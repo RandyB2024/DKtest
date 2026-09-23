@@ -1,0 +1,16 @@
+import test from "node:test";import assert from "node:assert/strict";import fs from "node:fs";
+const component=fs.readFileSync(new URL("../components/compact-dashboard.tsx",import.meta.url),"utf8");const css=fs.readFileSync(new URL("../app/compact-dashboard.css",import.meta.url),"utf8");
+test("dashboard blijft compact op mobiel",()=>{assert.match(css,/@media\(max-width:700px\)/);assert.match(css,/cd-kpis/)});
+test("vier kerncijfers staan bovenaan",()=>{for(const label of ["Omzet","Kosten","Resultaat","Banksaldo"])assert.match(component,new RegExp(`name:\"${label}\"`))});
+test("grafiek toont een zichtbare euro-as",()=>{assert.match(component,/€ 60k/);assert.match(component,/€ 40k/);assert.match(component,/€ 20k/)});
+test("mobiel geselecteerd datapunt toont volledige bedragen",()=>assert.match(component,/cd-chart-summary/));
+test("grafiek heeft tabelalternatief",()=>assert.match(component,/Bekijk cijfers als tabel/));
+test("dashboard gebruikt centrale rapportageselector",()=>assert.match(component,/dashboardMetrics/));
+test("periodecontext wordt bij doorklikken bewaard",()=>assert.match(component,/mdk-dashboard-context/));
+test("vervallen facturen gebruiken filtercontext",()=>assert.match(component,/\"vervallen\"/));
+test("dashboard bevat geen btw-kaart",()=>assert.equal(component.includes("Geschatte btw"),false));
+test("dashboard bevat geen irrelevante modules",()=>assert.equal(component.includes("Personeel"),false));
+test("een onderneming toont naam zonder dropdown",()=>assert.match(component,/organization\.name/));
+test("organisatie-id wordt in navigatiecontext bewaard",()=>assert.match(component,/organizationId:organization\.id/));
+test("desktop toont kernbeeld in drie compacte rijen",()=>{assert.match(css,/grid-template-columns:repeat\(4,1fr\)/);assert.match(component,/cd-main/)});
+test("Klaas Vis staat niet op dashboard",()=>assert.equal(component.includes("Klaas Vis"),false));

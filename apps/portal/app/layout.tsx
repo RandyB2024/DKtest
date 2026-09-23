@@ -1,0 +1,4 @@
+import type { Metadata,Viewport } from "next";import "./globals.css";import "./brand.css";import "./multi.css";import "./users.css";import "./insurance.css";import "./insurance-dashboard.css";import "./workflows.css";import "./financial-dashboard.css";import "./compact-dashboard.css";import ServiceWorker from "@/components/service-worker";import InstallApp from "@/components/install-app";
+export const metadata:Metadata={title:"Mijn Destination Known",description:"Administratie en contact met uw administratiekantoor op één plek.",manifest:"/manifest.webmanifest",icons:{icon:"/favicon.svg",shortcut:"/favicon.svg",apple:"/icon-192.png"}};
+export const viewport:Viewport={themeColor:"#0b345b",width:"device-width",initialScale:1};
+export default function RootLayout({children}:Readonly<{children:React.ReactNode}>){return <html lang="nl"><body>{children}<ServiceWorker/><InstallApp/></body></html>}

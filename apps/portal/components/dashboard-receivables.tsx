@@ -1,0 +1,7 @@
+"use client";
+import { AlertTriangle, ArrowRight } from "lucide-react";
+import { billingProfile, professionalInvoices } from "@/lib/billing";
+import { receivablesSummary } from "@/lib/receivables";
+import { euro } from "@/lib/models";
+
+export default function DashboardReceivables({onOpen}:{onOpen:()=>void}){const summary=receivablesSummary(professionalInvoices,billingProfile);return <section className="dashboard-receivables"><div className="section-title"><div><small>Debiteurenbewaking</small><h2>Openstaande facturen</h2></div><button className="btn" onClick={onOpen}>Naar facturen <ArrowRight size={15}/></button></div><div className="receivable-grid"><button className="card metric" onClick={onOpen}><label>Openstaand</label><strong>{euro.format(summary.total)}</strong><span>{summary.count} facturen</span></button><button className="card metric" onClick={onOpen}><label>Binnen betaaltermijn</label><strong>{euro.format(summary.withinTerm)}</strong><span>Vervalt binnenkort {euro.format(summary.dueSoon)}</span></button><button className="card metric" onClick={onOpen}><label>Vervallen</label><strong>{euro.format(summary.overdue)}</strong><span>{summary.overdueCount} facturen</span></button><button className="card metric reminder" onClick={onOpen}><label><AlertTriangle size={14}/> Betalingsherinneringen</label><strong>{summary.reminders}</strong><span>Voor controle beschikbaar</span></button></div></section>}

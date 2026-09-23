@@ -1,0 +1,4 @@
+export type InstallPlatform="ios-safari"|"ios-other"|"android"|"desktop"|"unsupported";
+export function detectInstallPlatform(userAgent:string,hasPrompt:boolean):InstallPlatform{const ios=/iphone|ipad|ipod/i.test(userAgent)||(/macintosh/i.test(userAgent)&&/mobile/i.test(userAgent));const safari=/safari/i.test(userAgent)&&!/crios|fxios|edgios|chrome|android/i.test(userAgent);if(ios)return safari?"ios-safari":"ios-other";if(/android/i.test(userAgent))return hasPrompt?"android":"unsupported";return hasPrompt?"desktop":"unsupported"}
+export function installLabel(platform:InstallPlatform){if(platform==="ios-safari"||platform==="ios-other")return"Zet op beginscherm";if(platform==="desktop")return"Mijn Destination Known installeren";if(platform==="android")return"App installeren";return""}
+export function shouldShowInstallButton(installed:boolean,platform:InstallPlatform){return !installed&&platform!=="unsupported"}

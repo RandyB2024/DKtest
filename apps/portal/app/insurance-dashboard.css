@@ -1,0 +1,6 @@
+.insurance-dashboard{display:block;width:100%;margin-top:18px;text-align:left;background:linear-gradient(135deg,#eef4fb,#fff)}
+.insurance-dashboard>div{display:grid;grid-template-columns:62px 1fr;column-gap:16px;align-items:center}
+.insurance-dashboard img{width:58px;height:58px;object-fit:contain;grid-row:1/5}
+.insurance-dashboard small{color:#344a8a;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.insurance-dashboard h2,.insurance-dashboard p{margin:3px 0}
+.insurance-dashboard strong{color:#0b4b78}

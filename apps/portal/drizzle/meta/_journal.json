@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1789715203299,
+      "tag": "0000_mysterious_toxin",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1789745970126,
+      "tag": "0001_chubby_ares",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789982049483,
+      "tag": "0002_sleepy_randall",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790065725560,
+      "tag": "0003_eminent_storm",
+      "breakpoints": true
+    }
+  ]
+}
