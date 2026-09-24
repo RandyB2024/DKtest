@@ -1,3 +1,4 @@
+> Status fase 1: Office leest customer_relationships en organizations uit dezelfde Supabase-database als apps/portal. Supabase Auth met AAL2 en RLS is leidend. Alle overige Office-bedrijfsmodules en schrijfacties zijn uitgeschakeld. Office gebruikt dko-supabase-auth; de hieronder beschreven lokale cookies, in-memory services, PDF- en wijzigingsflows zijn historische demo-contracten en geen actuele online implementatie. Zie SUPABASE_INTEGRATION.md.
 # Gedeelde backendcontracten
 
 Destination Known Office en Mijn Destination Known gebruiken één autoritatief domein. Office beheert `CustomerRelationship`, `Organization`, `OrganizationProfile`, `OrganizationFeature`, `User`, `Membership` en `OrganizationChangeRequest`. Het klantportaal leest dezelfde records via beveiligde, rolgefilterde API-contracten.

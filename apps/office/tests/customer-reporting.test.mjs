@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from '../src/server.mjs';
+import { createServer } from './helpers/development-server.mjs';
 import { report as accountingReport } from '../src/domain/accounting-service.mjs';
 import { CustomerReportingService } from '../src/services/customer-reporting-service.mjs';
 

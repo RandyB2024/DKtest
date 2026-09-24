@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer } from '../src/server.mjs';
+import { createServer } from './helpers/development-server.mjs';
 import { documents, conversations, salesInvoices } from '../src/domain/demo-data.mjs';
 
 async function setup(t){const server=createServer().listen(0,'127.0.0.1');t.after(()=>server.close());await new Promise(resolve=>server.once('listening',resolve));const base=`http://127.0.0.1:${server.address().port}`,login=await fetch(`${base}/api/portal/auth/development-login`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({userId:'user-jan'})});assert.equal(login.status,200);return {base,cookie:login.headers.get('set-cookie').split(';')[0]}}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createServer } from '../src/server.mjs';
+import { createServer } from './helpers/development-server.mjs';
 import { PortalManagementService, customerRelationships, organizations, organizationFeatures, organizationChangeRequests, memberships, portalUsers, internalUsers, DEMO_ORGANIZATION_ID } from '../src/domain/portal-management-service.mjs';
 import { auditLogs, tasks } from '../src/domain/demo-data.mjs';
 

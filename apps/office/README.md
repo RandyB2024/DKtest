@@ -1,60 +1,30 @@
-# Destination Known Office — PWA-basis
+# Destination Known Office — Supabase fase 1
 
-Lokale MVP voor de PWA-, sessie-, passkey- en vergrendelarchitectuur van Destination Known Office, uitgebreid met klantenbeheer en een boekhoudkundig correcte kern. Er zijn geen echte Microsoft-, WebAuthn-, bank- of andere externe koppelingen actief.
+Office gebruikt standaard Supabase Auth, verplichte TOTP-MFA (AAL2) en gedeelde klantrelaties/ondernemingen. Alleen actieve Office-medewerkers krijgen toegang. De bestaande vormgeving en navigatie blijven behouden; nog niet gemigreerde modules zijn expliciet uitgeschakeld.
 
-## Beschikbare routes
-
-- `/dashboard`
-- `/work-queue`
-- `/clients` en `/clients/:clientId`
-- `/administration`
-- `/documents`
-- `/tax-returns`
-- `/communication`
-- `/audit`
-- `/settings`
-
-Klantdossiers bevatten financiële kerncijfers, aandachtspunten, activiteit en negen tabs. De Boekhouding-tab bevat bank, inkoop, verkoop, grootboek, debiteuren, crediteuren, BTW, memoriaal en periodecontrole. Journaalposten worden server-side gecontroleerd op `debet = credit`.
+Zie [SUPABASE_INTEGRATION.md](SUPABASE_INTEGRATION.md) voor configuratie, migratie, handmatige acceptatie en hostingadvies. Zie [PWA_SECURITY.md](PWA_SECURITY.md) voor de beveiligingsgrenzen.
 
 ## Lokaal starten
 
-Node.js 20 of nieuwer is vereist.
+Node.js >=22.13.0 is vereist. Voer uit vanuit apps/office:
 
 ```powershell
-$env:ALLOW_DEVELOPMENT_AUTH='true'
+npm ci
+Copy-Item .env.example .env.local
+# Vul de twee Supabase-waarden lokaal in voor het bestaande testproject.
 npm start
 ```
 
-Open daarna `http://127.0.0.1:4173`.
+Open http://127.0.0.1:4173. Gebruik dezelfde origin als OFFICE_ORIGIN. Start zonder Supabase-configuratie veilig met een configuratiefout bij aanmelden; er is geen automatische demo-fallback.
 
-## Testen
+## Tests
 
 ```powershell
 npm test
 ```
 
-De database-uitbreiding staat in `database/migrations/0033_accounting_core.sql` en is voorbereid op SQLite lokaal en een latere PostgreSQL/Supabase-migratie.
+De tests gebruiken fictieve accounts, de echte Supabase-client met een gesimuleerde transportlaag en PostgreSQL/RLS-tests via PGlite. Er zijn geen echte sleutels nodig.
 
-## PWA installeren
+## Historische lokale demo
 
-Gebruik in Chrome of Edge de installatieknop in de adresbalk of de knop **Installeer app** in Office. Op iPhone/iPad kiest u in Safari **Zet op beginscherm**. Een service worker vereist `localhost`, `127.0.0.1` of HTTPS.
-
-## Productie
-
-Zie `PWA_SECURITY.md`. Start productie nooit met development-auth:
-
-```powershell
-$env:NODE_ENV='production'
-$env:ALLOW_DEVELOPMENT_AUTH='false'
-$env:SESSION_SECRET='<sterk geheim uit de hostingomgeving>'
-npm start
-```
-
-Zonder geïmplementeerde productieprovider levert de server bewust geen lokale loginroute op. Activeer hosting pas nadat Microsoft/OIDC en WebAuthn server-side zijn aangesloten.
-# Mijn Destination Known - lokale testklant
-
-Open `http://127.0.0.1:PORT/mijn` voor het klantportaal van **De Boer Advies**. De lokale ontwikkelmodus meldt Jan de Boer automatisch aan. In productie wordt deze bypass door de bestaande configuratiecontrole geweigerd; de beoogde login is een passkey of een wachtwoord met verplichte authenticator-2FA.
-
-Office en Mijn Destination Known gebruiken in deze MVP dezelfde Node-processcope en dezelfde domeinverzamelingen. Daardoor verschijnen een klantupload, klantvraag en concept-verkoopfactuur direct in de Office-services zolang dezelfde lokale server draait. Dit is dus een echte gedeelde lokale bron, maar nog geen duurzame database: wijzigingen verdwijnen bij een serverherstart.
-
-Voor deployment worden de bestaande `clientId`/`organizationId`-contracten gemigreerd naar één PostgreSQL/Supabase-database. Office krijgt interne boekhoudrechten; klantaccounts krijgen uitsluitend organisatiegebonden rapportage-, document-, factuur- en communicatierechten via applicatie-autorisatie en Row Level Security. Bestanden en rapporten komen in private objectopslag met kortlevende, geautoriseerde downloads.
+De oorspronkelijke modules blijven geïsoleerd in src/development-server.mjs voor lokale ontwikkeling en regressietests. Alleen expliciet ALLOW_DEVELOPMENT_AUTH=true, NODE_ENV=development of test, zonder Supabase-configuratie en via een loopbackverbinding maakt deze modus toegankelijk. Deze gegevens zijn tijdelijk en niet autoritatief. De geïntegreerde /mijn-demo is in Supabase-modus uitgeschakeld; het echte klantportaal staat in apps/portal.
