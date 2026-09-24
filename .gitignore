@@ -58,3 +58,6 @@ Thumbs.db
 !apps/portal/build/
 !apps/portal/build/sites-vite-plugin.ts
 !apps/portal/build/sites-vite-plugin.LICENSE
+
+# Supabase CLI local state
+**/supabase/.temp/

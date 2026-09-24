@@ -1,6 +1,14 @@
-import { NextResponse } from "next/server";
-import { requireSessionUser } from "@/lib/session";
-import { assertOrganizationAccess } from "@/lib/access";
-import { organizations, reports } from "@/lib/seed";
-export async function GET(_: Request, context: { params: Promise<{ organizationId: string }> }) { const userId = await requireSessionUser(); if (!userId) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 }); const { organizationId } = await context.params; try { assertOrganizationAccess(userId, organizationId); } catch { return NextResponse.json({ error: "Geen toegang tot deze onderneming" }, { status: 403 }); } return NextResponse.json({ organization: organizations.find(o => o.id === organizationId), report: reports.find(r => r.organizationId === organizationId) }); }
-export async function POST(request: Request, context: { params: Promise<{ organizationId: string }> }) { const userId = await requireSessionUser(); if (!userId) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 }); const { organizationId } = await context.params; const body = await request.json().catch(() => ({})) as { organizationId?: string; action?: "invoice:create" | "document:upload" | "profile:edit" }; if (body.organizationId !== organizationId) return NextResponse.json({ error: "organization_id komt niet overeen met het pad" }, { status: 400 }); try { assertOrganizationAccess(userId, organizationId, body.action ?? "dashboard:view"); } catch (error) { return NextResponse.json({ error: error instanceof Error && error.message === "INSUFFICIENT_ROLE" ? "Rol heeft onvoldoende rechten" : "Geen toegang" }, { status: 403 }); } return NextResponse.json({ ok: true, organizationId }); }
+import { portalApi, unavailableModule } from "@/lib/portal-api";
+import { requireAal2, requireOrganization, requirePortalIdentity } from "@/lib/portal-access";
+type Context = { params: Promise<{ organizationId: string }> };
+export async function GET(request: Request, context: Context) {
+  return portalApi(request, async ({ client }) => {
+    const identity = await requirePortalIdentity(client);
+    if (identity.profile.mfa_required) requireAal2(identity);
+    const id = requireOrganization(identity, (await context.params).organizationId);
+    return Response.json({ organization: identity.organizations.find(o => o.id === id) });
+  });
+}
+export async function POST(request: Request, context: Context) {
+  return unavailableModule(request, false, (await context.params).organizationId);
+}

@@ -12,7 +12,7 @@ test("gemanipuleerde organization_id heeft geen geldige membership", () => asser
 test("alle administratiegegevens horen bij de ene demo-onderneming", () => assert.ok([...invoices, ...requests].every(item => item.organizationId === "org-work")));
 test("ongeldige opgeslagen context herstelt veilig", () => assert.equal(resolveOrganizationContext("user-randy", "org-onbekend"), "org-work"));
 test("klant met één onderneming krijgt geen extra keuzestap", () => assert.equal(authorizedOrganizations("user-randy").length, 1));
-test("medewerker heeft een persoonlijk actief account", () => { const user = users.find(u => u.id === "user-ed"); assert.equal(user?.accountStatus, "Actief"); assert.equal(user?.email, "ed@example.test"); });
+test("historische medewerkerfixture bevat geen inlogadres", () => { const user = users.find(u => u.id === "user-ed"); assert.equal(user?.accountStatus, "Actief"); assert.equal(user?.email, ""); });
 test("uitnodiging heeft correcte status en vervaldatum", () => { assert.equal(invitations[0].status, "Uitgenodigd"); assert.ok(new Date(invitations[0].expiresAt) > new Date(invitations[0].invitedAt)); });
 test("eigenaar kan gebruikers van de demo-onderneming beheren", () => assert.equal(can("user-randy", "org-work", "users:manage"), true));
 test("financieel medewerker kan facturen en documenten verwerken maar geen gebruikers beheren", () => { assert.equal(can("user-ed", "org-work", "invoice:create"), true); assert.equal(can("user-ed", "org-work", "document:upload"), true); assert.equal(can("user-ed", "org-work", "users:view"), false); });

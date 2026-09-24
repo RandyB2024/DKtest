@@ -1,46 +1,47 @@
-# Beveiliging
+# Beveiligingsmodel
 
-## Reeds aanwezig
+## Identiteit en context
 
-- De verzekeringsmodule vereist zowel een gecontroleerde Klaas Vis-relatie als een afzonderlijke verzekeringsbevoegdheid.
-- Zakelijke en persoonlijke polisdata hebben afzonderlijke eigenaarvelden; toegang wordt server-side per organisatie, persoon, polis en document gecontroleerd.
-- Polisdocumenten gebruiken private opslagverwijzingen en worden uitsluitend via een `no-store` downloadroute aangeboden.
-- Wijzigingen en schademeldingen zijn verzoeken en bevestigen nooit automatisch een poliswijziging of dekking.
-- Algemene e-mailnotificaties bevatten geen polis-, schade- of medische inhoud.
-- Destination Known Office ontvangt alleen expliciet toegestane administratieve signalen en geen persoonlijke of medische verzekeringsinformatie.
+Elke beveiligde route maakt een nieuwe Supabase-client en controleert `auth.getUser()` bij Auth. Het user-object uit een browsercookie of een aangeleverd userId is geen autorisatiebron. AAL wordt pas na geldige gebruikerscontrole gelezen.
 
-- Fail-closed serverrendering: zonder geldige httpOnly sessie verschijnt geen portaaldata.
-- Server-side controle op sessie en klant-ID; een andere klant retourneert 403.
-- `SameSite=Strict`; `Secure` wordt in productie gezet.
-- Centrale `organization_id`-velden in alle bedrijfsgebonden domeinrecords.
-- Many-to-many-memberships met rollen en direct blokkeren van ingetrokken memberships.
-- Actieve organisatiecontext wordt bij iedere serveraanvraag opnieuw gevalideerd; een voorkeur of requestbody verleent nooit toegang.
-- Mutatieroutes controleren organisatie-ID in pad én body en toetsen de benodigde rolpermissie.
-- Persoonlijke accountstatus, membershipstatus en geldigheidsperiode worden centraal gecontroleerd.
-- Uitnodigings- en beheeracties vereisen afzonderlijke permissies; de laatste eigenaar is beschermd.
-- Belangrijke toegangsacties hebben een gestructureerd auditmodel zonder wachtwoorden of tokens.
-- Uploadacceptatie voor PDF/JPG/PNG, niet-leeg en maximaal 10 MB.
-- Geen wachtwoorden, tokens of financiële payloads in logging.
-- De service worker cachet alleen vier expliciete publieke statische bestanden.
+Toegang vereist `profiles.account_status = active`, een actieve organisatie-membership binnen de geldigheidsperiode, een klantrol en een door RLS zichtbare niet-gearchiveerde onderneming. Office-only, geblokkeerd, verwijderd, niet-gekoppeld, verlopen of toekomstig gekoppeld krijgt geen portaaltoegang. Bevoegdheden worden per aanvraag opnieuw uit PostgreSQL geladen.
 
-## Alleen voor lokale ontwikkeling
+RLS blijft actief; geen bevoorrechte sleutel of adminclient voor klantacties. Publieke configuratie accepteert alleen een HTTPS-project-URL en een publishable key. Geen alternatieve omgevingsvariabelen met database- of beheergeheimen.
 
-De vaste demo-inlog, vaste sessiewaarde, in-memory mutaties, gesimuleerde uploads, berichten en notificaties zijn niet productieveilig. Er is geen claim dat biometrie al actief is; biometrische gegevens horen nooit in de applicatiedatabase.
+## Sessies, cookies en fouten
 
-## Verplicht vóór productie
+- Officiële SDK-cookies met getAll/setAll, inclusief chunking en refresh; geen zelfgemaakte sessie-ID.
+- HttpOnly, SameSite=Strict, Path=/, Secure in productie en Max-Age=8 uur. SDK-verwijderingen krijgen Max-Age=0. Actieve refresh kan deze browserbewaartermijn verlengen; stel voor een harde absolute sessieduur ook Supabase Auth-sessielimieten in.
+- HttpOnly is mogelijk doordat login, MFA en alle aangemelde queries via de eigen serverroutes lopen. De anonieme browserclient leest deze cookies niet.
+- Login gebruikt een algemene 401 voor een onjuist wachtwoord, onbekend account en ontbrekende klanttoegang.
+- Geen Supabase-foutdetails, wachtwoorden, tokens, QR-inhoud of omgevingswaarden in logging.
+- State-changing requests vereisen een exact passende Origin en weigeren cross-site fetches. SameSite alleen is niet de enige CSRF-controle.
+- Na login is de bestemming altijd `/`; redirectparameters worden niet gebruikt.
+- API-antwoorden zijn private/no-store. De serverpagina bevat uitsluitend een publieke shell.
+- Logout trekt via Supabase de huidige sessie/refreshmogelijkheid in en verwijdert browsercookies. Een eerder buitgemaakt JWT kan bij rechtstreekse databaseaanroepen geldig blijven tot zijn ingestelde expiratie; kies een korte JWT-duur en test intrekking bij online acceptatie. De app vertrouwt nooit alleen op lokale JWT-decodering.
 
-- Passkey/WebAuthn (Face ID, Android-biometrie, Windows Hello), fallback met sterk wachtwoord, verplichte TOTP-2FA en herstelcodes.
-- Cryptografische, roterende sessies; CSRF; rate limiting; CSP/HSTS en beveiligingsheaders.
-- PostgreSQL Row Level Security als primaire organisatiegrens: `auth.uid()` → actieve membership → record-`organization_id` → rolpermissie, plus serverautorisatie op iedere query, actie en download.
-- Autorisatie- en IDOR-tests voor iedere resource en medewerkersrol.
-- Persoonlijke uitnodigingstokens moeten eenmalig, gehasht, kort geldig en intrekbaar zijn; e-mailaflevering en acceptatie zijn nu gesimuleerd.
-- Audittrail zonder gevoelige payloads, secrets manager, monitoring, back-ups en incidentprocedure.
-- Malware-/contentinspectie en server-side herkenning van daadwerkelijke bestandstypen.
+## MFA
 
-## Private documenten
+MFA-plichtige gebruikers ontvangen vóór AAL2 geen profiel-/organisatiepayload, maar een MFA-prompt. Zonder bestaande TOTP-factor kan de gebruiker zelf inschrijven; de QR en handmatige sleutel bestaan alleen in het no-store-antwoord en tijdelijk in componentgeheugen. Na verificatie worden de verhoogde SDK-sessiecookies opgeslagen.
 
-Sla bytes op in een private Supabase Storage-bucket of gelijkwaardige objectopslag. Bewaar eigenaarschap in PostgreSQL. Downloads verlopen alleen via een geautoriseerde serveractie met een zeer korte signed URL of gestreamde response. Publieke permanente URL's zijn verboden.
+Bij een bestaande geverifieerde factor wordt geen nieuwe inschrijving of verwijdering daarvan aangeboden. Na opnieuw inloggen volgt challenge + verify. Een onjuiste code geeft een algemene fout. Verlies van de authenticator vereist een apart gecontroleerd beheerdersherstel; er is geen overslaan-knop. Passkeys en herstelcodes zijn niet geïmplementeerd.
 
-## Nooit offline cachen
+Financiële/documentroutes en -policies vereisen altijd AAL2, ook als `mfa_required` voor een profiel false is. Geen AAL2-verlaging in migraties of tests.
 
-API-responses, HTML met klantdata, facturen, uploads, rapportages, aangiften, gesprekken, notificaties, bankgegevens en persoonsgegevens mogen nooit door de service worker of browseropslag worden gecachet.
+## Niet-gemigreerde acties
+
+Oude demo-API's zijn afgesloten. Restrictieve databasepolicies verhinderen dat gewone klanten de applicatieblokkade via directe REST-/Storage-mutaties omzeilen. Bij toekomstige migratie moet elke blokkade doelgericht worden vervangen door geteste rol-/veld-/organisatiecontroles. Uitgeschakelde UI is op zichzelf geen autorisatiegrens.
+
+De SQL behoudt bestaande Office-toegang voor afzonderlijke Office-identiteiten. Ken Office-rollen alleen na verificatie toe en test deze afzonderlijk bij Office-integratie.
+
+## Browser en PWA
+
+Geen sessies of klantgegevens in localStorage/sessionStorage. De service worker cachet uitsluitend manifest en merkiconen en negeert HTML, API, document- en MFA-verkeer. QR-codes gaan niet door een beeldoptimalisatiedienst. Offline zijn klantgegevens niet beschikbaar.
+
+## Verificatiegrenzen en productievoorwaarden
+
+SDK-/HTTP-tests bewijzen appgedrag; lokale PostgreSQL-tests bewijzen de meegeleverde policies. Ze bewijzen niet dat de remote database dezelfde migratie en geen extra permissieve policies, grants, views of functies bevat. Controleer het echte testproject vóór vrijgave. Stop bij afwijkende regels in plaats van RLS uit te schakelen.
+
+Controleer vóór productie ook Supabase Auth-rate limits en MFA-instellingen, HTTPS, Worker/CDN cache bypass voor API's, security headers/CSP/HSTS, sessieduur, monitoring, back-ups en het herstelproces. Er wordt geen eigen in-memory rate limiter gebruikt: die is onbetrouwbaar over Worker-instances. Gebruik Supabase Auth en waar nodig Cloudflare-rate limits. Geen productieacceptatieclaim op basis van alleen lokale tests.
+
+Referenties: [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/advanced-guide), [Supabase MFA](https://supabase.com/docs/guides/auth/auth-mfa).

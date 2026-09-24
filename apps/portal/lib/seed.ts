@@ -1,8 +1,9 @@
+// Historical fixtures for unmigrated module tests; never import into a portal entry point.
 import type { User, Organization, OrganizationGroup, Membership, OrganizationRelation, Verkoopfactuur, Documentverzoek, Conversatie, Afspraak, Rapportage, Aangifte, Notificatie, Voertuig, UserInvitation, Auditgebeurtenis } from "./models";
 export const users: User[] = [
-  { id: "user-randy", name: "Jan Jansen", email: "demo@destinationknown.test", functionTitle: "Eigenaar", accountStatus: "Actief", lastLogin: "2026-09-18T09:14:00+02:00", lastOrganizationId: "org-work" },
-  { id: "user-ed", name: "Sanne de Vries", email: "ed@example.test", functionTitle: "Financieel medewerker", accountStatus: "Actief", lastLogin: "2026-09-17T16:42:00+02:00", lastOrganizationId: "org-work" },
-  { id: "user-blocked", name: "Pieter Smit", email: "pieter@example.test", functionTitle: "Oud-medewerker", accountStatus: "Geblokkeerd" },
+  { id: "user-randy", name: "Jan Jansen", email: "", functionTitle: "Eigenaar", accountStatus: "Actief", lastLogin: "2026-09-18T09:14:00+02:00", lastOrganizationId: "org-work" },
+  { id: "user-ed", name: "Sanne de Vries", email: "", functionTitle: "Financieel medewerker", accountStatus: "Actief", lastLogin: "2026-09-17T16:42:00+02:00", lastOrganizationId: "org-work" },
+  { id: "user-blocked", name: "Pieter Smit", email: "", functionTitle: "Oud-medewerker", accountStatus: "Geblokkeerd" },
 ];
 export const groups: OrganizationGroup[] = [];
 export const organizations: Organization[] = [
@@ -14,8 +15,8 @@ export const memberships: Membership[] = [
   { ...membershipBase, id: "mem-3", userId: "user-ed", organizationId: "org-work", role: "Financieel medewerker", additionalPermissions: ["insurance:view", "policy:view", "policy-document:download"] },
   { ...membershipBase, id: "mem-blocked", userId: "user-blocked", organizationId: "org-work", role: "Financieel medewerker" },
 ];
-export const invitations: UserInvitation[] = [{ id: "invite-1", firstName: "Mila", lastName: "Bos", email: "mila@example.test", functionTitle: "Documenten aanleveren", status: "Uitgenodigd", invitedAt: "2026-09-17", expiresAt: "2026-09-24", invitedBy: "user-randy", organizationRoles: [{ organizationId: "org-work", role: "Documenten aanleveren" }] }];
-export const auditEvents: Auditgebeurtenis[] = [{ id: "audit-1", organizationId: "org-work", userId: "user-randy", action: "invitation.sent", timestamp: "2026-09-17T14:10:00+02:00", objectType: "UserInvitation", objectId: "invite-1", result: "success", change: "Uitnodiging verzonden aan mila@example.test", sessionInfo: "lokale ontwikkelsessie" }];
+export const invitations: UserInvitation[] = [{ id: "invite-1", firstName: "Mila", lastName: "Bos", email: "", functionTitle: "Documenten aanleveren", status: "Uitgenodigd", invitedAt: "2026-09-17", expiresAt: "2026-09-24", invitedBy: "user-randy", organizationRoles: [{ organizationId: "org-work", role: "Documenten aanleveren" }] }];
+export const auditEvents: Auditgebeurtenis[] = [{ id: "audit-1", organizationId: "org-work", userId: "user-randy", action: "invitation.sent", timestamp: "2026-09-17T14:10:00+02:00", objectType: "UserInvitation", objectId: "invite-1", result: "success", change: "Fictieve uitnodiging aangemaakt", sessionInfo: "lokale ontwikkelsessie" }];
 export const relations: OrganizationRelation[] = [];
 export const reports: Rapportage[] = [{ id: "rep-work", organizationId: "org-work", periode: "September 2026", omzet: 42500, kosten: 25700, banksaldo: 28640, bijgewerkt: "2026-09-17T08:45:00+02:00" }];
 export const invoices: Verkoopfactuur[] = [{ id: "inv-work-1", organizationId: "org-work", nummer: "2026-0031", debiteur: "Noord & Co", datum: "2026-09-02", vervaldatum: "2026-10-02", status: "Verstuurd", regels: [{ id: "l1", omschrijving: "Bouwbegeleiding augustus", aantal: 18, prijs: 85, btw: 21 }] }];

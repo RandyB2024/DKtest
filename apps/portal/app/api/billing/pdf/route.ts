@@ -1,5 +1,2 @@
-import { NextResponse } from "next/server";
-import { can } from "@/lib/access";
-import { billingProfile, debtors, generateInvoicePdf, professionalInvoices, type ProfessionalInvoice } from "@/lib/billing";
-import { requireSessionUser } from "@/lib/session";
-export async function POST(request:Request){const userId=await requireSessionUser();if(!userId)return NextResponse.json({error:"Niet ingelogd."},{status:401});const body=await request.json().catch(()=>({})) as {organizationId?:string;invoiceId?:string;invoice?:ProfessionalInvoice};if(!body.organizationId||!can(userId,body.organizationId,"invoices:view"))return NextResponse.json({error:"Geen toegang."},{status:403});const invoice=body.invoice??professionalInvoices.find(i=>i.id===body.invoiceId);if(!invoice||invoice.organizationId!==body.organizationId)return NextResponse.json({error:"Factuur niet toegankelijk."},{status:403});const debtor=debtors.find(d=>d.id===invoice.debtorId&&d.organizationId===body.organizationId);if(!debtor)return NextResponse.json({error:"Debiteur niet toegankelijk."},{status:403});const bytes=generateInvoicePdf(invoice,billingProfile,debtor);return new Response(bytes,{headers:{"content-type":"application/pdf","content-disposition":`attachment; filename="${invoice.number??"concept"}.pdf"`,"cache-control":"private, no-store, max-age=0","x-content-type-options":"nosniff"}})}
+import { unavailableModule } from "@/lib/portal-api";
+export async function POST(request: Request) { return unavailableModule(request, true); }
