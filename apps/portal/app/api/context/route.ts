@@ -1,4 +1,21 @@
-import { NextResponse } from "next/server";
-import { requireSessionUser } from "@/lib/session";
-import { resolveOrganizationContext } from "@/lib/access";
-export async function POST(request: Request) { const userId = await requireSessionUser(); if (!userId) return NextResponse.json({ error: "Niet ingelogd" }, { status: 401 }); const body = await request.json().catch(() => ({})) as { organizationId?: string }; if (!body.organizationId) return NextResponse.json({ error: "Onderneming ontbreekt" }, { status: 400 }); const resolved = resolveOrganizationContext(userId, body.organizationId); if (resolved !== body.organizationId) return NextResponse.json({ error: "Geen actieve membership voor deze onderneming" }, { status: 403 }); const response = NextResponse.json({ organizationId: resolved }); response.cookies.set("mdk_active_org", resolved, { httpOnly: true, sameSite: "strict", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 90 }); return response; }
+import { portalApi, readBody } from "@/lib/portal-api";
+import { requireAal2, requireOrganization, requirePortalIdentity, resolvePortalContext } from "@/lib/portal-access";
+import { contextCookie } from "@/lib/supabase/server";
+
+export async function GET(request: Request) {
+  return portalApi(request, async ({ client, getCookie }) => {
+    const identity = await requirePortalIdentity(client);
+    if (identity.profile.mfa_required && !identity.aal2) return Response.json({ mfaRequired: true });
+    return Response.json({ ...identity, organizationId: resolvePortalContext(identity, getCookie(contextCookie)) });
+  });
+}
+export async function POST(request: Request) {
+  return portalApi(request, async ({ client, setCookie }) => {
+    const identity = await requirePortalIdentity(client);
+    if (identity.profile.mfa_required) requireAal2(identity);
+    const body = await readBody(request);
+    const organizationId = requireOrganization(identity, body.organizationId, true);
+    setCookie(contextCookie, organizationId);
+    return Response.json({ ...identity, organizationId });
+  });
+}

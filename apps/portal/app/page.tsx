@@ -1,5 +1,5 @@
-import Login from "@/components/login";
-import Portal from "@/components/portal";
-import { getValidatedContext, requireSessionUser } from "@/lib/session";
-export const dynamic = "force-dynamic";
-export default async function Home() { const userId = await requireSessionUser(); if (!userId) return <Login />; const initialOrganizationId = await getValidatedContext(userId); return <Portal userId={userId} initialOrganizationId={initialOrganizationId} />; }
+import PortalEntry from "@/components/portal-entry";
+
+// Public shell only. Bootstrap uses a route handler that can return renewed
+// HttpOnly cookies, including on reload. No customer data is rendered here.
+export default function Home() { return <PortalEntry />; }
