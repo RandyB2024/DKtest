@@ -1,5 +1,5 @@
-const CACHE = 'dk-office-shell-v11-financial-foundation';
-const SHELL = ['/offline.html', '/styles.css', '/intake.css', '/app.js', '/portal.js', '/mijn.css', '/mijn.js', '/manifest.webmanifest', '/assets/logo.png', '/assets/icon-192.png', '/assets/icon-512.png'];
+const CACHE = 'dk-office-shell-v12-supabase';
+const SHELL = ['/offline.html', '/styles.css', '/intake.css', '/manifest.webmanifest', '/assets/logo.png', '/assets/icon-192.png', '/assets/icon-512.png'];
 
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));

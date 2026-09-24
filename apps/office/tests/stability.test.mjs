@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { createServer } from '../src/server.mjs';
+import { createServer } from './helpers/development-server.mjs';
 
 async function withServer(t) {
   const server = createServer().listen(0, '127.0.0.1');
@@ -54,6 +54,6 @@ test('mobiele navigatie en defensieve API-client zijn aangesloten', async () => 
   assert.match(app, /credentials:'same-origin'/);
   assert.match(app, /AbortController/);
   assert.match(css, /sidebar\.mobile-open/);
-  assert.match(sw, /v11-financial-foundation/);
+  assert.match(sw, /v12-supabase/);
   assert.match(sw, /startsWith\('\/api\/'\)/);
 });

@@ -1,29 +1,15 @@
-# PWA- en passkeyarchitectuur
+# Office beveiliging — Supabase fase 1
 
-## Veilige cachegrens
+Elke beveiligde API-aanvraag verifieert de Supabase-gebruiker, het actieve profiel, het actieve office_membership, de rol met scope office en is_office_user(). Bedrijfsgegevens vereisen AAL2. Login, status en MFA gebruiken alleen de minimaal noodzakelijke AAL1-bootstrap; een klantaccount komt daar niet doorheen.
 
-De service worker cachet uitsluitend de openbare app-shell: HTML, CSS, JavaScript, manifest, iconen en de offlinepagina. Requests naar `/api/`, `/documents/` en `/downloads/` worden nooit onderschept of opgeslagen. Beveiligde API-antwoorden gebruiken `Cache-Control: no-store, private`.
+De server gebruikt de gebruikerssessie en de publishable key, nooit een service-role-key. RLS vormt de tweede grens. Geblokkeerde profielen en ingetrokken memberships worden bij de volgende aanvraag geweigerd. De bestaande Office-rol is globaal binnen het kantoor; deze fase introduceert geen toewijzing per medewerker of onderneming.
 
-Klantdossiers, banktransacties, facturen, belastinggegevens, documenten, communicatie en auditlogs moeten na een geldige sessie opnieuw van de backend komen. Logout trekt de server-side sessie in, wist tijdelijke browserstate en stuurt `Clear-Site-Data`.
+De afzonderlijke dko-supabase-auth-cookie is HttpOnly, SameSite=Strict en in productie Secure. De maximale cookielevensduur is acht uur en kan bij tokenvernieuwing worden vernieuwd; absolute sessielimieten worden in Supabase beheerd. Logout beëindigt de lokale Supabase-sessie en verwijdert Office-cookies. Reeds uitgegeven bearer access tokens kunnen technisch tot hun vervaldatum bestaan; deel of log ze nooit. Portal-cookies worden niet gewist. Clear-Site-Data wordt daarom niet gebruikt.
 
-## Productie-authenticatie
+Muterende auth-aanvragen vereisen de exacte OFFICE_ORIGIN en weigeren cross-site requests. De frontend bewaart geen tokens in localStorage en toont geen sleutels. API-antwoorden en MFA-materiaal zijn no-store. Wachtwoorden worden na verzending uit het formulier verwijderd. Bij verlies van toegang wordt de klantweergave gewist.
 
-De lokale Ed/Randy-keuze is uitsluitend beschikbaar wanneer `ALLOW_DEVELOPMENT_AUTH=true`. Bij `NODE_ENV=production` weigert de server te starten zolang die bypass actief is. Productie gebruikt eerst Microsoft/OIDC met MFA en daarna een persoonlijke WebAuthn-passkey.
+De service worker cachet alleen toegestane openbare assets en de offlinepagina. Auth-, API-, document- en downloadverkeer wordt niet gecachet. De actieve Supabase-JavaScriptcode en beschermde HTML worden via het netwerk geladen. Oude caches worden bij activatie verwijderd.
 
-WebAuthn verwerkt biometrie nooit in Office. Het apparaat voert Face ID, Touch ID, Android-biometrie of Windows Hello uit. Office bewaart uitsluitend credential-id, publieke sleutel, counter, apparaatnaam en tijdstempels. Meerdere niet-ingetrokken credentials per gebruiker zijn toegestaan.
+Alle niet-gemigreerde bedrijfsacties worden server-side geweigerd; de additieve migratie blokkeert tevens normale Office-schrijfaanvragen rechtstreeks via PostgREST en private Storage. Auth/MFA is de noodzakelijke uitzondering. De oude lokale sessie-, passkey- en vergrendellogica geldt alleen voor de expliciete lokale demo.
 
-## Step-up en vergrendeling
-
-Sessies hebben `strong_auth_at`, `strong_auth_method`, `last_activity_at` en `locked_at`. Gevoelige serveracties krijgen later een controle die een recente sterke authenticatie vereist. De huidige lokale provider simuleert ontgrendeling; productie moet daarvoor een verse WebAuthn assertion verifiëren.
-
-De browser kan vroegtijdig vergrendelen, maar de server bepaalt altijd of een sessie geldig en ontgrendeld is. Terugkeer uit achtergrondstatus vraagt de status opnieuw op. Een verlopen of ingetrokken sessie geeft `401`; een vergrendelde sessie `423`.
-
-## Deploymentchecklist office.destinationknown.nl
-
-- HTTPS en `Secure` cookies verplicht.
-- `ALLOW_DEVELOPMENT_AUTH=false` en een sterk server-side sessiegeheim.
-- Microsoft/OIDC-provider plus WebAuthn challengeopslag implementeren.
-- RP ID vastzetten op `office.destinationknown.nl` (of bewust op `destinationknown.nl`).
-- Origins strikt valideren; challenges eenmalig, kort geldig en server-side bewaren.
-- Alle mutaties blijven server-side geautoriseerd; step-up wordt per gevoelige actie afgedwongen.
-- Service-workerupdates versiegebonden uitrollen en oude shellcaches tijdens `activate` verwijderen.
+Hosting vereist HTTPS, NODE_ENV=production, ALLOW_DEVELOPMENT_AUTH=false, een expliciete HTTPS OFFICE_ORIGIN en de testprojectconfiguratie. Er is in deze opdracht niets gehost of op afstand gemigreerd.

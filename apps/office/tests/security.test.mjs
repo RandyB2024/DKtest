@@ -1,14 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadConfig } from '../src/config.mjs';
-import { createServer } from '../src/server.mjs';
+import { createServer } from './helpers/development-server.mjs';
 
 test('productie weigert te starten met development authentication', () => {
   assert.throws(() => loadConfig({ NODE_ENV: 'production', ALLOW_DEVELOPMENT_AUTH: 'true', SESSION_SECRET: 'sterk-geheim' }), /development-auth/);
 });
 
-test('productie weigert een zwak sessiegeheim', () => {
-  assert.throws(() => loadConfig({ NODE_ENV: 'production', ALLOW_DEVELOPMENT_AUTH: 'false', SESSION_SECRET: 'local-development-only' }), /SESSION_SECRET/);
+test('Supabase is standaard en productie vereist een expliciete HTTPS-origin', () => {
+  assert.equal(loadConfig({}).allowDevelopmentAuth, false);
+  assert.throws(() => loadConfig({ NODE_ENV: 'production' }), /OFFICE_ORIGIN/);
+  assert.equal(loadConfig({ NODE_ENV: 'production', OFFICE_ORIGIN: 'https://office.example.invalid' }).allowDevelopmentAuth, false);
 });
 
 test('beveiligde API weigert een request zonder sessie en voorkomt caching', async t => {
