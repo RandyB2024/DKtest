@@ -52,7 +52,7 @@ export async function officeIdentity(client, { requireMfa = true } = {}) {
   if (assurance.error || !assurance.data) throw new OfficeError(401, 'AUTH_REQUIRED', 'Log opnieuw in.');
   const aal2 = assurance.data.currentLevel === 'aal2';
   if (requireMfa && !aal2) throw new OfficeError(403, 'MFA_REQUIRED', 'Bevestig uw identiteit met tweestapsverificatie.');
-  return { id: user.id, displayName: profileResult.data.display_name, role: roleResult.data.display_name, aal2 };
+  return { id: user.id, displayName: profileResult.data.display_name, role: roleResult.data.display_name, roleCode: roleResult.data.code, canManageCustomers: aal2 && ['owner','admin'].includes(roleResult.data.code), aal2 };
 }
 export function checkQuery(result) {
   if (result.error) throw new OfficeError(503, 'DATABASE_UNAVAILABLE', 'De gegevens of toegangsrechten kunnen niet worden geladen. Controleer de configuratie en migraties.');
