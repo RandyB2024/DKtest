@@ -1,4 +1,4 @@
-# Office beveiliging — Supabase fase 1
+# Office beveiliging — Supabase fase 2A
 
 Elke beveiligde API-aanvraag verifieert de Supabase-gebruiker, het actieve profiel, het actieve office_membership, de rol met scope office en is_office_user(). Bedrijfsgegevens vereisen AAL2. Login, status en MFA gebruiken alleen de minimaal noodzakelijke AAL1-bootstrap; een klantaccount komt daar niet doorheen.
 
@@ -10,6 +10,6 @@ Muterende auth-aanvragen vereisen de exacte OFFICE_ORIGIN en weigeren cross-site
 
 De service worker cachet alleen toegestane openbare assets en de offlinepagina. Auth-, API-, document- en downloadverkeer wordt niet gecachet. De actieve Supabase-JavaScriptcode en beschermde HTML worden via het netwerk geladen. Oude caches worden bij activatie verwijderd.
 
-Alle niet-gemigreerde bedrijfsacties worden server-side geweigerd; de additieve migratie blokkeert tevens normale Office-schrijfaanvragen rechtstreeks via PostgREST en private Storage. Auth/MFA is de noodzakelijke uitzondering. De oude lokale sessie-, passkey- en vergrendellogica geldt alleen voor de expliciete lokale demo.
+Klantbeheer loopt via zes transactionele RPCs voor owner/admin met vaste velden en atomair audit. Private helpers zijn niet uitvoerbaar door authenticated. Alle niet-gemigreerde bedrijfsacties worden server-side geweigerd; de additieve migratie blokkeert tevens normale Office-schrijfaanvragen rechtstreeks via PostgREST en private Storage. Auth/MFA en de zes gecontroleerde klantbeheer-RPCs zijn de afgebakende uitzonderingen. Directe tabelwrites blijven geblokkeerd. Accountuitnodigingen en Auth Admin API blijven uitgeschakeld. De oude lokale sessie-, passkey- en vergrendellogica geldt alleen voor de expliciete lokale demo.
 
 Hosting vereist HTTPS, NODE_ENV=production, ALLOW_DEVELOPMENT_AUTH=false, een expliciete HTTPS OFFICE_ORIGIN en de testprojectconfiguratie. Er is in deze opdracht niets gehost of op afstand gemigreerd.

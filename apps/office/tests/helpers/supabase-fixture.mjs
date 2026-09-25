@@ -51,6 +51,7 @@ export function supabaseFixture() {
       state.user.factors = state.user.factors.filter(f => f.id !== url.pathname.split('/').pop()); return json({id:url.pathname.split('/').pop()});
     }
     if (url.pathname === '/rest/v1/rpc/is_office_user') return json(isOffice());
+    if (url.pathname.startsWith('/rest/v1/rpc/office_') && state.rpc) return state.rpc(url.pathname.split('/').pop(),body);
     if (url.pathname.startsWith('/rest/v1/')) {
       if (method !== 'GET') throw new Error('No writes permitted in phase 1');
       const table = url.pathname.split('/').pop();

@@ -1,3 +1,4 @@
+import { customerMutation } from './customer-management.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -77,6 +78,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+    const mutation = await customerMutation(req, url, client, user, body);
+    if (mutation) return sendJson(res, mutation.status, mutation.data);
     if (!['GET','HEAD'].includes(req.method) && req.headers['content-type']?.startsWith('application/json')) {
       const input = await body(req);
       for (const name of ['organization_id','organizationId']) {
@@ -98,7 +101,7 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
         }
         const filters = [...url.searchParams.getAll('organization_id'), ...url.searchParams.getAll('organizationId')];
         if (filters.length) { organizations = organizations.filter(o => filters.every(id => id === o.id)); relationships = relationships.filter(r => organizations.some(o => o.customer_relationship_id === r.id)); }
-        return sendJson(res, 200, { source: 'supabase', readOnly: true, relationships, organizations, user });
+        return sendJson(res, 200, { source: 'supabase', readOnly: !user.canManageCustomers, relationships, organizations, user });
       }
       const org = path.match(/^\/api\/organizations\/([^/]+)$/);
       if (org) return sendJson(res, 200, { source: 'supabase', organization: await entity(client, 'organizations', decodeURIComponent(org[1]), orgFields) });
