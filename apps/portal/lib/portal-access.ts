@@ -1,7 +1,8 @@
+import { validatedTotp } from "./supabase/trusted-mfa";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 export class AccessError extends Error {
-  constructor(public status: number, message: string) { super(message); }
+  constructor(public status: number, message: string, public code?: string) { super(message); }
 }
 export type PortalProfile = { id: string; email: string; display_name: string; account_status: string; mfa_required: boolean };
 export type PortalOrganization = { id: string; name: string; legal_name: string | null; registration_number: string | null; archived_at: string | null };
@@ -33,18 +34,19 @@ export async function requirePortalIdentity(client: SupabaseClient): Promise<Por
   if (roleError) throw new AccessError(503, "Toegang kan tijdelijk niet worden gecontroleerd.");
   const memberships = active.filter(m => roles?.some(r => r.id === m.role_id));
   if (!memberships.length) throw new AccessError(403, "Geen toegang tot het klantportaal.");
+  const aal2 = await validatedTotp(client, auth.user.id);
+  // Auth bootstrap exposes no organization data before fresh MFA. RLS also hides it.
+  if (!aal2) return { profile, memberships, organizations: [], aal2: false };
   const { data: orgs, error: orgError } = await client.from("organizations")
     .select("id,name,legal_name,registration_number,archived_at").in("id", memberships.map(m => m.organization_id)).is("archived_at", null);
   if (orgError) throw new AccessError(503, "Ondernemingen kunnen tijdelijk niet worden geladen.");
   const organizations = (orgs ?? []) as PortalOrganization[];
   if (!organizations.length) throw new AccessError(403, "Geen toegang tot het klantportaal.");
-  const { data: assurance, error: aalError } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (aalError || !assurance) throw new AccessError(401, "Log opnieuw in.");
-  return { profile, memberships: memberships.filter(m => organizations.some(o => o.id === m.organization_id)), organizations, aal2: assurance.currentLevel === "aal2" };
+  return { profile, memberships: memberships.filter(m => organizations.some(o => o.id === m.organization_id)), organizations, aal2 };
 }
 
 export function requireAal2(identity: PortalIdentity) {
-  if (!identity.aal2) throw new AccessError(403, "Bevestig eerst uw identiteit met tweestapsverificatie.");
+  if (!identity.aal2) throw new AccessError(403, "Bevestig eerst uw identiteit met tweestapsverificatie.", "MFA_REQUIRED");
 }
 export function requireOrganization(identity: PortalIdentity, id: unknown, allowAll = false): string {
   if (typeof id !== "string" || !(identity.organizations.some(o => o.id === id) || (allowAll && id === "all" && identity.organizations.length > 1))) {

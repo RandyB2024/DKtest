@@ -30,3 +30,5 @@ npm.cmd test
 Tests gebruiken synthetische accounts, de echte Supabase SDK met testtransport en PostgreSQL/RLS via PGlite. Geen echte credentials nodig.
 
 De historische demo in src/development-server.mjs blijft uitsluitend expliciet lokaal beschikbaar voor regressietests. Deze is geen bron voor de Supabase-interface. Development-auth mag niet met Supabase-configuratie worden gemengd en is in productie verboden. Het echte klantportaal staat in apps/portal.
+
+Vertrouwde MFA-sessies zijn maximaal 24 uur geldig vanaf de laatste gevalideerde TOTP-verificatie. Refresh verlengt dit niet. MFA_TRUST_MAX_AGE_SECONDS=86400 is de enige toegestane ingestelde waarde. Zie PWA_SECURITY.md; nieuwe migratie 202609250001 is alleen lokaal voorbereid.

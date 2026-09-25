@@ -1,9 +1,10 @@
+import { MFA_TRUST_MAX_AGE_SECONDS } from "./trusted-mfa";
 import { createServerClient, parseCookieHeader, serializeCookieHeader, type CookieOptions } from "@supabase/ssr";
 import { publicSupabaseConfig } from "./config";
 
 export const contextCookie = "mdk_active_org";
 export const cookieOptions: CookieOptions = {
-  httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: 28800,
+  httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict", path: "/", maxAge: MFA_TRUST_MAX_AGE_SECONDS,
 };
 
 // Instantiate per request, including errors and refreshes. No shared auth state.

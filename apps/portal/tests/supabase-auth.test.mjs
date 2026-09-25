@@ -24,15 +24,15 @@ const originalFetch = globalThis.fetch;
 const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const originalKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-let db, user, sessions, calls, password, cookieJar, initialAal, lifetime, roleMissing;
+let db, user, sessions, calls, password, cookieJar, initialAal, lifetime, roleMissing, initialAmr;
 function json(data, status = 200) { return Response.json(data, { status }); }
-function tokenSession(aal = initialAal) {
+function tokenSession(aal = initialAal, amr = initialAmr) {
   const now = Math.floor(Date.now() / 1000);
-  const payload = { sub: user.id, role: "authenticated", aal, exp: now + lifetime, iat: now, session_id: randomUUID() };
+  const payload = { sub: user.id, role: "authenticated", aal, amr, exp: now + lifetime, iat: now, session_id: randomUUID() };
   const encode = value => Buffer.from(JSON.stringify(value)).toString("base64url");
   const access_token = `${encode({ alg: "HS256", typ: "JWT" })}.${encode(payload)}.${Buffer.from(randomUUID()).toString("base64url")}`;
   const session = { access_token, refresh_token: randomUUID(), expires_in: lifetime, expires_at: payload.exp, token_type: "bearer", user: structuredClone(user) };
-  sessions.set(access_token, { aal, refresh: session.refresh_token });
+  sessions.set(access_token, { aal, amr, refresh: session.refresh_token });
   return session;
 }
 function request(path, method = "GET", body, headers = {}) {
@@ -52,7 +52,7 @@ async function signIn() {
 beforeEach(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://sdk-fixture.supabase.co";
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_testfixture";
-  password = randomUUID(); cookieJar = new Map(); sessions = new Map(); calls = []; initialAal = "aal2"; lifetime = 3600; roleMissing = false;
+  password = randomUUID(); cookieJar = new Map(); sessions = new Map(); calls = []; initialAal = "aal2"; lifetime = 3600; roleMissing = false; initialAmr = [{method:"totp",timestamp:Math.floor(Date.now()/1000)}];
   user = { id: randomUUID(), email: "fixture@example.invalid", aud: "authenticated", app_metadata: {}, user_metadata: {}, created_at: new Date().toISOString(), factors: [] };
   const org = { id: randomUUID(), name: "Fictieve testonderneming", legal_name: null, registration_number: null, archived_at: null };
   const role = { id: randomUUID(), scope: "customer" };
@@ -73,7 +73,7 @@ beforeEach(() => {
         const active = [...sessions.values()].find(s => s.refresh === body.refresh_token);
         if (!active) return json({ message: "invalid", code: "refresh_token_not_found" }, 400);
         lifetime = 3600;
-        return json(tokenSession(active.aal));
+        return json(tokenSession(active.aal, active.amr));
       }
       if (body.email !== user.email || body.password !== password) return json({ message: "Invalid login credentials", code: "invalid_credentials" }, 400);
       return json(tokenSession());
@@ -90,7 +90,7 @@ beforeEach(() => {
     if (url.pathname.endsWith("/verify")) {
       if (body.code !== "123456") return json({ message: "invalid", code: "mfa_verification_failed" }, 422);
       user.factors.forEach(f => { f.status = "verified"; });
-      return json(tokenSession("aal2"));
+      initialAmr = [{method:"totp",timestamp:Math.floor(Date.now()/1000)}]; return json(tokenSession("aal2"));
     }
     if (url.pathname.startsWith("/rest/v1/")) {
       const table = url.pathname.split("/").pop();
@@ -131,7 +131,7 @@ test("no session or forged old cookie cannot access context", async () => {
 });
 test("login cookies restore session on independent requests and only expose linked organizations", async () => {
   const response = await signIn();
-  assert.ok(response.headers.getSetCookie().some(c => c.includes("HttpOnly") && c.includes("SameSite=Strict") && c.includes("Max-Age=28800")));
+  assert.ok(response.headers.getSetCookie().some(c => c.includes("HttpOnly") && c.includes("SameSite=Strict") && c.includes("Max-Age=86400")));
   for (let i = 0; i < 2; i++) {
     const loaded = await context(request("/api/context"));
     assert.equal(loaded.status, 200); assert.match(loaded.headers.get("cache-control"), /no-store/);
@@ -242,7 +242,7 @@ test("cross-site login and context mutation are blocked; redirect input is ignor
 });
 test("AAL1 only receives MFA prompt and cannot access financial/document routes", async () => {
   initialAal = "aal1"; await signIn();
-  assert.deepEqual(await (await context(request("/api/context"))).json(), { mfaRequired: true });
+  assert.deepEqual(await (await context(request("/api/context"))).json(), { mfaRequired: true, code: "MFA_REQUIRED" });
   assert.equal((await pdf(request("/api/billing/pdf", "POST", { organizationId: db.organizations[0].id }))).status, 403);
   assert.equal((await insuranceDocument(request("/api/insurance/documents/fixture"))).status, 403);
   db.profiles[0].mfa_required = false;
@@ -260,7 +260,7 @@ test("TOTP enrollment, invalid code, verification and renewed session cookies", 
   assert.equal((await (await context(request("/api/context"))).json()).aal2, true);
   assert.equal((await mfa(request("/api/auth/mfa", "POST", { action: "enroll" }))).status, 409);
   await signIn();
-  assert.deepEqual(await (await context(request("/api/context"))).json(), { mfaRequired: true });
+  assert.deepEqual(await (await context(request("/api/context"))).json(), { mfaRequired: true, code: "MFA_REQUIRED" });
   assert.equal((await (await factors(request("/api/auth/mfa"))).json()).factors.length, 1);
 });
 test("unmigrated mutation endpoints never pretend success, even at AAL2", async () => {
@@ -288,4 +288,29 @@ test("runtime entry graph contains no seed authorization, D1 or privileged key c
   visit(resolve(root,"app/page.tsx")); visit(resolve(root,"app/layout.tsx")); routes(resolve(root,"app/api"));
   assert.ok(visited.size > 10);
   assert.ok(![...visited].some(p => /[\\/]lib[\\/](seed|access|billing|communications|insurance)\.ts$/.test(p)));
+});
+
+test('portal trust expires exactly at 24h despite SDK refresh; new cookies cannot inherit MFA',async t=>{
+  const anchor=Math.floor(Date.now()/1000)*1000;
+  t.mock.timers.enable({apis:['Date'],now:anchor});initialAmr=[{method:'totp',timestamp:anchor/1000}];await signIn();
+  assert.equal((await (await context(request('/api/context'))).json()).aal2,true);
+  t.mock.timers.setTime(anchor+86340000);
+  const refreshed=await context(request('/api/context'));saveCookies(refreshed);assert.equal((await refreshed.json()).aal2,true);
+  assert.ok(calls.some(c=>c.query.get('grant_type')==='refresh_token'));
+  t.mock.timers.setTime(anchor+86400000);
+  assert.deepEqual(await (await context(request('/api/context'))).json(),{mfaRequired:true,code:'MFA_REQUIRED'});
+  const denied=await pdf(request('/api/billing/pdf','POST',{}));assert.equal(denied.status,403);assert.equal((await denied.json()).code,'MFA_REQUIRED');
+  const factor=await mfa(request('/api/auth/mfa','POST',{action:'enroll'}));saveCookies(factor);const setup=await factor.json();
+  const verified=await mfa(request('/api/auth/mfa','POST',{action:'verify',factorId:setup.factorId,code:'123456'}));saveCookies(verified);assert.equal(verified.status,200);
+  assert.equal((await (await context(request('/api/context'))).json()).aal2,true);
+  cookieJar.clear();assert.equal((await context(request('/api/context'))).status,401);
+  initialAal='aal1';await signIn();assert.equal((await (await context(request('/api/context'))).json()).mfaRequired,true);
+});
+test('portal malformed AMR and optional-profile flag cannot bypass fresh MFA',async()=>{
+  db.profiles[0].mfa_required=false;
+  for(const amr of [null,[],{},[{method:'totp',timestamp:'bad'}],[{method:'totp',timestamp:Math.floor(Date.now()/1000)-86400}]]){
+    initialAmr=amr;await signIn();
+    assert.deepEqual(await (await context(request('/api/context'))).json(),{mfaRequired:true,code:'MFA_REQUIRED'});
+    const denied=await pdf(request('/api/billing/pdf','POST',{}));assert.equal(denied.status,403);assert.equal((await denied.json()).code,'MFA_REQUIRED');
+  }
 });

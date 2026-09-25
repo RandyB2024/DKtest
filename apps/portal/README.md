@@ -12,14 +12,15 @@ Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Vul in het **lokale bestand** de project-URL en publishable key van het bestaande Supabase-testproject in. Deel ze niet via chat of logs. De template bevat uitsluitend lege placeholders:
+Vul in het **lokale bestand** de project-URL en publishable key van het bestaande Supabase-testproject in. Deel ze niet via chat of logs. De template bevat lege projectplaceholders en een vaste MFA-duur:
 
 - `NEXT_PUBLIC_SUPABASE_URL`: HTTPS-project-URL uit Supabase Project Settings / API.
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: publishable key uit Project Settings / API Keys.
+- `MFA_TRUST_MAX_AGE_SECONDS`: optioneel, standaard 86400; andere waarden sluiten toegang af.
 
 Er is bewust één configuratie: geen anon-key-fallback, databasewachtwoord of bevoorrechte sleutel. Een verkeerd sleuteltype of ontbrekende configuratie geeft een algemene 503 en nooit demotoegang. Herstart de devserver na configuratiewijzigingen. Open lokaal poort 5173.
 
-Pas eerst migratie `202609240001_portal_auth_boundary.sql` toe op het bestaande **testproject**; zie DEPLOYMENT.md. De reeds uitgevoerde basismigratie en bestaande accounts blijven behouden. Voer geen seed of reset uit.
+De bestaande migratiebasis blijft vereist. De nieuwe 202609250001_trusted_mfa_sessions.sql is uitsluitend lokaal voorbereid; zie SECURITY.md voor afzonderlijke dry-runcontrole. De reeds uitgevoerde basismigratie en bestaande accounts blijven behouden. Voer geen seed of reset uit.
 
 ## Wat is aangesloten?
 
@@ -31,7 +32,7 @@ Pas eerst migratie `202609240001_portal_auth_boundary.sql` toe op het bestaande 
 - Alleen eigen profiel, memberships en ondernemingen in de context-API.
 - Eén onderneming automatisch; meerdere ondernemingen afzonderlijk of als "Alle ondernemingen".
 - TOTP-inschrijving met QR-code, verificatie en bestaande-factorchallenge na opnieuw inloggen.
-- Verplichte AAL2 voor MFA-plichtige portaaltoegang; financiële/documentpolicies behouden onvoorwaardelijk AAL2.
+- Verplichte gevalideerde AAL2/TOTP, exact maximaal 24 uur na de laatste TOTP-verificatie, voor alle bedrijfsdata. Token-refresh verlengt dit niet.
 
 Dit beschrijft de implementatie. De echte online accounts en deployment moeten nog de handmatige acceptatiematrix doorlopen; lokale tests gebruiken uitsluitend fictieve gegevens.
 
@@ -57,3 +58,4 @@ Deze tests vervangen de online Supabase-/Storage-/browseracceptatie niet.
 ## PWA
 
 De ongewijzigde service worker cachet uitsluitend vier expliciet toegestane publieke assets. Geen klant-HTML, API-antwoorden, QR-codes, documenten of tokens in de cache of localStorage. De app-shell toont zonder netwerk geen opgeslagen klantgegevens.
+Voor de harde TOTP-grens, cookievoorwaarden, AAL1-bootstrap en directe RLS/RPC-tests: zie SECURITY.md en de nieuwe Office-test trusted-mfa-rls.test.mjs. Passkeys zijn nog niet geactiveerd.

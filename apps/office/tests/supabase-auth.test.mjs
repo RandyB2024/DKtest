@@ -121,3 +121,31 @@ test('served Supabase UI contains no demo script or secret configuration; PWA ne
   const frontend=await (await call('/supabase-app.js')).text();assert.doesNotMatch(frontend,/sb_secret_|service_role|SUPABASE_PUBLISHABLE_KEY|access_token|refresh_token|localStorage|De Boer/);
   const sw=await readFile(new URL('../public/sw.js',import.meta.url),'utf8');assert.match(sw,/startsWith\('\/api\/'\)/);assert.doesNotMatch(sw,/const SHELL[^;]+(?:supabase-app|mijn\.js|app\.js)/);
 });
+
+test('24h Office trust survives refresh without sliding; expiry allows only MFA bootstrap',async t=>{
+  const anchor=Math.floor(Date.now()/1000)*1000;
+  t.mock.timers.enable({apis:['Date'],now:anchor});
+  const {fixture,call,login,jar}=await setup(t);await login();
+  assert.equal((await call('/api/clients')).status,200);
+  t.mock.timers.setTime(anchor+86340000);
+  assert.equal((await call('/api/clients')).status,200);
+  assert.ok(fixture.calls.some(c=>c.query.get('grant_type')==='refresh_token'));
+  t.mock.timers.setTime(anchor+86400000);
+  const denied=await call('/api/clients');assert.equal(denied.status,403);assert.equal((await denied.json()).error.code,'MFA_REQUIRED');
+  assert.equal((await (await call('/api/auth/status')).json()).data.mfaRequired,true);
+  const setupFactor=await (await call('/api/auth/mfa',{action:'enroll'})).json();
+  assert.equal((await call('/api/auth/mfa',{action:'verify',factorId:setupFactor.data.factorId,code:'123456'})).status,200);
+  assert.equal((await call('/api/clients')).status,200);
+  jar.clear();assert.equal((await call('/api/clients')).status,401);
+  fixture.aal='aal1';await login();assert.equal((await (await call('/api/auth/status')).json()).data.mfaRequired,true);
+});
+test('Office malformed or absent AMR always returns MFA_REQUIRED and cannot mutate',async t=>{
+  const {fixture,call,login}=await setup(t);fixture.db.roles[0].code='owner';
+  for(const amr of [null,[],{},[{method:'totp',timestamp:'bad'}],[{method:'totp',timestamp:Math.floor(Date.now()/1000)-86400}]]){
+    fixture.amr=amr;await login();
+    for(const path of ['/api/clients','/api/relationships']){
+      const response=await call(path,path==='/api/relationships'?{name:'Denied'}:undefined);
+      assert.equal(response.status,403);assert.equal((await response.json()).error.code,'MFA_REQUIRED');
+    }
+  }
+});

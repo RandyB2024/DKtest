@@ -1,3 +1,4 @@
+import { validatedTotp, MFA_TRUST_MAX_AGE_SECONDS } from './trusted-mfa.mjs';
 import { createServerClient, parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 
 export class OfficeError extends Error {
@@ -11,7 +12,7 @@ export function officeSession(req, res, config, fetchImpl = fetch) {
   } catch { throw new OfficeError(503, 'CONFIGURATION_REQUIRED', 'Office is nog niet veilig geconfigureerd. Neem contact op met de beheerder.'); }
   const jar = new Map(parseCookieHeader(req.headers.cookie ?? '').map(c => [c.name, c.value]));
   const outgoing = new Map();
-  const options = { httpOnly: true, secure: config.isProduction, sameSite: 'strict', path: '/', maxAge: 28800 };
+  const options = { httpOnly: true, secure: config.isProduction, sameSite: 'strict', path: '/', maxAge: MFA_TRUST_MAX_AGE_SECONDS };
   // Separate namespace: Office and portal may run on the same local hostname.
   const client = createServerClient(url, key, {
     cookieOptions: { ...options, name: 'dko-supabase-auth' },
@@ -48,9 +49,7 @@ export async function officeIdentity(client, { requireMfa = true } = {}) {
   const officeResult = await client.rpc('is_office_user');
   checkQuery(officeResult);
   if (officeResult.data !== true) throw denied();
-  const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (assurance.error || !assurance.data) throw new OfficeError(401, 'AUTH_REQUIRED', 'Log opnieuw in.');
-  const aal2 = assurance.data.currentLevel === 'aal2';
+  const aal2 = await validatedTotp(client, user.id);
   if (requireMfa && !aal2) throw new OfficeError(403, 'MFA_REQUIRED', 'Bevestig uw identiteit met tweestapsverificatie.');
   return { id: user.id, displayName: profileResult.data.display_name, role: roleResult.data.display_name, roleCode: roleResult.data.code, canManageCustomers: aal2 && ['owner','admin'].includes(roleResult.data.code), aal2 };
 }
