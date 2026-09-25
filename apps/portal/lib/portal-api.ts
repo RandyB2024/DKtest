@@ -23,7 +23,7 @@ export async function readBody(request: Request): Promise<Record<string, unknown
 export function apiError(error: unknown) {
   const status = error instanceof AccessError ? error.status : 503;
   const message = error instanceof AccessError || error instanceof ConfigurationError ? error.message : "De dienst is tijdelijk niet beschikbaar. Probeer het opnieuw.";
-  return Response.json({ error: message }, { status, headers: { "cache-control": "private, no-store", "x-content-type-options": "nosniff" } });
+  return Response.json({ error: message, ...(error instanceof AccessError && error.code ? { code: error.code } : {}) }, { status, headers: { "cache-control": "private, no-store", "x-content-type-options": "nosniff" } });
 }
 export async function portalApi(request: Request, action: (session: RequestSupabase) => Promise<Response>, factory = createRequestSupabase) {
   let session: RequestSupabase | undefined;
@@ -38,10 +38,10 @@ export async function portalApi(request: Request, action: (session: RequestSupab
 }
 
 // Retired demo endpoints fail closed, including direct requests outside the UI.
-export async function unavailableModule(request: Request, financial = false, pathOrganizationId?: string) {
+export async function unavailableModule(request: Request, financial?: boolean, pathOrganizationId?: string) {
   return portalApi(request, async ({ client }) => {
     const identity = await requirePortalIdentity(client);
-    if (financial || identity.profile.mfa_required) requireAal2(identity);
+    requireAal2(identity);
     if (pathOrganizationId) requireOrganization(identity, pathOrganizationId);
     if (request.method !== "GET") {
       const body = await readBody(request);

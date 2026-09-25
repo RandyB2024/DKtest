@@ -1,6 +1,8 @@
+import { trustedMfaConfig } from './auth/trusted-mfa.mjs';
 import { randomBytes } from 'node:crypto';
 
 export function loadConfig(env = process.env) {
+  trustedMfaConfig(env.MFA_TRUST_MAX_AGE_SECONDS);
   const nodeEnv = env.NODE_ENV || 'development';
   const isProduction = nodeEnv === 'production';
   const allowDevelopmentAuth = env.ALLOW_DEVELOPMENT_AUTH === 'true';

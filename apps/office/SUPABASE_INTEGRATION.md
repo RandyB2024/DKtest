@@ -108,3 +108,41 @@ Gewijzigde bestanden (ten opzichte van de schone featurebranch):
 - apps/office/tests/customer-management-api.test.mjs (nieuw)
 - apps/office/tests/customer-management-rls.test.mjs (nieuw)
 - apps/portal/supabase/migrations/202609240003_office_customer_management.sql (nieuw)
+
+## Aanvulling: vertrouwde MFA-sessies
+
+Harde TOTP-grens van 86400 seconden, enforced in server en nieuwe migratie 202609250001_trusted_mfa_sessions.sql. MFA_TRUST_MAX_AGE_SECONDS=86400 (optioneel, dezelfde vaste standaard). Oude migraties zijn ongewijzigd. Zie PWA_SECURITY.md voor voorwaarden, testgrenzen en afzonderlijke dry-runcontrole; niets online toegepast.
+## Oplevercontrole vertrouwde MFA — 25 september 2026
+
+Branch feature/trusted-device-passkeys. Office: 110 tests geslaagd; portal: 135 tests geslaagd. Portal typecheck, lint en build geslaagd. Office heeft geen buildscript: alle src/public JavaScript-bestanden zijn aanvullend gecontroleerd met node --check. De bestaande Node-runtime blijft ongewijzigd.
+
+Git diff --check geslaagd. Vier bestaande migraties ongewijzigd. Geen credentials of gegenereerde/private bestanden in de wijzigingslijst aangetroffen. Geen commit, push, deployment of remote migratie uitgevoerd. Nieuwe migratie: 202609250001_trusted_mfa_sessions.sql. Lokale PGlite-tests voeren alle vijf migraties uit en bewijzen bescherming tegen verlopen MFA via tabelpolicies, Storage en de Office-RPC.
+
+De portalbuild meldt alleen de bekende beperking van statische routeclassificatie door vinext. Echte Supabase-projectacceptatie en browseracceptatie zijn in deze fase niet uitgevoerd. De securitydocumentatie beschrijft de latere dry-run en de vaste configuratie.
+
+Volledige gewijzigde-bestandenlijst:
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\.env.example
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\PWA_SECURITY.md
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\README.md
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\src\auth\supabase.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\src\auth\trusted-mfa.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\src\config.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\SUPABASE_INTEGRATION.md
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\tests\customer-management-rls.test.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\tests\helpers\supabase-fixture.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\tests\supabase-auth.test.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\tests\trusted-mfa-rls.test.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\office\tests\trusted-mfa.test.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\.env.example
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\app\api\context\route.ts
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\app\api\organizations\[organizationId]\route.ts
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\lib\portal-access.ts
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\lib\portal-api.ts
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\lib\supabase\config.ts
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\lib\supabase\server.ts
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\lib\supabase\trusted-mfa.ts
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\README.md
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\SECURITY.md
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\supabase\migrations\202609250001_trusted_mfa_sessions.sql
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\tests\supabase-auth.test.mjs
+- C:\Users\Randy\Documents\destination-known-platform-local\apps\portal\tests\trusted-mfa.test.mjs

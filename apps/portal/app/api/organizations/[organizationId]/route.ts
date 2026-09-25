@@ -4,7 +4,7 @@ type Context = { params: Promise<{ organizationId: string }> };
 export async function GET(request: Request, context: Context) {
   return portalApi(request, async ({ client }) => {
     const identity = await requirePortalIdentity(client);
-    if (identity.profile.mfa_required) requireAal2(identity);
+    requireAal2(identity);
     const id = requireOrganization(identity, (await context.params).organizationId);
     return Response.json({ organization: identity.organizations.find(o => o.id === id) });
   });

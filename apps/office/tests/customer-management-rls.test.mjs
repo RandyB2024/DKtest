@@ -24,12 +24,13 @@ test('Phase 2A transactional RPC security and portal regression', async t => {
     `);
     // gen_random_uuid is a PostgreSQL built-in; PGlite has no pgcrypto extension.
     // Only that extension declaration is skipped. Every table/policy/function
-    // from all four migrations is executed without modification.
+    // from all five migrations is executed without modification.
     const foundation = readFileSync(new URL("../../portal/supabase/migrations/202609230001_initial_test_foundation.sql", import.meta.url), "utf8");
     await pg.exec(foundation.replace("create extension if not exists pgcrypto;", ""));
     await pg.exec(readFileSync(new URL("../../portal/supabase/migrations/202609240001_portal_auth_boundary.sql", import.meta.url), "utf8"));
     await pg.exec(readFileSync(new URL("../../portal/supabase/migrations/202609240002_office_phase1.sql", import.meta.url), "utf8"));
     await pg.exec(readFileSync(new URL("../../portal/supabase/migrations/202609240003_office_customer_management.sql", import.meta.url), "utf8"));
+    await pg.exec(readFileSync(new URL("../../portal/supabase/migrations/202609250001_trusted_mfa_sessions.sql",import.meta.url),'utf8'));
     await pg.exec(`grant usage on schema public,auth,storage to authenticated,anon;
       grant select,insert,update,delete on all tables in schema public,storage to authenticated;
       grant select on all tables in schema public,storage to anon;`);
@@ -53,7 +54,7 @@ test('Phase 2A transactional RPC security and portal regression', async t => {
     await pg.query("insert into conversations(organization_id,subject,created_by) values ($1,'Fixture',$2)", [org,office]);
     async function asUser(id, aal = "aal1") {
       await pg.exec("reset role");
-      await pg.query("select set_config('request.jwt.claims',$1,false)", [JSON.stringify({ sub:id, aal, role:"authenticated" })]);
+      await pg.query("select set_config('request.jwt.claims',$1,false)", [JSON.stringify({ sub:id, aal, amr:[{method:"totp",timestamp:Math.floor(Date.now()/1000)}], role:"authenticated" })]);
       await pg.exec("set role authenticated");
     }
     const rows = async sql => (await pg.query(sql)).rows;
