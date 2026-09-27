@@ -1,4 +1,8 @@
 node_modules/
+worker-public/
+worker-build/
+.wrangler/
+.dev.vars*
 .env
 .env.*
 !.env.example

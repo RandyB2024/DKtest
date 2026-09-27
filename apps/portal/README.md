@@ -59,3 +59,12 @@ Deze tests vervangen de online Supabase-/Storage-/browseracceptatie niet.
 
 De ongewijzigde service worker cachet uitsluitend vier expliciet toegestane publieke assets. Geen klant-HTML, API-antwoorden, QR-codes, documenten of tokens in de cache of localStorage. De app-shell toont zonder netwerk geen opgeslagen klantgegevens.
 Voor de harde TOTP-grens, cookievoorwaarden, AAL1-bootstrap en directe RLS/RPC-tests: zie SECURITY.md en de nieuwe Office-test trusted-mfa-rls.test.mjs. Passkeys zijn nog niet geactiveerd.
+
+
+## Optionele passkey-login (25 september 2026)
+
+Office en klantportaal ondersteunen nu passkeys als optionele eerste factor. Na een nieuwe passkey-login blijft TOTP nodig; dit is geen volledige Face ID-MFA. De harde 24-uursgrens en bestaande RLS/migraties zijn ongewijzigd. In Instellingen kunnen gebruikers eigen passkeys registreren, tonen en intrekken na TOTP jonger dan vijf minuten. Intrekken vereist ook een recent bewezen wachtwoordlogin en een nog geverifieerde TOTP-factor. Randy en Ed behouden afzonderlijke persoonlijke accounts.
+
+`GET/POST /api/auth/passkeys` gebruikt Supabase Auth via de gewone server-side SDK. `PASSKEYS_ENABLED=false` is de veilige standaard. Voor latere ingebruikname zijn RP ID `testadmin.nl` en exacte HTTPS-origins vereist; registratie op een ander officieel domein moet mogelijk opnieuw. Er is geen nieuwe migratie en er is niets online ingesteld of toegepast.
+
+Zie [de beveiligingsbeoordeling, het API-contract en de exacte configuratie-/acceptatiestappen](../shared/PASSKEY_SECURITY.md). Daar staan ook de beperkingen van de experimentele Supabase-API, directe Auth-aanroepen, herstel bij verlies en intrekking van reeds bestaande sessies. Uitnodigingen en Auth-gebruikersbeheer blijven uitgeschakeld. De monorepo-deployment moet `apps/shared/passkeys.mjs` meenemen; Office heeft geen bundelstap die dit bestand kopieert.

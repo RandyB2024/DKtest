@@ -4,6 +4,11 @@ import { createServerClient, parseCookieHeader, serializeCookieHeader } from '@s
 export class OfficeError extends Error {
   constructor(status, code, message) { super(message); this.status = status; this.code = code; }
 }
+export function writeOfficeCookie(res, cookie) {
+  const previous = res.getHeader('Set-Cookie') ?? [];
+  const values = Array.isArray(previous) ? previous : [previous];
+  res.setHeader('Set-Cookie', [...values.filter(c => c.split('=')[0] !== cookie.split('=')[0]), cookie]);
+}
 export function officeSession(req, res, config, fetchImpl = fetch) {
   const { supabaseUrl: url, supabaseKey: key } = config;
   try {
@@ -15,6 +20,7 @@ export function officeSession(req, res, config, fetchImpl = fetch) {
   const options = { httpOnly: true, secure: config.isProduction, sameSite: 'strict', path: '/', maxAge: MFA_TRUST_MAX_AGE_SECONDS };
   // Separate namespace: Office and portal may run on the same local hostname.
   const client = createServerClient(url, key, {
+    auth: { experimental: { passkey: config.passkeys?.enabled === true } },
     cookieOptions: { ...options, name: 'dko-supabase-auth' },
     cookies: {
       getAll: () => [...jar].map(([name, value]) => ({ name, value })),
@@ -23,7 +29,7 @@ export function officeSession(req, res, config, fetchImpl = fetch) {
           jar.set(name, value);
           outgoing.set(name, serializeCookieHeader(name, value, { ...sdkOptions, ...options, maxAge: sdkOptions.maxAge === 0 ? 0 : options.maxAge }));
         }
-        res.setHeader('Set-Cookie', [...outgoing.values()]);
+        for (const cookie of outgoing.values()) writeOfficeCookie(res, cookie);
       },
     },
     global: { fetch: (input, init) => fetchImpl(input, { ...init, cache: 'no-store' }) },

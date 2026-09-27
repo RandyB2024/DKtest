@@ -1,0 +1,18 @@
+{
+  "name": "destination-known-office-test",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-09-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "routes": [{ "pattern": "office.testadmin.nl", "custom_domain": true }],
+  "assets": {
+    "directory": "./worker-public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "vars": {
+    "OFFICE_ORIGIN": "https://office.testadmin.nl",
+    "MFA_TRUST_MAX_AGE_SECONDS": "86400",
+    "PASSKEYS_ENABLED": "false"
+  }
+}

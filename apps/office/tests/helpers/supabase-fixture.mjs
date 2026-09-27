@@ -34,6 +34,9 @@ export function supabaseFixture() {
       if (body.email !== state.user.email || body.password !== state.password) return json({message:'invalid',code:'invalid_credentials'},400);
       return json(session());
     }
+    if (url.pathname.startsWith('/auth/v1/passkeys') && state.passkeyRequest) {
+      return state.passkeyRequest({url,method,body,headers,session});
+    }
     const token = headers.get('authorization')?.replace(/^Bearer /,'');
     if (!state.sessions.has(token)) return json({message:'invalid',code:'bad_jwt'},401);
     if (url.pathname === '/auth/v1/user') return json(state.user);
@@ -61,7 +64,7 @@ export function supabaseFixture() {
         if (value.startsWith('eq.')) rows = rows.filter(r => String(r[field]) === value.slice(3));
         if (value === 'is.null') rows = rows.filter(r => r[field] === null);
       }
-      if (['profiles','office_memberships','roles'].includes(table) || url.searchParams.has('id')) return json(rows[0] ?? null);
+      if (state.portal ? table === 'profiles' : (['profiles','office_memberships','roles'].includes(table) || url.searchParams.has('id'))) return json(rows[0] ?? null);
       return json(rows);
     }
     throw new Error('Unexpected fixture endpoint');

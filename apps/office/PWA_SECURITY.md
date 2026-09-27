@@ -22,7 +22,7 @@ De server controleert auth.getUser() en gebruikt vervolgens auth.getClaims() voo
 
 De SDK-cookie heeft Max-Age=86400 en blijft HttpOnly, SameSite=Strict, Path=/ en Secure in productie. Refresh kan de sessiecookie opnieuw bewaren, maar nooit MFA-toegang verlengen. Een verlopen vertrouwde sessie kan alleen de minimale auth-bootstrap gebruiken om opnieuw TOTP te verifiëren. Na succesvolle verificatie geeft Supabase de nieuwe timestamp uit. Geen client-side trusted-vlag, localStorage, sessionStorage of extra leesbare auth-cookie.
 
-Een nieuwe browser, incognitovenster of gewist cookieprofiel heeft geen sessie: eerst opnieuw aanmelden en daarna TOTP. Expliciet uitloggen of opnieuw aanmelden begint eveneens een nieuwe sessie. Office en portal behouden hun afzonderlijke cookienamen; vertrouwen geldt per Supabase-sessie, niet als apparaatregistratie of gedeelde cross-app bypass. Bestaande sessies met geldige claims werken tot hun oorspronkelijke deadline; zonder geldige TOTP-claim is opnieuw MFA nodig. Passkeys zijn niet geactiveerd.
+Een nieuwe browser, incognitovenster of gewist cookieprofiel heeft geen sessie: eerst opnieuw aanmelden en daarna TOTP. Expliciet uitloggen of opnieuw aanmelden begint eveneens een nieuwe sessie. Office en portal behouden hun afzonderlijke cookienamen; vertrouwen geldt per Supabase-sessie, niet als apparaatregistratie of gedeelde cross-app bypass. Bestaande sessies met geldige claims werken tot hun oorspronkelijke deadline; zonder geldige TOTP-claim is opnieuw MFA nodig. Passkeys zijn standaard uitgeschakeld; de optionele eerste-factorintegratie hieronder behoudt TOTP.
 
 De nieuwe additieve migratie 202609250001_trusted_mfa_sessions.sql versterkt has_aal2() zonder oude migraties of policies te verwijderen. Daardoor gelden dezelfde checks voor bestaande financiële/Storage-policies en Office-RPCs. Aanvullende restrictieve policies sluiten ook overige bedrijfsdata en ondernemingsnamen af. Eigen profiel, memberships en bijbehorende rollen blijven beschikbaar voor bootstrap; bedrijfsgegevens niet. Portal mfa_required=false is geen uitzondering meer. Rollen, actieve status en organisatiegrenzen blijven vereist.
 
@@ -35,3 +35,12 @@ Er is niets online toegepast. Vanuit apps/portal in het gecontroleerde bestaande
 De lokale tests controleren direct na MFA, 23:59, exact 24 uur, refresh zonder verlenging, malformed claims, herverificatie, een leeg cookieprofiel en directe RLS/RPC/Storage-toegang. Live testaccount- en projectacceptatie zijn niet uitgevoerd. Supabase-sessie-intrekking of een kortere ingestelde Auth-sessielimiet kan eerder opnieuw inloggen vereisen.
 
 Bronnen: [gevalideerde JWT-claims](https://supabase.com/docs/reference/javascript/auth-getclaims) en [AMR/TOTP-claimdefinitie](https://supabase.com/docs/guides/auth/jwt-fields).
+
+
+## Optionele passkey-login (25 september 2026)
+
+Office en klantportaal ondersteunen nu passkeys als optionele eerste factor. Na een nieuwe passkey-login blijft TOTP nodig; dit is geen volledige Face ID-MFA. De harde 24-uursgrens en bestaande RLS/migraties zijn ongewijzigd. In Instellingen kunnen gebruikers eigen passkeys registreren, tonen en intrekken na TOTP jonger dan vijf minuten. Intrekken vereist ook een recent bewezen wachtwoordlogin en een nog geverifieerde TOTP-factor. Randy en Ed behouden afzonderlijke persoonlijke accounts.
+
+`GET/POST /api/auth/passkeys` gebruikt Supabase Auth via de gewone server-side SDK. `PASSKEYS_ENABLED=false` is de veilige standaard. Voor latere ingebruikname zijn RP ID `testadmin.nl` en exacte HTTPS-origins vereist; registratie op een ander officieel domein moet mogelijk opnieuw. Er is geen nieuwe migratie en er is niets online ingesteld of toegepast.
+
+Zie [de beveiligingsbeoordeling, het API-contract en de exacte configuratie-/acceptatiestappen](../shared/PASSKEY_SECURITY.md). Daar staan ook de beperkingen van de experimentele Supabase-API, directe Auth-aanroepen, herstel bij verlies en intrekking van reeds bestaande sessies. Uitnodigingen en Auth-gebruikersbeheer blijven uitgeschakeld. De monorepo-deployment moet `apps/shared/passkeys.mjs` meenemen; Office heeft geen bundelstap die dit bestand kopieert.
