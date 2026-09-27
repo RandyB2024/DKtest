@@ -1,3 +1,4 @@
+import { passkeyConfig } from "../../../shared/passkeys.mjs";
 import { MFA_TRUST_MAX_AGE_SECONDS } from "./trusted-mfa";
 import { createServerClient, parseCookieHeader, serializeCookieHeader, type CookieOptions } from "@supabase/ssr";
 import { publicSupabaseConfig } from "./config";
@@ -17,6 +18,7 @@ export function createRequestSupabase(request: Request) {
     outgoing.set(name, serializeCookieHeader(name, value, { ...options, ...cookieOptions, maxAge: options.maxAge === 0 ? 0 : cookieOptions.maxAge }));
   }
   const client = createServerClient(url, key, {
+    auth: { experimental: { passkey: passkeyConfig(process.env).enabled } },
     cookieOptions,
     cookies: {
       getAll: () => Array.from(jar, ([name, value]) => ({ name, value })),
@@ -28,6 +30,9 @@ export function createRequestSupabase(request: Request) {
     client,
     getCookie: (name: string) => jar.get(name),
     setCookie,
+    setChallenge(value: string, maxAge: number) {
+      outgoing.set("mdk-passkey-challenge", serializeCookieHeader("mdk-passkey-challenge",value,{...cookieOptions,maxAge}));
+    },
     finish(response: Response) {
       outgoing.forEach(value => response.headers.append("set-cookie", value));
       response.headers.set("cache-control", "private, no-store, max-age=0");

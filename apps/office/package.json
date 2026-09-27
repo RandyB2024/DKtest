@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node src/server.mjs",
     "dev": "node --watch src/server.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "build:worker": "node scripts/build-worker-assets.mjs",
+    "dev:worker": "npm run build:worker && wrangler dev",
+    "deploy:worker": "npm run build:worker && wrangler deploy"
   },
   "engines": {
     "node": ">=22.13.0"
@@ -16,6 +19,7 @@
     "@supabase/supabase-js": "^2.117.1"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.8"
+    "@electric-sql/pglite": "^0.5.8",
+    "wrangler": "^4.141.0"
   }
 }

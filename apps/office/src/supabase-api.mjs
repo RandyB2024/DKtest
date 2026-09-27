@@ -1,3 +1,6 @@
+import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
+import { parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
+import { writeOfficeCookie } from './auth/supabase.mjs';
 import { customerMutation } from './customer-management.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
@@ -27,6 +30,16 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     const url = new URL(req.url, config.origin), path = url.pathname;
     if (!['GET','HEAD'].includes(req.method) && (req.headers.origin !== config.origin || req.headers['sec-fetch-site'] === 'cross-site')) throw new OfficeError(403, 'ORIGIN_DENIED', 'Ongeldige herkomst van het verzoek.');
     const client = officeSession(req, res, config, fetchImpl);
+    if (path === '/api/auth/passkeys' && ['GET','POST'].includes(req.method)) {
+      const name = 'dko-passkey-challenge';
+      const data = await passkeyAction({ client, config: config.passkeys, origin: config.origin,
+        input: req.method === 'GET' ? {action:'list'} : await body(req),
+        identity: () => officeIdentity(client, {requireMfa:false}),
+        getChallenge: () => parseCookieHeader(req.headers.cookie ?? '').find(c => c.name === name)?.value,
+        setChallenge: (value,maxAge) => writeOfficeCookie(res,serializeCookieHeader(name,value,{httpOnly:true,secure:config.isProduction,sameSite:'strict',path:'/',maxAge})),
+      });
+      return sendJson(res,200,data);
+    }
     if (path === '/api/auth/login' && req.method === 'POST') {
       const input = await body(req);
       const invalid = () => new OfficeError(401, 'LOGIN_FAILED', 'Inloggen is niet gelukt. Controleer uw gegevens of neem contact op met uw beheerder.');
@@ -115,6 +128,6 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     throw new OfficeError(503, 'NOT_MIGRATED', 'Dit onderdeel is nog niet gemigreerd. Lezen, wijzigen, uploads en downloads zijn hier tijdelijk uitgeschakeld.');
   } catch (error) {
     // Never log raw SDK errors, request bodies, cookies or enrollment material.
-    sendJson(res, error instanceof OfficeError ? error.status : 503, error instanceof OfficeError ? error.message : 'Office is tijdelijk niet beschikbaar. Probeer het opnieuw.', error instanceof OfficeError ? error.code : 'UNAVAILABLE');
+    sendJson(res, (error instanceof OfficeError || error instanceof PasskeyError) ? error.status : 503, (error instanceof OfficeError || error instanceof PasskeyError) ? error.message : 'Office is tijdelijk niet beschikbaar. Probeer het opnieuw.', (error instanceof OfficeError || error instanceof PasskeyError) ? error.code : 'UNAVAILABLE');
   }
 }

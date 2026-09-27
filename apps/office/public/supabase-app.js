@@ -104,12 +104,16 @@ async function renderRoute() {
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
       const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header(data.organization.name);
       html = `<section class="panel"><p class="eyebrow">Onderneming · Supabase</p><h2>${escapeHtml(data.organization.name)}</h2><p>${escapeHtml(data.organization.legal_name || '')}</p><p>KvK: ${escapeHtml(data.organization.registration_number || 'Niet ingevuld')}</p><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie openen</a><p>Overige dossieronderdelen: ${unavailable}</p></section>`;
+    } else if (path === '/settings') {
+      header('Instellingen');html='<section class="panel" id="passkey-settings"></section>';
     } else {
       const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/settings':'Instellingen' };
       header(titles[path] || 'Office');
       html = `<section class="panel empty"><p class="eyebrow">Fase 1 · Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
     }
-    if (activeGeneration === generation && currentUser) { $('#view').innerHTML = html; customerControls(path, recordData); }
+    if (activeGeneration === generation && currentUser) { $('#view').innerHTML = html; customerControls(path, recordData);
+      if(path==='/settings'){const {mountPasskeySettings}=await import('/passkeys.js');if(activeGeneration===generation&&currentUser)mountPasskeySettings($('#passkey-settings'),api);}
+    }
   } catch (error) {
     if (activeGeneration !== generation) return;
     if (error.status === 401 || error.code === 'MFA_REQUIRED' || error.code === 'OFFICE_ACCESS_DENIED') { currentScreen = ''; await refreshStatus(); }

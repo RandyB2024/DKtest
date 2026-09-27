@@ -32,3 +32,15 @@ Tests gebruiken synthetische accounts, de echte Supabase SDK met testtransport e
 De historische demo in src/development-server.mjs blijft uitsluitend expliciet lokaal beschikbaar voor regressietests. Deze is geen bron voor de Supabase-interface. Development-auth mag niet met Supabase-configuratie worden gemengd en is in productie verboden. Het echte klantportaal staat in apps/portal.
 
 Vertrouwde MFA-sessies zijn maximaal 24 uur geldig vanaf de laatste gevalideerde TOTP-verificatie. Refresh verlengt dit niet. MFA_TRUST_MAX_AGE_SECONDS=86400 is de enige toegestane ingestelde waarde. Zie PWA_SECURITY.md; nieuwe migratie 202609250001 is alleen lokaal voorbereid.
+
+
+## Optionele passkey-login (25 september 2026)
+
+Office en klantportaal ondersteunen nu passkeys als optionele eerste factor. Na een nieuwe passkey-login blijft TOTP nodig; dit is geen volledige Face ID-MFA. De harde 24-uursgrens en bestaande RLS/migraties zijn ongewijzigd. In Instellingen kunnen gebruikers eigen passkeys registreren, tonen en intrekken na TOTP jonger dan vijf minuten. Intrekken vereist ook een recent bewezen wachtwoordlogin en een nog geverifieerde TOTP-factor. Randy en Ed behouden afzonderlijke persoonlijke accounts.
+
+`GET/POST /api/auth/passkeys` gebruikt Supabase Auth via de gewone server-side SDK. `PASSKEYS_ENABLED=false` is de veilige standaard. Voor latere ingebruikname zijn RP ID `testadmin.nl` en exacte HTTPS-origins vereist; registratie op een ander officieel domein moet mogelijk opnieuw. Er is geen nieuwe migratie en er is niets online ingesteld of toegepast.
+
+Zie [de beveiligingsbeoordeling, het API-contract en de exacte configuratie-/acceptatiestappen](../shared/PASSKEY_SECURITY.md). Daar staan ook de beperkingen van de experimentele Supabase-API, directe Auth-aanroepen, herstel bij verlies en intrekking van reeds bestaande sessies. Uitnodigingen en Auth-gebruikersbeheer blijven uitgeschakeld. De monorepo-deployment moet `apps/shared/passkeys.mjs` meenemen; Office heeft geen bundelstap die dit bestand kopieert.
+# Cloudflare Worker
+
+Voor de laptoponafhankelijke Office-hosting op `office.testadmin.nl`: zie [WORKER_DEPLOYMENT.md](WORKER_DEPLOYMENT.md). De bestaande Node-server blijft beschikbaar voor lokale ontwikkeling.

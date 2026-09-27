@@ -1,3 +1,4 @@
+import { passkeyConfig } from '../../shared/passkeys.mjs';
 import { trustedMfaConfig } from './auth/trusted-mfa.mjs';
 import { randomBytes } from 'node:crypto';
 
@@ -17,6 +18,7 @@ export function loadConfig(env = process.env) {
     if (parsed.origin !== origin || parsed.username || parsed.password || (isProduction && parsed.protocol !== 'https:') || (!isProduction && !['http:','https:'].includes(parsed.protocol))) throw new Error();
   } catch { throw new Error('Configureer OFFICE_ORIGIN als exacte origin; productie vereist HTTPS.'); }
   return Object.freeze({
+    passkeys: passkeyConfig(env),
     nodeEnv, isProduction, allowDevelopmentAuth, port, origin,
     supabaseUrl: env.SUPABASE_URL, supabaseKey: env.SUPABASE_PUBLISHABLE_KEY,
     // Legacy values are used only inside the explicitly local demo server.

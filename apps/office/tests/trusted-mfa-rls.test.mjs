@@ -99,6 +99,17 @@ test('trusted MFA: actual PostgreSQL policies and RPCs cannot bypass expiration'
         assert.equal(await count('organizations'),0);
       }
     });
+    await t.test('direct PostgREST database role: passkey AAL1 and WebAuthn AAL2 cannot bypass TOTP RLS',async()=>{
+      for(const id of [office,customer])for(const aal of ['aal1','aal2'])for(const method of ['passkey','webauthn']){
+        await asUser(id,aal,[{method,timestamp:now}]);
+        for(const table of ['organizations','customer_relationships','documents','storage.objects','sales_invoices'])assert.equal(await count(table),0);
+        await assert.rejects(pg.query("select public.office_create_relationship($1::jsonb)",[JSON.stringify({name:'Denied'})]),e=>e.code==='42501');
+      }
+      for(const id of [office,customer]){
+        await asUser(id,'aal2',[{method:'passkey',timestamp:now},...amr(86400)]);assert.equal(await count('organizations'),0);
+        await asUser(id,'aal2',[{method:'passkey',timestamp:now},...amr(0)]);assert.equal(await count('organizations'),id===office?2:1);
+      }
+    });
     await t.test('fresh TOTP restores access but cannot override membership or role boundaries',async()=>{
       await asUser(office,'aal2',[...amr(86400),{method:'totp',timestamp:now}]);
       assert.equal(await count('organizations'),2);
