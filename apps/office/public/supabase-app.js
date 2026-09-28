@@ -112,6 +112,7 @@ async function renderRoute() {
       html = `<section class="panel empty"><p class="eyebrow">Fase 1 · Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
     }
     if (activeGeneration === generation && currentUser) { $('#view').innerHTML = html; customerControls(path, recordData);
+      if(recordData?.kvkIntakes?.length) renderIntakeSnapshots(recordData.kvkIntakes);
       if(path==='/settings'){const {mountPasskeySettings}=await import('/passkeys.js');if(activeGeneration===generation&&currentUser)mountPasskeySettings($('#passkey-settings'),api);}
     }
   } catch (error) {
@@ -175,7 +176,11 @@ function customerForm(kind, record={}) {
   const field=(label,name,value='',required=false,extra='')=>`<label>${label}<input name="${name}" value="${escapeHtml(value)}" maxlength="200" ${required?'required':''} ${extra}></label>`;
   const orgFields=(prefix='',o={})=>field('Ondernemingsnaam',prefix+'name',o.name,true)+field('Officiële naam (optioneel)',prefix+'legal_name',o.legal_name)+field('KvK-nummer (optioneel)',prefix+'registration_number',o.registration_number,false,'pattern="[0-9]{8}" inputmode="numeric"');
   if(kind==='new') {
-    mutationDialog('Nieuwe klant met eerste onderneming',field('Klantnaam','name','',true)+'<h3>Eerste onderneming</h3>'+orgFields('org_'),'Klant aanmaken',input=>api('/api/relationships',{name:input.name,organization:{name:input.org_name,legal_name:input.org_legal_name,registration_number:input.org_registration_number}}),result=>'/clients/'+encodeURIComponent(result.relationship_id));
+    const activeEpoch=epoch;
+    import('/kvk-intake.js').then(({openKvkIntake})=>{
+      if(activeEpoch!==epoch||!currentUser)return;
+      openKvkIntake(api,async result=>{if(activeEpoch!==epoch||!currentUser)return;history.pushState({},'','/clients/'+encodeURIComponent(result.relationship_id));await renderRoute();});
+    }).catch(()=>{const status=$('#mutation-status');if(status)status.textContent='De KvK-intake kan niet worden geladen. Probeer opnieuw.';});
   } else if(kind==='relationship') {
     const fields=field('Klantnaam','name',record.name,true)+`<label>Status<select name="status"><option value="active" ${record.status==='active'?'selected':''}>Actief</option><option value="inactive" ${record.status==='inactive'?'selected':''}>Inactief</option></select></label><p>Een inactieve klantrelatie heeft geen toegang via het klantportaal.</p>`;
     mutationDialog('Klantgegevens bewerken',fields,'Opslaan',input=>api('/api/relationships/'+encodeURIComponent(record.id),input,'PATCH'),()=>'/clients/'+encodeURIComponent(record.id));
@@ -209,3 +214,15 @@ addEventListener('beforeinstallprompt', event => { event.preventDefault(); insta
 $('#install').onclick = async () => { if (installPrompt) await installPrompt.prompt(); installPrompt = null; $('#install').hidden = true; };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 void refreshStatus();
+function renderIntakeSnapshots(records) {
+  const labels={relationshipName:'Klantnaam',vatId:'Btw-identificatienummer',taxNumber:'Omzetbelastingnummer',iban:'IBAN',email:'E-mailadres',phone:'Telefoonnummer',contactPerson:'Contactpersoon',fiscalChoices:'Fiscale keuzes',services:'Dienstverlening'};
+  for(const record of records){
+    const section=document.createElement('section');section.className='panel';
+    const heading=document.createElement('h2');heading.textContent='KvK-intake · '+record.kvk_number;section.append(heading);
+    const note=document.createElement('p');note.textContent=`Momentopname bij intake · ${record.kvk_checked_at} · ${record.kvk_environment}. Latere dossierwijzigingen veranderen deze broncontrole niet.`;section.append(note);
+    const list=document.createElement('dl');section.append(list);
+    const pairs=[['Officiële ondernemingsnaam',record.profile.name],['Statutaire naam',record.profile.legalName],['Rechtsvorm',record.profile.legalForm],['Hoofdvestiging',record.profile.mainBranchNumber],...Object.entries(record.manual_details).map(([key,value])=>[labels[key]??key,value])];
+    for(const [label,value] of pairs){const term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;description.textContent=value||'Niet ingevuld';list.append(term,description);}
+    $('#view').append(section);
+  }
+}

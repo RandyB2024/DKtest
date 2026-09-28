@@ -1,4 +1,5 @@
 import { passkeyConfig } from '../../shared/passkeys.mjs';
+import { kvkConfig } from './kvk/client.mjs';
 import { trustedMfaConfig } from './auth/trusted-mfa.mjs';
 import { randomBytes } from 'node:crypto';
 
@@ -19,6 +20,7 @@ export function loadConfig(env = process.env) {
   } catch { throw new Error('Configureer OFFICE_ORIGIN als exacte origin; productie vereist HTTPS.'); }
   return Object.freeze({
     passkeys: passkeyConfig(env),
+    kvk: kvkConfig(env),
     nodeEnv, isProduction, allowDevelopmentAuth, port, origin,
     supabaseUrl: env.SUPABASE_URL, supabaseKey: env.SUPABASE_PUBLISHABLE_KEY,
     // Legacy values are used only inside the explicitly local demo server.

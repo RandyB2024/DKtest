@@ -44,3 +44,14 @@ Zie [de beveiligingsbeoordeling, het API-contract en de exacte configuratie-/acc
 # Cloudflare Worker
 
 Voor de laptoponafhankelijke Office-hosting op `office.testadmin.nl`: zie [WORKER_DEPLOYMENT.md](WORKER_DEPLOYMENT.md). De bestaande Node-server blijft beschikbaar voor lokale ontwikkeling.
+
+
+## KvK-gestuurde klantintake (27 september 2026)
+
+Nieuwe klant gebruikt een vierstapswizard met officiële KvK-zoekresultaten, Basisprofielcontrole, handmatige klantgegevens en bevestiging. De server haalt het profiel vóór opslaan opnieuw op. Alleen owner/admin met bestaande verse TOTP mogen aanmaken; andere actieve Office-rollen mogen zoeken/controleren. Klantaccounts hebben geen toegang. Uitgeschreven/onbekende status en dubbele actieve KvK-nummers worden geblokkeerd.
+
+De nieuwe additieve migratie `202609270001_kvk_customer_onboarding.sql` maakt een beperkte intake-RPC, een afgeschermde server-capability en een Office-only intake-momentopname mogelijk. Klant, onderneming en audit ontstaan in één transactie. Bestaande RPC-contracten blijven beschikbaar; dubbele KvK-nummers worden nu ook daar geweigerd. Er is geen boekhouding of uitnodigingsfunctie toegevoegd.
+
+Configureer later `KVK_API_MODE=test`, `KVK_API_BASE_URL=https://api.kvk.nl/test/api` en uitsluitend Worker-secrets voor `KVK_API_KEY` en `KVK_INTAKE_RPC_KEY`. Die tweede capability voorkomt dat directe RPC-aanroepen een server-side KvK-controle kunnen veinzen; de database bewaart alleen de SHA-256 ervan. Zonder configuratie geen KvK-intake. De migratie moet vóór eventuele ingebruikname apart worden gecontroleerd en toegepast.
+
+Zie [KvK-beveiligingsbeoordeling en configuratieprocedure](KVK_ONBOARDING.md) voor het volledige API-/databasecontract, secret-provisioning, duplicaatcontrole, tests en beperkingen. De KvK-wijziging is uitsluitend lokaal; niets online toegepast, gecommit, gepusht of gedeployed.

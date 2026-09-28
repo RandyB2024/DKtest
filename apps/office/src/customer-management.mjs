@@ -35,6 +35,7 @@ export async function customerMutation(req, url, client, user, readBody) {
     const input = validateCustomerInput(await readBody(req),kind,creating);
     const {data,error} = await client.rpc(rpc,{p_input:input,...(match[1] ? {p_id:match[1]} : {})});
     if (error) {
+      if (error.code === '23505') throw new OfficeError(409,'DUPLICATE_KVK','Er bestaat al een actieve onderneming met dit KvK-nummer.');
       if (error.code === '42501') throw new OfficeError(403,'WRITE_DENIED','Geen toestemming voor deze wijziging.');
       if (['22023','22P02'].includes(error.code)) throw invalid();
       if (error.code === 'P0002') throw new OfficeError(404,'RECORD_UNAVAILABLE','De klantrelatie of onderneming is niet beschikbaar.');
