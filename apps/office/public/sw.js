@@ -1,4 +1,4 @@
-const CACHE = 'dk-office-shell-v13-worker';
+const CACHE = 'dk-office-shell-v14-profile';
 const SHELL = ['/offline.html', '/styles.css', '/intake.css', '/manifest.webmanifest', '/assets/logo.png', '/assets/icon-192.png', '/assets/icon-512.png'];
 
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())));

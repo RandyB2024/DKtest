@@ -64,3 +64,9 @@ De nieuwe additieve migratie `202609270001_kvk_customer_onboarding.sql` maakt ee
 Configureer later `KVK_API_MODE=test`, `KVK_API_BASE_URL=https://api.kvk.nl/test/api` en uitsluitend Worker-secrets voor `KVK_API_KEY` en `KVK_INTAKE_RPC_KEY`. Die tweede capability voorkomt dat directe RPC-aanroepen een server-side KvK-controle kunnen veinzen; de database bewaart alleen de SHA-256 ervan. Zonder configuratie geen KvK-intake. De migratie moet vóór eventuele ingebruikname apart worden gecontroleerd en toegepast.
 
 Zie [KvK-beveiligingsbeoordeling en configuratieprocedure](KVK_ONBOARDING.md) voor het volledige API-/databasecontract, secret-provisioning, duplicaatcontrole, tests en beperkingen. De KvK-wijziging is uitsluitend lokaal; niets online toegepast, gecommit, gepusht of gedeployed.
+
+## Volledig klantprofiel (lokale featurebranch)
+
+Zie [CUSTOMER_PROFILE.md](CUSTOMER_PROFILE.md) voor datamodel, rollenmatrix, interne velden, API, migratieprocedure, tests en terugkeerplan. De acht dossieronderdelen gebruiken de bestaande Office-sessie en 24-uurs-TOTP; alleen owner/admin schrijven. Accountant leest fiscale instellingen, handler/viewer alleen algemene gegevens. RSIN, interne contactopmerkingen, prijsafspraken, notities, audit en bankgegevens worden rolgericht afgeschermd, ook bij directe databaseaanroepen.
+
+De nieuwe additieve migratie `202609280001_complete_customer_profile.sql` moet later apart worden gecontroleerd en toegepast vóór een eventuele Worker-uitrol. Bestaande migraties blijven ongewijzigd. KvK-nummers zijn na aanmaak alleen-lezen. De Worker bouwt ook `customer-profile.js` en `profile-fields.js`; dossierdata blijven network-only. Geen nieuwe secrets, passkeys, accountuitnodigingen of boekhoudautomatisering. Niets online toegepast, gecommit of gepusht.

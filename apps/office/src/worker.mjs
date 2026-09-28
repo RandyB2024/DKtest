@@ -4,7 +4,7 @@ import { handleOfficeApi } from './supabase-api.mjs';
 
 const assets = new Set([
   '/index.html', '/offline.html', '/styles.css', '/intake.css', '/supabase.css',
-  '/supabase-app.js', '/passkeys.js', '/kvk-intake.js', '/sw.js', '/manifest.webmanifest',
+  '/supabase-app.js', '/passkeys.js', '/kvk-intake.js', '/customer-profile.js', '/profile-fields.js', '/client-workspace.js', '/sw.js', '/manifest.webmanifest',
   '/assets/logo.png', '/assets/icon-192.png', '/assets/icon-512.png',
 ]);
 

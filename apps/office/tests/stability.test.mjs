@@ -54,6 +54,6 @@ test('mobiele navigatie en defensieve API-client zijn aangesloten', async () => 
   assert.match(app, /credentials:'same-origin'/);
   assert.match(app, /AbortController/);
   assert.match(css, /sidebar\.mobile-open/);
-  assert.match(sw, /v13-worker/);
+  assert.match(sw, /v14-profile/);
   assert.match(sw, /startsWith\('\/api\/'\)/);
 });
