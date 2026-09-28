@@ -2,6 +2,7 @@ import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
 import { parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 import { writeOfficeCookie } from './auth/supabase.mjs';
 import { customerMutation } from './customer-management.mjs';
+import { kvkRoute } from './kvk/intake.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -91,6 +92,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+    const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);
+    if (intake) return sendJson(res,intake.status,intake.data);
     const mutation = await customerMutation(req, url, client, user, body);
     if (mutation) return sendJson(res, mutation.status, mutation.data);
     if (!['GET','HEAD'].includes(req.method) && req.headers['content-type']?.startsWith('application/json')) {
@@ -122,7 +125,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
       if (rel) {
         const relationship = await entity(client, 'customer_relationships', decodeURIComponent(rel[1]), relationshipFields);
         const organizations = checkQuery(await client.from('organizations').select(orgFields).eq('customer_relationship_id', relationship.id).is('archived_at', null));
-        return sendJson(res, 200, { source: 'supabase', relationship, organizations });
+        const kvkIntakes = checkQuery(await client.from('organization_kvk_intakes').select('organization_id,kvk_number,profile,manual_details,kvk_checked_at,kvk_environment').eq('customer_relationship_id',relationship.id));
+        return sendJson(res, 200, { source: 'supabase', relationship, organizations, kvkIntakes });
       }
     }
     throw new OfficeError(503, 'NOT_MIGRATED', 'Dit onderdeel is nog niet gemigreerd. Lezen, wijzigen, uploads en downloads zijn hier tijdelijk uitgeschakeld.');
