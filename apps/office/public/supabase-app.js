@@ -67,7 +67,9 @@ async function refreshStatus() {
     if (activeEpoch !== epoch) return;
     if (!state.authenticated) { if (currentScreen !== 'login') loginScreen(); return; }
     if (state.mfaRequired) { if (currentScreen !== 'lock') await mfaScreen(); return; }
-    const entering = currentScreen !== 'app' || currentUser?.canManageCustomers !== state.user.canManageCustomers;
+    const entering = currentScreen !== 'app' || currentUser?.canManageCustomers !== state.user.canManageCustomers || currentUser?.roleCode !== state.user.roleCode;
+    // Permission changes override unsaved forms; never keep a privileged view.
+    if(currentUser && currentUser.roleCode !== state.user.roleCode) $('#view').replaceChildren();
     screen('app'); currentUser = state.user;
     $('#login').replaceChildren(); $('#lock').replaceChildren();
     $('#avatar').textContent = currentUser.displayName.split(' ').map(part => part[0]).slice(0,2).join(''); $('#avatar').title = `${currentUser.displayName} · ${currentUser.role}`;
@@ -85,25 +87,25 @@ function header(title) {
   $('#header-kicker').textContent = `Destination Known Office · ${currentUser?.displayName ?? ''}`;
   document.querySelectorAll('[data-route]').forEach(a => a.classList.toggle('active', a.pathname === location.pathname || a.pathname === '/clients' && location.pathname.startsWith('/clients/')));
 }
-function organizationCards(organizations) {
-  return organizations.map(o => `<article class="panel"><p class="eyebrow">Onderneming · Supabase</p><h2>${escapeHtml(o.name)}</h2><p>${escapeHtml(o.legal_name || '')}</p><p>KvK: ${escapeHtml(o.registration_number || 'Niet ingevuld')}</p><a data-route href="/organizations/${encodeURIComponent(o.id)}">Onderneming openen</a></article>`).join('') || '<section class="panel"><p>Geen toegankelijke ondernemingen gevonden.</p></section>';
-}
 async function renderRoute() {
   if (!currentUser) return;
+  if(!dispatchEvent(new Event('profile-before-leave',{cancelable:true}))){history.replaceState({},'',renderRoute.previousPath??'/clients');return;}
+  renderRoute.previousPath=location.pathname;
   const activeGeneration = ++generation, path = location.pathname === '/' ? '/dashboard' : location.pathname;
+  $('#view').className = /^\/(clients|organizations)\/[^/]+$/.test(path) ? 'dossier-shell' : '';
   $('#view').innerHTML = '<section class="panel" role="status">Gegevens veilig ophalen…</section>';
   try {
     let html, recordData;
     if (path === '/dashboard' || path === '/clients') {
       header(path === '/dashboard' ? `Welkom, ${currentUser.displayName}` : 'Klanten');
       const data = await api('/api/clients'); recordData = data;
-      html = `<section class="attention"><div><p class="eyebrow">Supabase · klantbeheer</p><h2>Uw klantrelaties en ondernemingen</h2><p>Financiële cijfers en werkvoorraad zijn nog niet gemigreerd.</p></div></section><section class="metrics"><article><span>Klantrelaties</span><strong>${data.relationships.length}</strong></article><article><span>Ondernemingen</span><strong>${data.organizations.length}</strong></article></section><section class="panel"><h2>Klantrelaties</h2><div class="task-list">${data.relationships.map(r => `<a data-route href="/clients/${encodeURIComponent(r.id)}">${escapeHtml(r.name)} · ${escapeHtml(r.status)}</a>`).join('') || '<p>Geen toegankelijke klantrelaties gevonden.</p>'}</div></section><div class="content-grid">${organizationCards(data.organizations)}</div>`;
+      html = '<div id="client-workspace"></div>';
     } else if (/^\/clients\/[^/]+$/.test(path)) {
-      const id = path.split('/').pop(), data = await api('/api/clients/' + id); recordData = data; header(data.relationship.name);
-      html = `<section class="client-hero"><a data-route href="/clients">← Klanten</a><div><p class="eyebrow">Klantrelatie · Supabase</p><h2>${escapeHtml(data.relationship.name)}</h2><p>${escapeHtml(data.relationship.status)}</p></div></section><div class="content-grid">${organizationCards(data.organizations)}</div><section class="panel"><h2>Overige dossieronderdelen</h2><p>Overige dossieronderdelen: ${unavailable}</p></section>`;
+      const id = path.split('/').pop(), data = await api('/api/clients/' + id); recordData = data; header('Klantdossier');
+      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><span>Klantdossier</span></div><div id="customer-profile"></div>`;
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
-      const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header(data.organization.name);
-      html = `<section class="panel"><p class="eyebrow">Onderneming · Supabase</p><h2>${escapeHtml(data.organization.name)}</h2><p>${escapeHtml(data.organization.legal_name || '')}</p><p>KvK: ${escapeHtml(data.organization.registration_number || 'Niet ingevuld')}</p><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie openen</a><p>Overige dossieronderdelen: ${unavailable}</p></section>`;
+      const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header('Onderneming');
+      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
     } else if (path === '/settings') {
       header('Instellingen');html='<section class="panel" id="passkey-settings"></section>';
     } else {
@@ -111,8 +113,17 @@ async function renderRoute() {
       header(titles[path] || 'Office');
       html = `<section class="panel empty"><p class="eyebrow">Fase 1 · Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
     }
-    if (activeGeneration === generation && currentUser) { $('#view').innerHTML = html; customerControls(path, recordData);
-      if(recordData?.kvkIntakes?.length) renderIntakeSnapshots(recordData.kvkIntakes);
+    if (activeGeneration === generation && currentUser) { $('#view').innerHTML = html;
+      if(path==='/clients'||path==='/dashboard'){
+        const {mountClientWorkspace}=await import('/client-workspace.js');
+        if(activeGeneration===generation&&currentUser)mountClientWorkspace($('#client-workspace'),recordData,{canCreate:currentUser.canManageCustomers,onCreate:()=>customerForm('new')});
+      }else customerControls(path, recordData);
+      if(recordData?.relationship || recordData?.organization){
+        const {mountCustomerProfile}=await import('/customer-profile.js');
+        let rel=recordData.relationship,orgs=recordData.organizations;
+        if(!rel){const parent=await api('/api/clients/'+recordData.organization.customer_relationship_id);rel=parent.relationship;orgs=[recordData.organization];}
+        if(activeGeneration===generation&&currentUser)await mountCustomerProfile($('#customer-profile'),api,rel,orgs);
+      }
       if(path==='/settings'){const {mountPasskeySettings}=await import('/passkeys.js');if(activeGeneration===generation&&currentUser)mountPasskeySettings($('#passkey-settings'),api);}
     }
   } catch (error) {
@@ -126,16 +137,16 @@ function customerControls(path, data) {
   const panel = document.createElement('section'); panel.className = 'panel customer-actions';
   const status = document.createElement('p'); status.id = 'mutation-status'; status.setAttribute('role','status');
   const actions = document.createElement('div'); actions.className = 'customer-buttons';
-  const button = (label, action) => { const b=document.createElement('button'); b.type='button'; b.textContent=label; b.onclick=action; actions.append(b); };
+  const button = (label, action) => { const b=document.createElement('button'); b.type='button'; b.textContent=label; if(label.endsWith('archiveren'))b.className='customer-action-danger'; b.onclick=action; actions.append(b); };
   if (currentUser.canManageCustomers) {
     if (path === '/clients' || path === '/dashboard') button('Nieuwe klant',()=>customerForm('new'));
     if (data.relationship) {
-      button('Klantgegevens bewerken',()=>customerForm('relationship',data.relationship));
+      if(!data.organizations.length)button('Klantgegevens bewerken',()=>customerForm('relationship',data.relationship));
       button('Onderneming toevoegen',()=>customerForm('organization-new',data.relationship));
       button('Klant archiveren',()=>archiveForm('relationship',data.relationship,data.organizations.length));
     }
     if (data.organization) {
-      button('Ondernemingsgegevens bewerken',()=>customerForm('organization',data.organization));
+      // Editing occurs in the versioned customer profile.
       button('Onderneming archiveren',()=>archiveForm('organization',data.organization));
     }
   } else {
@@ -214,15 +225,3 @@ addEventListener('beforeinstallprompt', event => { event.preventDefault(); insta
 $('#install').onclick = async () => { if (installPrompt) await installPrompt.prompt(); installPrompt = null; $('#install').hidden = true; };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 void refreshStatus();
-function renderIntakeSnapshots(records) {
-  const labels={relationshipName:'Klantnaam',vatId:'Btw-identificatienummer',taxNumber:'Omzetbelastingnummer',iban:'IBAN',email:'E-mailadres',phone:'Telefoonnummer',contactPerson:'Contactpersoon',fiscalChoices:'Fiscale keuzes',services:'Dienstverlening'};
-  for(const record of records){
-    const section=document.createElement('section');section.className='panel';
-    const heading=document.createElement('h2');heading.textContent='KvK-intake · '+record.kvk_number;section.append(heading);
-    const note=document.createElement('p');note.textContent=`Momentopname bij intake · ${record.kvk_checked_at} · ${record.kvk_environment}. Latere dossierwijzigingen veranderen deze broncontrole niet.`;section.append(note);
-    const list=document.createElement('dl');section.append(list);
-    const pairs=[['Officiële ondernemingsnaam',record.profile.name],['Statutaire naam',record.profile.legalName],['Rechtsvorm',record.profile.legalForm],['Hoofdvestiging',record.profile.mainBranchNumber],...Object.entries(record.manual_details).map(([key,value])=>[labels[key]??key,value])];
-    for(const [label,value] of pairs){const term=document.createElement('dt'),description=document.createElement('dd');term.textContent=label;description.textContent=value||'Niet ingevuld';list.append(term,description);}
-    $('#view').append(section);
-  }
-}

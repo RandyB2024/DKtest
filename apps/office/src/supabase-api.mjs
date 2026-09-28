@@ -3,6 +3,7 @@ import { parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 import { writeOfficeCookie } from './auth/supabase.mjs';
 import { customerMutation } from './customer-management.mjs';
 import { kvkRoute } from './kvk/intake.mjs';
+import { profileRoute } from './customer-profile.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -92,6 +93,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+    const profile = await profileRoute(req,url,client,user,body);
+    if (profile) return sendJson(res,profile.status,profile.data);
     const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);
     if (intake) return sendJson(res,intake.status,intake.data);
     const mutation = await customerMutation(req, url, client, user, body);
