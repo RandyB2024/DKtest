@@ -1,3 +1,4 @@
+import {tasksRoute} from './tasks.mjs';
 import {addressRoute} from './addresses.mjs';
 import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
 import { parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
@@ -94,6 +95,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+    const tasks=await tasksRoute(req,url,client,user,body);
+    if(tasks)return sendJson(res,tasks.status,tasks.data);
     const address=await addressRoute(req,url,client,user,config,fetchImpl);
     if(address)return sendJson(res,address.status,address.data);
     const profile = await profileRoute(req,url,client,user,body);
