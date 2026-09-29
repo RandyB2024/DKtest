@@ -1,4 +1,6 @@
 "use client";
+import PayablesView from "./payables-view";
+import ReceivablesView from "./receivables-view";
 import InstallApp from "./install-app";
 import { useState } from "react";
 import {
@@ -10,6 +12,7 @@ import {
   ClipboardCheck,
   FileText,
   FolderOpen,
+  Landmark,
   LayoutDashboard,
   MessagesSquare,
   Settings,
@@ -25,6 +28,7 @@ import PasskeySettings from "./passkey-settings";
 const nav = [
   ["Dashboard", LayoutDashboard],
   ["Facturen", FileText],
+  ["Crediteuren", Landmark],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
   ["Agenda", CalendarDays],
@@ -133,7 +137,24 @@ export default function Portal({
         />
       );
     }
-
+if (view === "Facturen") {
+  return (
+    <ReceivablesView
+      context={context}
+      organization={organization}
+      onGo={setView}
+    />
+  );
+}
+if (view === "Crediteuren") {
+  return (
+    <PayablesView
+      context={context}
+      organization={organization}
+      onGo={setView}
+    />
+  );
+}
     if (view === "Instellingen") {
       return (
         <>
