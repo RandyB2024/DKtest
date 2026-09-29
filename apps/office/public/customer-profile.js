@@ -1,3 +1,4 @@
+import {mountTasks} from './tasks.js';
 import {enhanceIntakeForm,intakeLabels} from './intake-form.js';
 import {intakeExtensions,addressKeys,intakeGroups} from './intake-fields.js';
 import {profileSections,validateProfile,maskIban} from './profile-fields.js';
@@ -96,6 +97,7 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
    if(section==='fiscal'){pair(panel,'RSIN (ondernemingsgegevens)',company.rsin);pair(panel,'Winstbelasting bevestigd op',record.income_tax_confirmed_at);pair(panel,'Bevestigd door',data.staff.find(s=>s.id===record.income_tax_confirmed_by)?.name);if(record.vat_status==='kor'||record.kor===true&&!record.vat_status)panel.append(el('p','KOR betreft alleen de omzetbelasting. Inkomstenbelasting of vennootschapsbelasting kan nog steeds van toepassing zijn.','profile-warning'));}
    if(section==='company'){pair(panel,'Bezoekadres: laatste Office-controle',record.visit_checked_at);pair(panel,'Postadres: laatste Office-controle',record.postal_checked_at);}
    if(data.canWrite)heading.append(button('Bewerken',()=>edit(section,record),'primary'));
+   if(section==='overview'){const tasks=el('section');content.append(tasks);await mountTasks(tasks,api,{relationship:rel.id,organization:org.id,staff:data.staff,canWrite:data.canWrite});}
   }
  }
  async function collection(panel,section,seq){
