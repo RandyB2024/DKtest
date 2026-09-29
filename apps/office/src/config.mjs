@@ -1,3 +1,4 @@
+import {addressConfig} from './addresses.mjs';
 import { passkeyConfig } from '../../shared/passkeys.mjs';
 import { kvkConfig } from './kvk/client.mjs';
 import { trustedMfaConfig } from './auth/trusted-mfa.mjs';
@@ -19,6 +20,7 @@ export function loadConfig(env = process.env) {
     if (parsed.origin !== origin || parsed.username || parsed.password || (isProduction && parsed.protocol !== 'https:') || (!isProduction && !['http:','https:'].includes(parsed.protocol))) throw new Error();
   } catch { throw new Error('Configureer OFFICE_ORIGIN als exacte origin; productie vereist HTTPS.'); }
   return Object.freeze({
+    address: addressConfig(env),
     passkeys: passkeyConfig(env),
     kvk: kvkConfig(env),
     nodeEnv, isProduction, allowDevelopmentAuth, port, origin,

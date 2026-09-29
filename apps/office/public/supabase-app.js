@@ -19,7 +19,7 @@ function authError(message) { const target = $('#auth-error'); if (target) targe
 function loginScreen(message = '') {
   screen('login');
   $('#lock').replaceChildren();
-  $('#login').innerHTML = `<main class="login-card"><img class="login-logo" src="/assets/logo.png" alt="Destination Known"><p class="eyebrow">Office</p><h1>Welkom terug</h1><p class="muted">Log in met uw persoonlijke Office-account.</p><form id="office-login"><label>E-mailadres<input name="email" type="email" autocomplete="username" required></label><label>Wachtwoord<input name="password" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Veilig inloggen</button></form><p id="auth-error" role="alert">${escapeHtml(message)}</p><p class="micro">Na het inloggen volgt tweestapsverificatie.</p></main>`;
+  $('#login').innerHTML = `<main class="login-card"><img class="login-logo" src="/assets/logo.png" alt="Destination Known"><p class="eyebrow">Office</p><h1>Welkom terug</h1><p class="muted">Log in met uw persoonlijke Office-account.</p><form id="office-login"><label>E-mailadres<input name="email" type="email" autocomplete="username" required></label><label>Wachtwoord<input name="password" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Veilig inloggen</button></form><p id="auth-error" role="alert">${escapeHtml(message)}</p></main>`;
   $('#office-login').onsubmit = async event => {
     event.preventDefault(); const form = event.target, button = form.querySelector('button'); button.disabled = true; authError('');
     try { await api('/api/auth/login', { email:form.elements.email.value, password:form.elements.password.value }); epoch++; currentScreen = ''; await refreshStatus(); }
@@ -29,7 +29,7 @@ function loginScreen(message = '') {
 }
 async function mfaScreen() {
   screen('lock'); $('#login').replaceChildren();
-  $('#lock').innerHTML = `<main class="login-card"><p class="eyebrow">Office beveiligen</p><h1>Tweestapsverificatie</h1><div id="mfa-content">Authenticator controleren…</div><p id="auth-error" role="alert"></p><p class="micro">Authenticator kwijt? Neem contact op met uw beheerder. Verificatie kan niet worden overgeslagen.</p><button id="mfa-logout" class="text-button">Afmelden</button></main>`;
+  $('#lock').innerHTML = `<main class="login-card"><p class="eyebrow">Office beveiligen</p><h1>Tweestapsverificatie</h1><div id="mfa-content">Authenticator controleren…</div><p id="auth-error" role="alert"></p><p class="micro">Authenticator kwijt? Neem contact op met uw beheerder.</p><button id="mfa-logout" class="text-button">Afmelden</button></main>`;
   $('#mfa-logout').onclick = logout;
   const activeEpoch = epoch;
   try {
@@ -37,7 +37,7 @@ async function mfaScreen() {
     if (activeEpoch !== epoch || currentScreen !== 'lock') return;
     if (data.factors.length) verificationForm(data.factors);
     else {
-      $('#mfa-content').innerHTML = '<p>Koppel een authenticator-app. U krijgt een QR-code om te scannen.</p><button id="enroll" class="primary">Authenticator instellen</button>';
+      $('#mfa-content').innerHTML = '<p>Koppel uw authenticator-app.</p><button id="enroll" class="primary">Authenticator instellen</button>';
       $('#enroll').onclick = async event => {
         const button = event.target; button.disabled = true; authError('');
         try {
@@ -50,11 +50,11 @@ async function mfaScreen() {
   } catch (error) { authError(error.message); }
 }
 function verificationForm(factors, setup) {
-  $('#mfa-content').innerHTML = `${setup ? '<p>Scan deze QR-code. Deel de code of instelsleutel met niemand.</p><img id="qr" width="220" height="220" alt="QR-code voor uw authenticator"><details><summary>Handmatig instellen</summary><code id="totp-secret"></code></details>' : '<p>Gebruik de nieuwste code uit uw authenticator-app.</p>'}<form id="verify"><label>Authenticator<select name="factor">${factors.map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`).join('')}</select></label><label>Verificatiecode<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label><button class="primary" type="submit">Verifiëren</button></form>`;
+  $('#mfa-content').innerHTML = `${setup ? '<p>Scan deze QR-code. Deel de code of instelsleutel met niemand.</p><img id="qr" width="220" height="220" alt="QR-code voor uw authenticator"><details><summary>Handmatig instellen</summary><code id="totp-secret"></code></details>' : ''}<form id="verify">${factors.length > 1 ? `<label>Authenticator<select name="factor">${factors.map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`).join('')}</select></label>` : ''}<label>Verificatiecode<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label><button class="primary" type="submit">Verifiëren</button></form>`;
   if (setup) { const qr = setup.qrCode; $('#qr').src = qr.startsWith('data:image/svg+xml') ? qr : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qr); $('#totp-secret').textContent = setup.secret; }
   $('#verify').onsubmit = async event => {
     event.preventDefault(); const form = event.target, button = form.querySelector('button'); button.disabled = true; authError('');
-    try { await api('/api/auth/mfa', { action:'verify', factorId:form.elements.factor.value, code:form.elements.code.value }); epoch++; currentScreen = ''; $('#mfa-content').replaceChildren(); await refreshStatus(); }
+    try { await api('/api/auth/mfa', { action:'verify', factorId:factors.length === 1 ? factors[0].id : form.elements.factor.value, code:form.elements.code.value }); epoch++; currentScreen = ''; $('#mfa-content').replaceChildren(); await refreshStatus(); }
     catch (error) { authError(error.message); }
     finally { form.elements.code.value = ''; button.disabled = false; }
   };
@@ -154,7 +154,7 @@ function customerControls(path, data) {
   }
   const invite=document.createElement('button'); invite.type='button'; invite.disabled=true; invite.textContent='Account uitnodigen'; actions.append(invite);
   const note=document.createElement('p'); note.className='muted'; note.textContent='Accountuitnodigingen worden in een volgende beveiligde fase toegevoegd.';
-  panel.append(actions,note,status); $('#view').prepend(panel);
+  if(data.relationship || data.organization){const more=document.createElement('details'),summary=document.createElement('summary');more.className='profile-source';summary.textContent='Dossier beheren';more.append(summary,actions,note);panel.append(more,status);}else panel.append(actions,note,status); $('#view').prepend(panel);
 }
 function mutationDialog(title, fields, submitLabel, perform, destination) {
   const dialog=document.createElement('dialog'); dialog.className='customer-dialog';

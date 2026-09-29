@@ -62,3 +62,10 @@ test('wizard is shipped in Worker assets, uses textContent and sends only number
   assert.match(js,/kvkNumber:company.kvkNumber,manual/);assert.match(js,/if\(busy\)return/);
   const built=await readFile(new URL('../worker-public/kvk-intake.js',import.meta.url),'utf8');assert.equal(built,js);
 });
+
+test('extended intake refetches KvK and sends one atomic RPC with validated optional sections',async()=>{
+ const{fixture,state,call,login}=setup();await login();let saved;fixture.rpc=async(name,args)=>{assert.equal(name,'office_create_relationship_from_kvk_intake');saved=args;return Response.json({relationship_id:randomUUID(),organization_id:randomUUID()});};
+ const intake={company:{visit_country:'NL',visit_postcode:'3526 kp',visit_house_number:'93'},fiscal:{vat_status:'kor',income_tax:'corporate_tax',income_tax_confirm:true},administration:{vehicles:false,klaas_vis:'unknown'}};
+ const r=await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'Extended'},intake});assert.equal(r.status,201);assert.equal(saved.p_intake.company.visit_postcode,'3526KP');assert.equal(saved.p_intake.fiscal.income_tax,'corporate_tax');assert.equal(state.calls.filter(u=>u.pathname.includes('basisprofielen')).length,1);
+ for(const bad of [{unknown:{}},{fiscal:{unknown:'x'}},{fiscal:{income_tax_confirmed_by:randomUUID()}},{company:{registration_number:'12345678'}},[]])assert.equal((await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'Extended'},intake:bad})).status,400);
+});

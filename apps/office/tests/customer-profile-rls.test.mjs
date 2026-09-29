@@ -65,12 +65,30 @@ test('Complete customer profile: PostgreSQL authorization, validation and transa
     await pg.exec(readFileSync(new URL('../../portal/supabase/migrations/202609270001_kvk_customer_onboarding.sql',import.meta.url),'utf8'));
 
     await pg.exec(readFileSync(new URL('../../portal/supabase/migrations/202609280001_complete_customer_profile.sql',import.meta.url),'utf8'));
+    await pg.exec(readFileSync(new URL('../../portal/supabase/migrations/202609280002_address_business_tax_intake.sql',import.meta.url),'utf8'));
     async function role(code){await pg.exec('reset role');await pg.query("update office_memberships set role_id=(select id from roles where scope='office' and code=$1),status='active' where user_id=$2",[code,office]);await pg.query("update profiles set account_status='active' where id=$1",[office]);await asUser(office,'aal2');}
     const read=async(section=null,page=1,archived=false,r=rel,o=org)=>(await pg.query('select office_customer_profile_read($1,$2,$3,$4,$5) data',[r,o,section,page,archived])).rows[0].data;
     const write=async(section,fields,{id=null,archive=false,version,r=rel,o=org}={})=>{
       if(version===undefined){const d=await read(null,1,false,r,o);version=section==='overview'?d.relationship.profile_version:d.organization.profile_version;}
       return (await pg.query('select office_customer_profile_write($1,$2,$3,$4::jsonb,$5,$6,$7) data',[r,o,section,JSON.stringify(fields),version,id,archive])).rows[0].data;
     };
+    await t.test('new intake preserves legacy fields, requires explicit profit-tax confirmation and isolates KOR',async()=>{
+      await role('owner');await write('company',{name:'Fixture',visit_address:'Original unparsed address',visit_country:'NL',visit_postcode:'3526KP',visit_house_number:'93',visit_street:'Europalaan',visit_city:'Utrecht',postal_same:true});
+      let d=await read();assert.equal(d.sections.company.visit_address,'Original unparsed address');assert.equal(d.sections.company.postal_postcode,'3526KP');assert.ok(d.sections.company.address_reviewed_at);
+      await assert.rejects(write('fiscal',{income_tax:'corporate_tax'}),e=>e.code==='22023');
+      await write('fiscal',{income_tax:'corporate_tax',income_tax_confirm:true,vat_status:'kor'});d=await read();assert.equal(d.sections.fiscal.income_tax,'corporate_tax');assert.equal(d.sections.fiscal.kor,true);assert.equal(d.sections.fiscal.income_tax_confirmed_by,office);assert.ok(d.sections.fiscal.income_tax_confirmed_at);assert.equal(d.sections.fiscal.vat_unity,null);assert.equal(d.sections.fiscal.vpb_unity,null);
+      await assert.rejects(write('fiscal',{income_tax:'income_tax'}),e=>e.code==='22023');await assert.rejects(write('fiscal',{income_tax_confirmed_by:office}),e=>e.code==='22023');
+      await write('fiscal',{income_tax:'income_tax',income_tax_confirm:true});assert.equal((await read()).sections.fiscal.kor,true);
+      await write('administration',{vehicles:true,vehicle_count:2,vehicle_use:'owned',vehicle_notes:'INTERNAL VEHICLE',klaas_vis:'to_check',insurance_notes:'PRIVATE INSURANCE'});
+      await assert.rejects(write('administration',{vehicles:false}),e=>e.code==='22023');await write('administration',{vehicles:false,vehicle_count:null,vehicle_use:null,vehicle_notes:null});
+      await role('accountant');d=await read();assert.equal(d.sections.fiscal.income_tax,'income_tax');assert.equal(d.sections.administration,undefined);
+      for(const code of ['handler','viewer']){await role(code);d=await read();assert.equal(d.sections.fiscal,undefined);assert.equal(d.sections.administration,undefined);}
+      await role('owner');assert.doesNotMatch(JSON.stringify(await read('history')),/PRIVATE INSURANCE|INTERNAL VEHICLE|Europalaan/);
+      await assert.rejects(pg.query('select office_customer_profile_write_v1($1,$2,$3,$4::jsonb,0,null,false)',[rel,org,'fiscal','{}']),e=>e.code==='42501');
+      // Return the explicit VAT status to unreviewed for legacy regression edits below.
+      await write('fiscal',{vat_status:null});
+    });
+    await t.test('distributed address throttle and private counter table',async()=>{await role('admin');for(let i=0;i<30;i++)assert.equal((await pg.query('select office_address_lookup_allow() allowed')).rows[0].allowed,true);assert.equal((await pg.query('select office_address_lookup_allow() allowed')).rows[0].allowed,false);await assert.rejects(pg.query('select * from office_address_lookup_limits'),e=>e.code==='42501');await role('viewer');await assert.rejects(pg.query('select office_address_lookup_allow()'),e=>e.code==='42501');});
     let contact,note,bank;
     await t.test('owner/admin save typed sections, audit redacts values, historical source not copied',async()=>{
       await role('owner');const initial=await read();assert.ok(initial.relationship.relationship_number);assert.equal(initial.source,null);
@@ -147,7 +165,7 @@ test('Complete customer profile: PostgreSQL authorization, validation and transa
       await pg.exec('reset role;set role anon');await assert.rejects(read(),e=>e.code==='42501');await assert.rejects(pg.query('select * from office_customer_company'),e=>e.code==='42501');
     });
     await t.test('AAL1, exact 24h, absent AMR, revoked membership and blocked profile fail closed',async()=>{
-      for(const claims of [{aal:'aal1',amr:[{method:'totp',timestamp:Math.floor(Date.now()/1000)}]},{aal:'aal2',amr:[]},{aal:'aal2',amr:[{method:'totp',timestamp:Math.floor(Date.now()/1000)-86400}]}]){
+      for(const claims of [{aal:'aal1',amr:[{method:'totp',timestamp:Math.floor(Date.now()/1000)}]},{aal:'aal2',amr:[]},{aal:'aal2',amr:[{method:'totp',timestamp:Math.floor(Date.now()/1000)-86400}]},{aal:'aal2',amr:[{method:'totp',timestamp:Math.floor(Date.now()/1000)+3600}]}]){
         await role('owner');await pg.query("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:office,...claims})]);await assert.rejects(read(),e=>e.code==='42501');assert.equal(await count('office_customer_fiscal'),0);
       }
       for(const sql of ["update profiles set account_status='blocked' where id=$1","update office_memberships set status='revoked' where user_id=$1"]){await role('owner');await pg.exec('reset role');await pg.query(sql,[office]);await asUser(office,'aal2');await assert.rejects(read(),e=>e.code==='42501');}
@@ -161,6 +179,14 @@ test('Complete customer profile: PostgreSQL authorization, validation and transa
     await t.test('existing KvK intake and legacy creation still work after all migrations',async()=>{
       await role('owner');await pg.exec('reset role');const key=randomBytes(32).toString('hex');await pg.query("insert into office_kvk_private.worker_gate values(true,encode(sha256(convert_to($1,'UTF8')),'hex'),'test')",[key]);await role('owner');
       const profile=normalizeBasis(basis('68750110'),'68750110',normalizeSearch(search('68750110')));
+      const initialCount=await count('customer_relationships');
+      const extended={company:{visit_country:'NL',visit_postcode:'3526KP',visit_house_number:'93',postal_same:true},fiscal:{income_tax:'corporate_tax',income_tax_confirm:true,vat_status:'kor'},administration:{klaas_vis:'unknown',vehicles:null}};
+      const extendedProfile={...profile,kvkNumber:'12345678'};
+      const callIntake=async fields=>(await pg.query('select office_create_relationship_from_kvk_intake($1::jsonb,$2::jsonb,$3,$4::timestamptz,$5,$6::jsonb) data',[JSON.stringify(extendedProfile),'{"relationshipName":"Extended"}','test',new Date().toISOString(),key,JSON.stringify(fields)])).rows[0].data;
+      await assert.rejects(callIntake({...extended,fiscal:{income_tax:'corporate_tax'}}),e=>e.code==='22023');assert.equal(await count('customer_relationships'),initialCount);
+      const complete=await callIntake(extended);const full=await read(null,1,false,complete.relationship_id,complete.organization_id);assert.equal(full.sections.fiscal.vat_status,'kor');assert.equal(full.sections.administration.klaas_vis,'unknown');assert.equal(full.sections.company.postal_postcode,'3526KP');assert.ok((await read('history',1,false,complete.relationship_id,complete.organization_id)).items.length>=6);
+      const beforeFailure=await count('customer_relationships'),auditBefore=await count('audit_events');extendedProfile.kvkNumber='23456789';
+      await pg.exec('reset role');await pg.exec("create trigger fail_extended_audit before insert on audit_events for each row execute function fail_profile_audit()");await role('owner');await assert.rejects(callIntake(extended));assert.equal(await count('customer_relationships'),beforeFailure);assert.equal(await count('audit_events'),auditBefore);await pg.exec('reset role');await pg.exec('drop trigger fail_extended_audit on audit_events');await role('owner');
       const created=(await pg.query('select office_create_relationship_from_kvk($1::jsonb,$2::jsonb,$3,$4::timestamptz,$5) data',[JSON.stringify(profile),'{"relationshipName":"Intake","taxNumber":"PRIVATE LEGACY"}','test',new Date().toISOString(),key])).rows[0].data;
       const snapshot=await read(null,1,false,created.relationship_id,created.organization_id);assert.equal(snapshot.source.profile.kvkNumber,'68750110');assert.equal(snapshot.legacyManual.taxNumber,'PRIVATE LEGACY');
       await role('viewer');const redacted=await read(null,1,false,created.relationship_id,created.organization_id);assert.equal(redacted.source.profile.kvkNumber,'68750110');assert.equal(redacted.legacyManual,undefined);assert.equal(await count('organization_kvk_intakes'),0);
