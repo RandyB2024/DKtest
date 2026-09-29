@@ -1,3 +1,5 @@
+import {kvkTransport} from './kvk-fixture.mjs';
+import {randomBytes} from 'node:crypto';
 // Local browser QA only. Uses the real Office server/UI with a mocked Supabase
 // transport. Never reads .env files, uses real accounts or contacts a provider.
 // Run: node tests/helpers/profile-visual-fixture.mjs
@@ -11,12 +13,14 @@ const rel=fixture.db.customer_relationships[0],org=fixture.db.organizations[0];
 rel.name='Voorbeeld Administratie & Ondernemersadvies';Object.assign(rel,{profile_version:0,relationship_number:1042,responsible_id:fixture.user.id,started_on:'2025-01-01'});
 Object.assign(org,{name:'Voorbeeld Administratie',legal_name:'Voorbeeld Administratie & Ondernemersadvies B.V.',registration_number:'68750110',profile_version:0});
 const sections={};for(const [section,spec] of Object.entries(profileSections)){sections[section]={};for(const [key,field] of Object.entries(spec.fields))sections[section][key]=field.type==='boolean'?true:field.type==='integer'?4:field.type==='date'?'2026-01-01':field.type==='staff'?fixture.user.id:field.type==='enum'?field.values[0]:field.type==='email'?'voorbeeld@example.invalid':field.type==='url'?'https://example.invalid':field.type==='currency'?'EUR':field.type==='iban'?'NL •••• 4300':field.max>500?'Synthetische testtekst voor de visuele controle. Er zijn geen echte klantgegevens gebruikt.':'Voorbeeld';}
-sections.company.legal_form='Besloten vennootschap';let scenario='full';
+for(const prefix of ['visit','postal'])Object.assign(sections.company,{[prefix+'_country']:'NL',[prefix+'_postcode']:'3526KP',[prefix+'_house_number']:'93',[prefix+'_addition']:'',[prefix+'_bag_id']:'0344200000128086'});sections.company.legal_form='Besloten vennootschap';let scenario='full';
 function setCount(count){
  fixture.db.customer_relationships=Array.from({length:count},(_,i)=>({...rel,id:i?'d0000000-0000-4000-8000-'+String(i).padStart(12,'0'):rel.id,name:i?'Voorbeeldklant '+String(i+1).padStart(3,'0'):rel.name,status:i%5===0?'inactive':'active'}));
  fixture.db.organizations=fixture.db.customer_relationships.map((r,i)=>({...org,id:i?'e0000000-0000-4000-8000-'+String(i).padStart(12,'0'):org.id,customer_relationship_id:r.id,name:i?'Handelsnaam '+(i+1):org.name,legal_name:i%4===0?'':'Officiële Onderneming '+(i+1)+' B.V.',registration_number:String(10000000+i)}));
 }
 fixture.rpc=async(name,args)=>{
+ if(name==='office_address_lookup_allow')return Response.json(true);
+ if(name==='office_create_relationship_from_kvk_intake')return Response.json({relationship_id:rel.id,organization_id:org.id});
  if(name!=='office_customer_profile_read')return Response.json({id:org.id,version:1});
  if(scenario==='error')return Response.json({code:'XX000',message:'synthetic'},{status:500});
  if(args.p_section){
@@ -26,9 +30,11 @@ fixture.rpc=async(name,args)=>{
  const empty=scenario==='empty';return Response.json({relationship:{...rel,...fixture.db.customer_relationships.find(r=>r.id===args.p_relationship_id),...(empty?{responsible_id:null,started_on:null}:{})},organization:{...org,...fixture.db.organizations.find(o=>o.id===args.p_organization_id),...(empty?{legal_name:null}:{})},staff:[{id:fixture.user.id,name:'Testmedewerker'}],sections:empty?Object.fromEntries(Object.keys(sections).map(k=>[k,{}])):sections,canWrite:true,role:'owner',source:empty?null:{checked_at:'2026-09-28 09:00',environment:'test',profile:{name:org.name,legalName:org.legal_name,kvkNumber:org.registration_number,legalForm:'Besloten vennootschap',status:'active',tradeNames:[org.name],visitAddress:{street:'Voorbeeldstraat',number:'1',city:'Testplaats'},activities:[{code:'6920',description:'Administratieve dienstverlening'}]}}});
 };
 const port=Number(process.argv[2]??4178);
-const config=loadConfig({PORT:String(port),OFFICE_ORIGIN:'http://127.0.0.1:'+port,SUPABASE_URL:'https://office-fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture'});
-const app=createServer({config,fetchImpl:fixture.fetch});
+const kvkState={key:randomBytes(16).toString('hex')},kvk=kvkTransport(kvkState);
+const config=loadConfig({KVK_API_KEY:kvkState.key,KVK_INTAKE_RPC_KEY:randomBytes(32).toString('hex'),PORT:String(port),OFFICE_ORIGIN:'http://127.0.0.1:'+port,SUPABASE_URL:'https://office-fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture'});
+const app=createServer({config,fetchImpl:(url,init)=>new URL(url).host==='api.kvk.nl'?kvk(url,init):new URL(url).host==='api.pdok.nl'?Promise.resolve(Response.json({response:{numFound:1,docs:[{postcode:'3526KP',huisnummer:93,straatnaam:'Europalaan',woonplaatsnaam:'Utrecht',nummeraanduiding_id:'0344200000128086'}]}})):fixture.fetch(url,init)});
 http.createServer((req,res)=>{
+ const originalWriteHead=res.writeHead;res.writeHead=function(status,headers){return originalWriteHead.call(this,status,{...headers,'Cache-Control':'no-store'});};
  const url=new URL(req.url,config.origin);
  if(url.pathname==='/__fixture/scenario'){
   scenario=['full','empty','error','long'].includes(url.searchParams.get('name'))?url.searchParams.get('name'):'full';

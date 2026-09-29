@@ -1,6 +1,9 @@
+import {enhanceIntakeForm,intakeLabels} from './intake-form.js';
+import {intakeExtensions,addressKeys,intakeGroups} from './intake-fields.js';
 import {profileSections,validateProfile,maskIban} from './profile-fields.js';
 const el=(tag,text,className)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n;};
 const labels={active:'Actief',inactive:'Inactief',setup:'Nog in te richten',blocked:'Tijdelijk geblokkeerd',ended:'Beëindigd',month:'Maand',quarter:'Kwartaal',year:'Jaar',half_year:'Halfjaar',not_applicable:'Niet van toepassing',on_request:'Op verzoek',income_tax:'Inkomstenbelasting',corporate_tax:'Vennootschapsbelasting',four_weeks:'Vier weken',invoice:'Factuurstelsel',cash:'Kasstelsel',administration:'Administratie',vat:'Omzetbelasting',annual_accounts:'Jaarrekening',payroll:'Salarisadministratie',reporting:'Rapportage',guidance:'Ondernemingsbegeleiding',meeting:'Periodiek gesprek',other:'Overig',email:'E-mail',phone:'Telefoon',mobile:'Mobiel',post:'Post'};
+Object.assign(labels,intakeLabels);
 const display=v=>v===null||v===undefined||v===''?'Niet ingevuld':typeof v==='boolean'?v?'Ja':'Nee':labels[v]??String(v);
 function pair(parent,label,value){const p=el('div',undefined,'profile-value');p.append(el('span',label,'profile-label'),el('span',display(value),value===null||value===undefined||value===''?'profile-empty-value':'profile-value-text'));parent.append(p);}
 function button(label,fn,style='secondary'){const b=el('button',label,'profile-button profile-button--'+style);b.type='button';b.onclick=fn;return b;}
@@ -15,7 +18,10 @@ const fieldGroups={
  agreements:[['Contact',['contact_frequency','meetings_per_year','preferred_times']],['Aanlevering en rapportage',['reporting','submission_deadline','particulars']]],
  notes:[['Notitie',['title','body']],['Indeling',['category','pinned']]]
 };
-const introductions={overview:'De belangrijkste afspraken over deze klantrelatie.',company:'Bedrijfsgegevens en de herkomst van de KvK-registratie.',contacts:'De mensen die u namens deze onderneming kunt bereiken.',fiscal:'Fiscale stamgegevens en aandachtspunten.',administration:'De inrichting en werkwijze van de administratie.',banks:'Rekeninggegevens, veilig gemaskeerd weergegeven.',services:'De dienstverlening en bijbehorende afspraken.',agreements:'Afspraken over contact, rapportage en aanlevering.',notes:'Interne aantekeningen voor dit dossier.',history:'Wijzigingen in dit dossier, op volgorde van tijd.'};
+for(const [section,fields]of Object.entries(intakeExtensions)){
+ const groups=section==='company'?[['Bezoekadres',[...addressKeys,'source','manual'].map(k=>'visit_'+k)],['Postadres',['postal_same',...[...addressKeys,'source','manual'].map(k=>'postal_'+k)]]]:section==='administration'?[['Zakelijke voertuigen',['vehicles','vehicle_count','vehicle_use','vehicle_notes']],['Bedrijfspand',['premises','premises_use','premises_same','premises_notes']],['Verzekeringsopgave',['klaas_vis','insurance_notes']]]:[['Fiscale beoordeling',Object.keys(fields)]];fieldGroups[section].push(...groups);
+}
+fieldGroups.fiscal=[...intakeGroups.fiscal,['Historische registratie',['fiscal_unity','kor','vat_liable','fiscal_form','external_adviser']]];
 const historyTitle=action=>{const match=String(action).match(/^profile\.([a-z]+)\.(saved|archived)$/);return match&&profileSections[match[1]]?profileSections[match[1]].label+(match[2]==='archived'?' gearchiveerd':' bijgewerkt'):action;};
 function viewGroups(section,fields,record,staff){
  const container=el('div',undefined,'profile-field-groups');
@@ -73,22 +79,23 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
   const seq=++request;
   for(const section of groups[tab]){
    if(!root.isConnected||seq!==request)return;
-   const panel=el('section',undefined,'panel profile-section'),heading=el('div',undefined,'profile-section-heading'),headingText=el('div');headingText.append(el('h3',profileSections[section]?.label??'Historie'),el('p',introductions[section],'profile-description'));heading.append(headingText);panel.append(heading);content.append(panel);
+   const panel=el('section',undefined,'panel profile-section'),heading=el('div',undefined,'profile-section-heading'),headingText=el('div');headingText.append(el('h3',profileSections[section]?.label??'Historie'));heading.append(headingText);panel.append(heading);content.append(panel);
    if(profileSections[section]?.private||section==='history')headingText.append(el('span','Intern','profile-badge'));
    if(!allowed(section)){panel.append(el('p','Dit onderdeel is niet beschikbaar voor uw Office-rol.','profile-empty'));continue;}
    if(section==='history'||profileSections[section].collection){await collection(panel,section,seq);continue;}
    const record=section==='overview'?data.relationship:section==='company'?{...company,name:org.name,legal_name:org.legal_name}:data.sections[section]??{};
-   const fields=Object.fromEntries(Object.entries(profileSections[section].fields).filter(([key])=>key!=='rsin'||allowed('fiscal')));
+   const fields=Object.fromEntries(Object.entries(profileSections[section].fields).filter(([key])=>(key!=='rsin'||allowed('fiscal'))&&!(section==='fiscal'&&record.vat_status&&['kor','vat_liable'].includes(key))));
    panel.append(viewGroups(section,fields,record,data.staff));
    if(section==='overview'){
-    panel.append(el('p','Fiscale keuzes en diensten worden niet afgeleid uit de rechtsvorm. Vul ze na inhoudelijke beoordeling in.','profile-help'));
+
     if(data.legacyManual&&Object.values(data.legacyManual).some(Boolean)){const d=el('details',undefined,'profile-source');d.append(el('summary','Historische handmatige KvK-intake — nog beoordelen'));
      const names={relationshipName:'Oorspronkelijke klantnaam',vatId:'Btw-identificatienummer',taxNumber:'Omzetbelastingnummer',iban:'IBAN (gemaskeerd)',email:'E-mail',phone:'Telefoon',contactPerson:'Contactpersoon',fiscalChoices:'Fiscale keuzes',services:'Dienstverlening'};
-     for(const [key,value] of Object.entries(data.legacyManual))pair(d,names[key]??key,key==='iban'?maskIban(value):value);panel.append(d,el('p','Deze historische invoer wordt niet automatisch omgezet naar actuele fiscale instellingen of contactpersonen.','profile-help'));}
+     for(const [key,value] of Object.entries(data.legacyManual))pair(d,names[key]??key,key==='iban'?maskIban(value):value);d.append(el('p','Historische invoer; niet automatisch omgezet naar actuele instellingen.','profile-help'));panel.append(d);}
    }
-   if(section==='company'){panel.append(el('p','Aanvullingen zijn handmatig beheerd. De oorspronkelijke KvK-gegevens en controledatum staan hieronder. Het KvK-nummer is alleen-lezen.','profile-help'));sourcePanel(panel);}
-   if(section==='fiscal')pair(panel,'RSIN (ondernemingsgegevens)',company.rsin);
-   if(data.canWrite)heading.append(button('Bewerken',()=>edit(section,record)));
+   if(section==='company'){sourcePanel(panel);}
+   if(section==='fiscal'){pair(panel,'RSIN (ondernemingsgegevens)',company.rsin);pair(panel,'Winstbelasting bevestigd op',record.income_tax_confirmed_at);pair(panel,'Bevestigd door',data.staff.find(s=>s.id===record.income_tax_confirmed_by)?.name);if(record.vat_status==='kor'||record.kor===true&&!record.vat_status)panel.append(el('p','KOR betreft alleen de omzetbelasting. Inkomstenbelasting of vennootschapsbelasting kan nog steeds van toepassing zijn.','profile-warning'));}
+   if(section==='company'){pair(panel,'Bezoekadres: laatste Office-controle',record.visit_checked_at);pair(panel,'Postadres: laatste Office-controle',record.postal_checked_at);}
+   if(data.canWrite)heading.append(button('Bewerken',()=>edit(section,record),'primary'));
   }
  }
  async function collection(panel,section,seq){
@@ -125,7 +132,7 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
      for(const [key,field] of Object.entries(profileSections[section].fields))if(Object.hasOwn(item,key))pair(grid,field.label,field.type==='staff'?data.staff.find(s=>s.id===item[key])?.name:item[key]);
      if(section==='notes'){pair(grid,'Auteur',data.staff.find(s=>s.id===item.created_by)?.name??item.created_by);pair(grid,'Aangemaakt',item.created_at);pair(grid,'Laatst gewijzigd',item.updated_at);}
      details.append(grid);article.append(details);
-     if(data.canWrite&&!archived){const actions=el('div',undefined,'profile-record-actions');actions.append(button('Bewerken',()=>edit(section,item,version),'quiet'),button('Archiveren',()=>archive(section,item,version),'danger'));article.append(actions);}
+     if(data.canWrite&&!archived){const actions=el('div',undefined,'profile-record-actions');actions.append(button('Bewerken',()=>edit(section,item,version),'quiet'),button('Archiveren',()=>archive(section,item,version),'danger'));details.append(actions);}
     }panel.append(article);
    }
    const paging=el('div',undefined,'profile-pagination');if(page>1)paging.append(button('Vorige pagina',()=>{pageBy[section]=page-1;void render();}));paging.append(el('span','Pagina '+page));if(result.hasMore)paging.append(button('Volgende pagina',()=>{pageBy[section]=page+1;void render();}));panel.append(paging);
@@ -142,10 +149,10 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
   for(const [key,field] of Object.entries(profileSections[section].fields)){
    const label=el('label',field.label+(field.required&&!(section==='banks'&&record.id&&key==='iban')?' *':''));if(field.max>500)label.className='profile-field-wide';let input;
    if(['enum','boolean','staff'].includes(field.type)){
-    input=el('select');const empty=el('option','Niet ingevuld');empty.value='';input.append(empty);
+    input=el('select');const empty=el('option',field.type==='boolean'?'Onbekend / nog te beoordelen':'Niet ingevuld');empty.value='';input.append(empty);
     const values=field.type==='boolean'?['true','false']:field.type==='staff'?data.staff.map(s=>s.id):field.values;
     for(const v of values){const option=el('option',field.type==='staff'?data.staff.find(s=>s.id===v).name:field.type==='boolean'?v==='true'?'Ja':'Nee':labels[v]??v);option.value=v;input.append(option);}
-   }else{input=el(field.max>500?'textarea':'input');if(input.tagName==='INPUT')input.type=field.type==='date'?'date':field.type==='integer'?'number':field.type==='email'?'email':'text';if(field.max)input.maxLength=field.max;if(field.type==='integer'){input.min='0';input.max=String(field.max);input.step='1';}}
+   }else{input=el(field.type==='text'&&field.max>500?'textarea':'input');if(input.tagName==='INPUT')input.type=field.type==='date'?'date':field.type==='integer'?'number':field.type==='email'?'email':'text';if(field.max)input.maxLength=field.max;if(field.type==='integer'){input.min='0';input.max=String(field.max);input.step='1';}}
    input.name=key;input.value=section==='banks'&&key==='iban'?'':record[key]??(section==='administration'&&key==='currency'?'EUR':'');
    // Existing bank numbers are never echoed into an editable control. Empty keeps the old number.
    input.required=!!field.required&&!(section==='banks'&&record.id&&key==='iban');
@@ -153,6 +160,7 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
   }
   if(section==='banks'&&record.id)fieldset.append(el('p','IBAN leeg laten behoudt het bestaande rekeningnummer. Een ingevuld IBAN vervangt het na bevestiging.'));
   if(section==='contacts')fieldset.append(el('p','Portaaltoegang is alleen een registratie. Accountuitnodigingen blijven uitgeschakeld.'));
+  enhanceIntakeForm(section,controls,record,api,fieldset);
   const save=el('button','Opslaan');save.type='submit';save.className='primary profile-button profile-button--primary';const cancel=button('Annuleren',()=>close()),actions=el('div',undefined,'profile-form-actions');actions.append(cancel,save);form.append(actions);
   form.oninput=()=>{dirty=true;};
   function close(){if(pending)return;if(dirty&&!confirm('Wijzigingen verwerpen?'))return;dirty=false;dialog.close();}
@@ -162,8 +170,9 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
    for(const [key,input] of Object.entries(controls)){
     const field=profileSections[section].fields[key],v=input.value;
     if(section==='banks'&&record.id&&key==='iban'&&!v)continue;
+    if(key==='income_tax_confirm'&&!v)continue;
     const value=v===''?null:field.type==='boolean'?v==='true':field.type==='integer'?Number(v):v;
-    if((record[key]??null)!==value)fields[key]=value;
+    if((record[key]??null)!==value||key==='income_tax_confirm'&&value===true)fields[key]=value;
    }
    if(!Object.keys(fields).length){errors.textContent='Geen wijzigingen om op te slaan.';return;}
    try{fields=validateProfile(section,fields);}catch(e){errors.textContent=e.message;return;}

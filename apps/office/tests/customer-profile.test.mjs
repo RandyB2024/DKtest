@@ -13,7 +13,7 @@ test('profile field contract, cautious identifiers, emails, dates, website, IBAN
  for(const bad of ['NL90ABNA0417164300','123','GB82!WEST12345698765432'])assert.equal(validIban(bad),false);
  assert.equal(maskIban('NL91ABNA0417164300'),'NL •••• 4300');
  assert.throws(()=>validateProfile('constructor',{name:'x'}));assert.throws(()=>validateProfile('fiscal',{constructor:'x'}));assert.throws(()=>validateProfile('fiscal',JSON.parse('{"__proto__":"x"}')));
- const sql=readFileSync(new URL('../../portal/supabase/migrations/202609280001_complete_customer_profile.sql',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('../../portal/supabase/migrations/202609280002_address_business_tax_intake.sql',import.meta.url),'utf8');
  const schema=JSON.parse(sql.match(/select '(\{"overview".*)'::jsonb/)[1].replaceAll("''","'"));assert.deepEqual(schema,profileSections);
 });
 

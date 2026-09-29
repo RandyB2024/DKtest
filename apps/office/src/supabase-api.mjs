@@ -1,3 +1,4 @@
+import {addressRoute} from './addresses.mjs';
 import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
 import { parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 import { writeOfficeCookie } from './auth/supabase.mjs';
@@ -93,6 +94,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+    const address=await addressRoute(req,url,client,user,config,fetchImpl);
+    if(address)return sendJson(res,address.status,address.data);
     const profile = await profileRoute(req,url,client,user,body);
     if (profile) return sendJson(res,profile.status,profile.data);
     const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);

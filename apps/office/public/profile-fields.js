@@ -1,3 +1,4 @@
+import {extendProfile,validateIntakeFields} from './intake-fields.js';
 // Shared, public field contract. Contains no customer data or secrets.
 const text=(label,max=200)=>({label,type:'text',max});
 const choice=(label,values)=>({label,type:'enum',values});
@@ -16,6 +17,7 @@ export const profileSections={
  agreements:{label:'Afspraken',private:true,fields:{contact_frequency:text('Contactfrequentie',120),meetings_per_year:integer('Gesprekken per jaar',366),preferred_times:text('Voorkeursdagen of dagdelen',1000),reporting:text('Rapportageafspraken',2000),submission_deadline:text('Aanleverdeadline',500),particulars:text('Bijzonderheden',2000)}},
  notes:{label:'Interne notities',private:true,collection:true,fields:{title:{...text('Titel'),required:true},body:{...text('Inhoud',6000),required:true},category:text('Categorie',80),pinned:bool('Vastgepind')}}
 };
+extendProfile(profileSections);
 export function validIban(value){
  const s=value.replace(/\s/g,'').toUpperCase();if(!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(s))return false;
  // NL format is unambiguous; other countries retain the international range.
@@ -44,5 +46,5 @@ export function validateProfile(section,input){
    if(field.type==='currency'){v=v.toUpperCase();if(!/^[A-Z]{3}$/.test(v))throw Error('Gebruik een drieletterige valutacode.');}
    if(field.type==='iban'){v=v.replace(/\s/g,'').toUpperCase();if(!validIban(v))throw Error('Controleer het IBAN.');}
   }out[key]=v;
- }return out;
+ }return validateIntakeFields(section,out);
 }

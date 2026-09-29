@@ -1,3 +1,4 @@
+import {validateProfile} from '../../public/profile-fields.js';
 import {OfficeError} from '../auth/supabase.mjs';
 import {createKvkClient,searchInput,kvkNumber,invalid} from './client.mjs';
 import {normalizeSearch,normalizeBasis} from './normalize.mjs';
@@ -29,11 +30,12 @@ export async function kvkRoute(req,url,client,user,config,readBody,transport){
   if(create&&!user.canManageCustomers)throw new OfficeError(403,'WRITE_DENIED','Uw Office-rol heeft alleen leesrechten.');
   const query=search?searchInput(url.searchParams):null;
   if(!search&&url.search)throw invalid();
-  let number,input;
+  let number,input,intake;
   if(create){
     const body=await readBody(req);
-    if(Object.keys(body).some(k=>!['kvkNumber','manual'].includes(k)))throw invalid();
+    if(Object.keys(body).some(k=>!['kvkNumber','manual','intake'].includes(k)))throw invalid();
     number=kvkNumber(body.kvkNumber);input=manualInput(body.manual);
+    if(body.intake!==undefined){if(!body.intake||typeof body.intake!=='object'||Array.isArray(body.intake)||Object.keys(body.intake).some(k=>!['company','administration','fiscal'].includes(k)))throw invalid();intake={};try{for(const [section,fields] of Object.entries(body.intake))intake[section]=validateProfile(section,fields);}catch{throw invalid();}}
     if(!/^[a-f0-9]{64}$/.test(config.kvk.rpcKey??''))throw new OfficeError(503,'KVK_CONFIGURATION','De KvK-intake is nog niet geconfigureerd.');
   } else if(detail)number=kvkNumber(detail[1]);
   const kvk=createKvkClient(config.kvk,transport);
@@ -42,8 +44,8 @@ export async function kvkRoute(req,url,client,user,config,readBody,transport){
   if(!create)return {status:200,data:{company,checkedAt,environment:config.kvk.mode}};
   if(company.status!=='active')throw new OfficeError(409,'KVK_INACTIVE','Deze onderneming is uitgeschreven of de actieve status is onbekend. Aanmaken is geblokkeerd.');
   // The browser supplies only a number and manual data. Always re-fetch above.
-  const {data,error}=await client.rpc('office_create_relationship_from_kvk',{
-    p_profile:company,p_manual:input,p_environment:config.kvk.mode,p_checked_at:checkedAt,p_server_key:config.kvk.rpcKey,
+  const {data,error}=await client.rpc(intake?'office_create_relationship_from_kvk_intake':'office_create_relationship_from_kvk',{
+    ...(intake?{p_intake:intake}:{}),p_profile:company,p_manual:input,p_environment:config.kvk.mode,p_checked_at:checkedAt,p_server_key:config.kvk.rpcKey,
   });
   if(error){
     if(error.code==='23505')throw new OfficeError(409,'DUPLICATE_KVK','Er bestaat al een actieve onderneming met dit KvK-nummer. Open het bestaande klantdossier.');
