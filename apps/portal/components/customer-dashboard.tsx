@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import type { ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+
 import {
   ArrowRight,
   Building2,
@@ -49,6 +53,20 @@ type MetricCardProps = {
   subtitle: string;
   icon: ReactNode;
   onClick?: () => void;
+  loading?: boolean;
+};
+
+type OpenPositions = {
+  receivables: {
+    totalCents: number;
+    overdueCents: number;
+    count: number;
+  };
+  payables: {
+    totalCents: number;
+    overdueCents: number;
+    count: number;
+  };
 };
 
 const periods: Period[] = [
@@ -66,12 +84,22 @@ const comparisons: Comparison[] = [
   "Vorig jaar",
 ];
 
+const euro = new Intl.NumberFormat("nl-NL", {
+  style: "currency",
+  currency: "EUR",
+});
+
+function money(cents: number) {
+  return euro.format(cents / 100);
+}
+
 function MetricCard({
   title,
   value,
   subtitle,
   icon,
   onClick,
+  loading = false,
 }: MetricCardProps) {
   return (
     <button
@@ -87,7 +115,9 @@ function MetricCard({
         </span>
       </div>
 
-      <strong>{value}</strong>
+      <strong>
+        {loading ? "Laden..." : value}
+      </strong>
 
       <small>{subtitle}</small>
 
@@ -104,13 +134,25 @@ export default function CustomerDashboard({
   organization,
   onGo,
 }: CustomerDashboardProps) {
-  const [period, setPeriod] = useState<Period>("Maand");
+  const [period, setPeriod] =
+    useState<Period>("Maand");
+
   const [comparison, setComparison] =
     useState<Comparison>("Vorig jaar");
 
+  const [openPositions, setOpenPositions] =
+    useState<OpenPositions | null>(null);
+
+  const [financialLoading, setFinancialLoading] =
+    useState(false);
+
+  const [financialError, setFinancialError] =
+    useState("");
+
   const firstName =
-    context.profile.display_name.trim().split(/\s+/)[0] ||
-    "daar";
+    context.profile.display_name
+      .trim()
+      .split(/\s+/)[0] || "daar";
 
   const companyName =
     organization?.name ??
@@ -118,12 +160,78 @@ export default function CustomerDashboard({
       ? "Alle administraties"
       : "Uw administratie");
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadOpenPositions() {
+      if (context.organizationId === "all") {
+        setOpenPositions(null);
+        setFinancialError("");
+        return;
+      }
+
+      setFinancialLoading(true);
+      setFinancialError("");
+
+      try {
+        const response = await fetch(
+          `/api/financial/open-positions?organizationId=${encodeURIComponent(
+            context.organizationId,
+          )}`,
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
+
+        const data = (await response.json()) as
+          | OpenPositions
+          | {
+              error?: string;
+              code?: string;
+            };
+
+        if (!response.ok) {
+          throw new Error(
+            "error" in data && data.error
+              ? data.error
+              : "Financiële gegevens konden niet worden geladen.",
+          );
+        }
+
+        if (!cancelled) {
+          setOpenPositions(data as OpenPositions);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setOpenPositions(null);
+          setFinancialError(
+            error instanceof Error
+              ? error.message
+              : "Financiële gegevens konden niet worden geladen.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setFinancialLoading(false);
+        }
+      }
+    }
+
+    void loadOpenPositions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [context.organizationId]);
+
   function go(view: string, detail?: string) {
     if (detail) {
       sessionStorage.setItem(
         "customer-dashboard-detail",
         JSON.stringify({
-          organizationId: context.organizationId,
+          organizationId:
+            context.organizationId,
           detail,
           period,
           comparison,
@@ -134,6 +242,59 @@ export default function CustomerDashboard({
     onGo?.(view);
   }
 
+  const receivablesValue =
+    context.organizationId === "all"
+      ? "Selecteer onderneming"
+      : openPositions
+        ? money(
+            openPositions.receivables.totalCents,
+          )
+        : "Nog geen gegevens";
+
+  const payablesValue =
+    context.organizationId === "all"
+      ? "Selecteer onderneming"
+      : openPositions
+        ? money(
+            openPositions.payables.totalCents,
+          )
+        : "Nog geen gegevens";
+
+  const receivablesSubtitle =
+    openPositions &&
+    context.organizationId !== "all"
+      ? `${openPositions.receivables.count} openstaand${
+          openPositions.receivables.count === 1
+            ? "e factuur"
+            : "e facturen"
+        }${
+          openPositions.receivables
+            .overdueCents > 0
+            ? ` · ${money(
+                openPositions.receivables
+                  .overdueCents,
+              )} vervallen`
+            : ""
+        }`
+      : "Bedrag dat u nog moet ontvangen";
+
+  const payablesSubtitle =
+    openPositions &&
+    context.organizationId !== "all"
+      ? `${openPositions.payables.count} openstaand${
+          openPositions.payables.count === 1
+            ? "e factuur"
+            : "e facturen"
+        }${
+          openPositions.payables.overdueCents > 0
+            ? ` · ${money(
+                openPositions.payables
+                  .overdueCents,
+              )} vervallen`
+            : ""
+        }`
+      : "Bedrag dat u nog moet betalen";
+
   return (
     <div className="customer-dashboard-v2">
       <section className="customer-dashboard-header">
@@ -142,10 +303,13 @@ export default function CustomerDashboard({
             Overzicht
           </span>
 
-          <h1>Goedemorgen, {firstName}</h1>
+          <h1>
+            Goedemorgen, {firstName}
+          </h1>
 
           <p>
-            In één oogopslag de financiële stand van{" "}
+            In één oogopslag de financiële
+            stand van{" "}
             <strong>{companyName}</strong>.
           </p>
         </div>
@@ -162,6 +326,15 @@ export default function CustomerDashboard({
           </span>
         </div>
       </section>
+
+      {financialError && (
+        <div
+          className="notice"
+          role="alert"
+        >
+          {financialError}
+        </div>
+      )}
 
       <section className="customer-kpi-grid">
         <MetricCard
@@ -186,9 +359,13 @@ export default function CustomerDashboard({
 
         <MetricCard
           title="Debiteuren"
-          value="Nog geen gegevens"
-          subtitle="Bedrag dat u nog moet ontvangen"
+          value={receivablesValue}
+          subtitle={receivablesSubtitle}
           icon={<FileText />}
+          loading={
+            financialLoading &&
+            context.organizationId !== "all"
+          }
           onClick={() =>
             go("Facturen", "debiteuren")
           }
@@ -196,11 +373,15 @@ export default function CustomerDashboard({
 
         <MetricCard
           title="Crediteuren"
-          value="Nog geen gegevens"
-          subtitle="Bedrag dat u nog moet betalen"
+          value={payablesValue}
+          subtitle={payablesSubtitle}
           icon={<Landmark />}
+          loading={
+            financialLoading &&
+            context.organizationId !== "all"
+          }
           onClick={() =>
-            go("Documenten", "crediteuren")
+            go("Crediteuren", "crediteuren")
           }
         />
       </section>
@@ -215,8 +396,9 @@ export default function CustomerDashboard({
             <h2>Hoe staat u ervoor?</h2>
 
             <p>
-              Bekijk omzet, kosten en resultaat over de
-              gewenste periode.
+              Bekijk omzet, kosten en
+              resultaat over de gewenste
+              periode.
             </p>
           </div>
 
@@ -229,7 +411,8 @@ export default function CustomerDashboard({
                   value={period}
                   onChange={(event) =>
                     setPeriod(
-                      event.target.value as Period,
+                      event.target
+                        .value as Period,
                     )
                   }
                 >
@@ -252,15 +435,18 @@ export default function CustomerDashboard({
                   value={comparison}
                   onChange={(event) =>
                     setComparison(
-                      event.target.value as Comparison,
+                      event.target
+                        .value as Comparison,
                     )
                   }
                 >
-                  {comparisons.map((item) => (
-                    <option key={item}>
-                      {item}
-                    </option>
-                  ))}
+                  {comparisons.map(
+                    (item) => (
+                      <option key={item}>
+                        {item}
+                      </option>
+                    ),
+                  )}
                 </select>
 
                 <ChevronDown />
@@ -275,17 +461,22 @@ export default function CustomerDashboard({
           </div>
 
           <strong>
-            Financiële grafiek wordt automatisch gevuld
+            Financiële grafiek wordt
+            automatisch gevuld
           </strong>
 
           <p>
-            Zodra boekingen beschikbaar zijn, ziet u hier
-            omzet, kosten en resultaat per {period.toLowerCase()}.
+            Zodra boekingen beschikbaar
+            zijn, ziet u hier omzet, kosten
+            en resultaat per{" "}
+            {period.toLowerCase()}.
           </p>
 
-          {comparison !== "Geen vergelijking" && (
+          {comparison !==
+            "Geen vergelijking" && (
             <small>
-              Vergelijking: {comparison.toLowerCase()}
+              Vergelijking:{" "}
+              {comparison.toLowerCase()}
             </small>
           )}
         </div>
@@ -326,15 +517,22 @@ export default function CustomerDashboard({
             type="button"
             className="customer-action-row"
             onClick={() =>
-              go("Documenten", "ontbrekende-documenten")
+              go(
+                "Documenten",
+                "ontbrekende-documenten",
+              )
             }
           >
             <strong>0</strong>
 
             <span>
-              <b>Ontbrekende documenten</b>
+              <b>
+                Ontbrekende documenten
+              </b>
+
               <small>
-                Bonnen of facturen die nog nodig zijn
+                Bonnen of facturen die nog
+                nodig zijn
               </small>
             </span>
 
@@ -345,15 +543,20 @@ export default function CustomerDashboard({
             type="button"
             className="customer-action-row"
             onClick={() =>
-              go("Communicatie", "open-vragen")
+              go(
+                "Communicatie",
+                "open-vragen",
+              )
             }
           >
             <strong>0</strong>
 
             <span>
               <b>Open vragen</b>
+
               <small>
-                Vragen waarop nog antwoord nodig is
+                Vragen waarop nog antwoord
+                nodig is
               </small>
             </span>
 
@@ -364,15 +567,20 @@ export default function CustomerDashboard({
             type="button"
             className="customer-action-row"
             onClick={() =>
-              go("Aangiften", "aangifte-acties")
+              go(
+                "Aangiften",
+                "aangifte-acties",
+              )
             }
           >
             <strong>0</strong>
 
             <span>
               <b>Aangiften</b>
+
               <small>
-                Aangiften die controle of akkoord nodig hebben
+                Aangiften die controle of
+                akkoord nodig hebben
               </small>
             </span>
 
@@ -407,7 +615,10 @@ export default function CustomerDashboard({
             type="button"
             className="customer-text-link"
             onClick={() =>
-              go("Notificaties", "alle-acties")
+              go(
+                "Notificaties",
+                "alle-acties",
+              )
             }
           >
             Bekijk alle acties
@@ -436,8 +647,10 @@ export default function CustomerDashboard({
 
             <div>
               <dt>KvK-nummer</dt>
+
               <dd>
-                {organization?.registration_number ||
+                {organization
+                  ?.registration_number ||
                   "Nog niet ingevuld"}
               </dd>
             </div>
@@ -449,6 +662,7 @@ export default function CustomerDashboard({
 
             <div>
               <dt>Beveiliging</dt>
+
               <dd>
                 {context.aal2
                   ? "2FA actief"
@@ -467,7 +681,9 @@ export default function CustomerDashboard({
                 Geldstromen
               </span>
 
-              <h2>Openstaande posten</h2>
+              <h2>
+                Openstaande posten
+              </h2>
             </div>
 
             <ReceiptText />
@@ -477,13 +693,30 @@ export default function CustomerDashboard({
             <button
               type="button"
               onClick={() =>
-                go("Facturen", "debiteuren")
+                go(
+                  "Facturen",
+                  "debiteuren",
+                )
               }
             >
               <span>Te ontvangen</span>
-              <strong>Nog geen gegevens</strong>
+
+              <strong>
+                {financialLoading
+                  ? "Laden..."
+                  : receivablesValue}
+              </strong>
+
               <small>
-                Bekijk van wie u nog geld krijgt
+                {openPositions
+                  ? `${openPositions.receivables.count} openstaande factuur${
+                      openPositions
+                        .receivables
+                        .count === 1
+                        ? ""
+                        : "en"
+                    }`
+                  : "Bekijk van wie u nog geld krijgt"}
               </small>
 
               <b>
@@ -495,13 +728,30 @@ export default function CustomerDashboard({
             <button
               type="button"
               onClick={() =>
-                go("Documenten", "crediteuren")
+                go(
+                  "Documenten",
+                  "crediteuren",
+                )
               }
             >
               <span>Te betalen</span>
-              <strong>Nog geen gegevens</strong>
+
+              <strong>
+                {financialLoading
+                  ? "Laden..."
+                  : payablesValue}
+              </strong>
+
               <small>
-                Bekijk aan wie u nog moet betalen
+                {openPositions
+                  ? `${openPositions.payables.count} openstaande factuur${
+                      openPositions
+                        .payables
+                        .count === 1
+                        ? ""
+                        : "en"
+                    }`
+                  : "Bekijk aan wie u nog moet betalen"}
               </small>
 
               <b>
@@ -527,52 +777,85 @@ export default function CustomerDashboard({
             <button
               type="button"
               onClick={() =>
-                go("Documenten", "upload")
+                go(
+                  "Documenten",
+                  "upload",
+                )
               }
             >
               <Upload />
+
               <span>
-                <b>Document uploaden</b>
-                <small>Bon of factuur toevoegen</small>
+                <b>
+                  Document uploaden
+                </b>
+
+                <small>
+                  Bon of factuur toevoegen
+                </small>
               </span>
             </button>
 
             <button
               type="button"
               onClick={() =>
-                go("Communicatie", "nieuwe-vraag")
+                go(
+                  "Communicatie",
+                  "nieuwe-vraag",
+                )
               }
             >
               <MessageSquare />
+
               <span>
                 <b>Vraag stellen</b>
-                <small>Contact met uw administratie</small>
+
+                <small>
+                  Contact met uw
+                  administratie
+                </small>
               </span>
             </button>
 
             <button
               type="button"
               onClick={() =>
-                go("Facturen", "nieuwe-factuur")
+                go(
+                  "Facturen",
+                  "nieuwe-factuur",
+                )
               }
             >
               <ReceiptText />
+
               <span>
                 <b>Factuur maken</b>
-                <small>Nieuwe verkoopfactuur</small>
+
+                <small>
+                  Nieuwe verkoopfactuur
+                </small>
               </span>
             </button>
 
             <button
               type="button"
               onClick={() =>
-                go("Rapportages", "rapport")
+                go(
+                  "Rapportages",
+                  "rapport",
+                )
               }
             >
               <ChartNoAxesCombined />
+
               <span>
-                <b>Rapport bekijken</b>
-                <small>Financiële stand bekijken</small>
+                <b>
+                  Rapport bekijken
+                </b>
+
+                <small>
+                  Financiële stand bekijken
+                </small>
               </span>
             </button>
           </div>
@@ -587,7 +870,8 @@ export default function CustomerDashboard({
 
         <span>
           <CheckCircle2 />
-          Realtime zodra gegevens gekoppeld zijn
+          Financiële gegevens uit de
+          administratie
         </span>
 
         <span>

@@ -13,6 +13,7 @@ import "./workflows.css";
 import "./financial-dashboard.css";
 import "./compact-dashboard.css";
 import "./customer-dashboard.css";
+import "./financial-lists.css";
 
 import ServiceWorker from "@/components/service-worker";
 
