@@ -29,6 +29,7 @@ import Logout from "./logout";
 import PasskeySettings from "./passkey-settings";
 import PayablesView from "./payables-view";
 import ReceivablesView from "./receivables-view";
+import DocumentsView from "./documents-view";
 
 const nav = [
   ["Dashboard", LayoutDashboard],
@@ -220,7 +221,15 @@ export default function Portal({
         />
       );
     }
-
+if (view === "Documenten") {
+  return (
+    <DocumentsView
+      context={context}
+      organization={organization}
+      onGo={setView}
+    />
+  );
+}
     if (
       view === "Factuurdetail"
     ) {

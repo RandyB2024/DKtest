@@ -74,6 +74,13 @@ type OpenPositions = {
   };
 };
 
+type DocumentsResponse = {
+  items: Array<{
+    id: string;
+    status: string;
+  }>;
+};
+
 type BankTransaction = {
   id: string;
 
@@ -322,6 +329,18 @@ export default function CustomerDashboard({
     useState<PeriodSeries | null>(
       null,
     );
+
+  const [
+    documentInboxCount,
+    setDocumentInboxCount,
+  ] =
+    useState(0);
+
+  const [
+    documentsLoading,
+    setDocumentsLoading,
+  ] =
+    useState(false);
 
   const [
     financialLoading,
@@ -699,6 +718,80 @@ export default function CustomerDashboard({
   }, [
     context.organizationId,
     period,
+  ]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDocumentInbox() {
+      if (
+        context.organizationId ===
+        "all"
+      ) {
+        setDocumentInboxCount(0);
+        setDocumentsLoading(false);
+        return;
+      }
+
+      setDocumentsLoading(true);
+
+      try {
+        const response =
+          await fetch(
+            `/api/documents?organizationId=${encodeURIComponent(
+              context.organizationId,
+            )}&scope=inbox`,
+            {
+              method: "GET",
+              cache: "no-store",
+            },
+          );
+
+        const data =
+          (await response.json()) as
+            | DocumentsResponse
+            | {
+                error?: string;
+              };
+
+        if (!response.ok) {
+          throw new Error(
+            "error" in data &&
+              data.error
+              ? data.error
+              : "Documenten konden niet worden geladen.",
+          );
+        }
+
+        if (!cancelled) {
+          setDocumentInboxCount(
+            (data as DocumentsResponse)
+              .items.length,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Document inbox count failed",
+          error,
+        );
+
+        if (!cancelled) {
+          setDocumentInboxCount(0);
+        }
+      } finally {
+        if (!cancelled) {
+          setDocumentsLoading(false);
+        }
+      }
+    }
+
+    void loadDocumentInbox();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    context.organizationId,
   ]);
 
   function go(
@@ -1169,21 +1262,31 @@ export default function CustomerDashboard({
             onClick={() =>
               go(
                 "Documenten",
-                "ontbrekende-documenten",
+                "inbox",
               )
             }
           >
-            <strong>0</strong>
+            <strong>
+              {documentsLoading
+                ? "…"
+                : documentInboxCount}
+            </strong>
 
             <span>
               <b>
-                Ontbrekende
-                documenten
+                {documentInboxCount === 1
+                  ? "Document in inbox"
+                  : "Documenten in inbox"}
               </b>
 
               <small>
-                Bonnen of facturen
-                die nog nodig zijn
+                {documentsLoading
+                  ? "Documenten worden gecontroleerd"
+                  : documentInboxCount === 0
+                    ? "Geen onverwerkte documenten"
+                    : documentInboxCount === 1
+                      ? "1 document is nog niet verwerkt"
+                      : `${documentInboxCount} documenten zijn nog niet verwerkt`}
               </small>
             </span>
 

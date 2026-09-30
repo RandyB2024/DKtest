@@ -782,3 +782,39 @@
   color: #142a47;
   font-weight: 700;
 }
+.financial-chart {
+  display: grid;
+  gap: 18px;
+}
+
+.financial-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.financial-chart-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.financial-chart-pill {
+  padding: 12px 14px;
+  border: 1px solid #e3e8ef;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfd 100%);
+  display: grid;
+  gap: 4px;
+}
+
+.financial-chart-pill strong {
+  color: #122a47;
+  font-size: 13px;
+}
+
+.financial-chart-pill small {
+  color: #718398;
+  font-size: 12px;
+  line-height: 1.4;
+}
