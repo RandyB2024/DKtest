@@ -25,6 +25,8 @@ import {
   WalletCards,
 } from "lucide-react";
 
+import FinancialChart from "@/components/financial-chart";
+
 import type {
   PortalContext,
   PortalOrganization,
@@ -135,6 +137,28 @@ type PeriodSummary = {
 
   salesInvoiceCount: number;
   purchaseInvoiceCount: number;
+};
+
+type PeriodSeries = {
+  period:
+    | "day"
+    | "week"
+    | "month"
+    | "quarter"
+    | "halfyear"
+    | "year";
+
+  startDate: string;
+  endDate: string;
+
+  buckets: Array<{
+    index: number;
+    startDate: string;
+    endDate: string;
+    revenueCents: number;
+    costsCents: number;
+    resultCents: number;
+  }>;
 };
 
 const periods: Period[] = [
@@ -292,6 +316,14 @@ export default function CustomerDashboard({
     );
 
   const [
+    periodSeries,
+    setPeriodSeries,
+  ] =
+    useState<PeriodSeries | null>(
+      null,
+    );
+
+  const [
     financialLoading,
     setFinancialLoading,
   ] =
@@ -310,6 +342,12 @@ export default function CustomerDashboard({
     useState(false);
 
   const [
+    periodSeriesLoading,
+    setPeriodSeriesLoading,
+  ] =
+    useState(false);
+
+  const [
     financialError,
     setFinancialError,
   ] =
@@ -324,6 +362,12 @@ export default function CustomerDashboard({
   const [
     periodSummaryError,
     setPeriodSummaryError,
+  ] =
+    useState("");
+
+  const [
+    periodSeriesError,
+    setPeriodSeriesError,
   ] =
     useState("");
 
@@ -577,6 +621,86 @@ export default function CustomerDashboard({
     period,
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPeriodSeries() {
+      if (
+        context.organizationId ===
+        "all"
+      ) {
+        setPeriodSeries(null);
+        setPeriodSeriesError("");
+        return;
+      }
+
+      setPeriodSeriesLoading(true);
+      setPeriodSeriesError("");
+
+      try {
+        const response =
+          await fetch(
+            `/api/financial/period-series?organizationId=${encodeURIComponent(
+              context.organizationId,
+            )}&period=${encodeURIComponent(
+              periodApiValue[period],
+            )}`,
+            {
+              method: "GET",
+              cache: "no-store",
+            },
+          );
+
+        const data =
+          (await response.json()) as
+            | PeriodSeries
+            | {
+                error?: string;
+              };
+
+        if (!response.ok) {
+          throw new Error(
+            "error" in data &&
+              data.error
+              ? data.error
+              : "Grafiekgegevens konden niet worden geladen.",
+          );
+        }
+
+        if (!cancelled) {
+          setPeriodSeries(
+            data as PeriodSeries,
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPeriodSeries(null);
+
+          setPeriodSeriesError(
+            error instanceof Error
+              ? error.message
+              : "Grafiekgegevens konden niet worden geladen.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setPeriodSeriesLoading(
+            false,
+          );
+        }
+      }
+    }
+
+    void loadPeriodSeries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    context.organizationId,
+    period,
+  ]);
+
   function go(
     view: string,
     detail?: string,
@@ -791,6 +915,15 @@ export default function CustomerDashboard({
         </div>
       )}
 
+      {periodSeriesError && (
+        <div
+          className="notice"
+          role="alert"
+        >
+          {periodSeriesError}
+        </div>
+      )}
+
       <section className="customer-kpi-grid">
         <MetricCard
           title="Omzet"
@@ -959,63 +1092,60 @@ export default function CustomerDashboard({
           </div>
         </div>
 
-        <div className="customer-chart-empty">
-          <div className="customer-chart-icon">
-            <ChartNoAxesCombined />
+        {periodSeriesError ? (
+          <div className="customer-chart-empty">
+            <div className="customer-chart-icon">
+              <ChartNoAxesCombined />
+            </div>
+
+            <strong>
+              Grafiek kon niet worden geladen
+            </strong>
+
+            <p>{periodSeriesError}</p>
           </div>
+        ) : periodSeriesLoading ? (
+          <div className="customer-chart-empty">
+            <div className="customer-chart-icon">
+              <ChartNoAxesCombined />
+            </div>
 
-          <strong>
-            {periodSummaryLoading
-              ? "Periodecijfers worden geladen..."
-              : `Financieel overzicht · ${period}`}
-          </strong>
+            <strong>
+              Grafiek wordt geladen...
+            </strong>
 
-          {periodSummary ? (
             <p>
-              Omzet {revenueValue} ·
-              Kosten {costsValue} ·
-              Resultaat {resultValue}
-              <br />
-              {periodRange}
-            </p>
-          ) : (
-            <p>
-              Zodra boekingen
-              beschikbaar zijn, ziet u
-              hier omzet, kosten en
-              resultaat per{" "}
+              Financiële ontwikkeling wordt
+              opgebouwd voor{" "}
               {period.toLowerCase()}.
             </p>
-          )}
+          </div>
+        ) : periodSeries &&
+          periodSeries.buckets.length > 0 ? (
+          <FinancialChart
+            buckets={
+              periodSeries.buckets
+            }
+          />
+        ) : (
+          <div className="customer-chart-empty">
+            <div className="customer-chart-icon">
+              <ChartNoAxesCombined />
+            </div>
 
-          {comparison !==
-            "Geen vergelijking" && (
-            <small>
-              Vergelijking:{" "}
-              {comparison.toLowerCase()}{" "}
-              (vergelijkingscijfers volgen
-              in de volgende rapportagestap)
-            </small>
-          )}
-        </div>
+            <strong>
+              Nog geen grafiekgegevens
+            </strong>
 
-        <div className="customer-chart-legend">
-          <span>
-            <i className="revenue" />
-            Omzet
-          </span>
+            <p>
+              Zodra er facturen in deze
+              periode zijn, wordt de grafiek
+              automatisch gevuld.
+            </p>
+          </div>
+        )}
 
-          <span>
-            <i className="costs" />
-            Kosten
-          </span>
-
-          <span>
-            <i className="result" />
-            Resultaat
-          </span>
-        </div>
-      </section>
+              </section>
 
       <section className="customer-dashboard-middle">
         <article className="customer-dashboard-card attention">
