@@ -29,6 +29,152 @@ async function entity(client, table, id, fields) {
 const orgFields = 'id,customer_relationship_id,name,legal_name,registration_number,archived_at';
 const relationshipFields = 'id,name,status,archived_at';
 
+const documentReadFields = [
+  'id',
+  'organization_id',
+  'filename',
+  'mime_type',
+  'size_bytes',
+  'source',
+  'status',
+  'document_type',
+  'book_year',
+  'book_month',
+  'visible_to_customer',
+  'customer_action_required',
+  'acknowledgement_required',
+  'processed_at',
+  'created_at',
+  'updated_at',
+  'archived_at',
+].join(',');
+
+async function documentsReadRoute(req, url, client) {
+  const path = url.pathname;
+
+  if (req.method === 'GET' && path === '/api/documents') {
+    const organizationIds = url.searchParams.getAll('organizationId');
+
+    if (organizationIds.length !== 1) {
+      throw new OfficeError(
+        400,
+        'ORGANIZATION_REQUIRED',
+        'Kies ??n onderneming.'
+      );
+    }
+
+    const organizationId = organizationIds[0];
+
+    await entity(
+      client,
+      'organizations',
+      organizationId,
+      orgFields
+    );
+
+    const documents = checkQuery(
+      await client
+        .from('documents')
+        .select(documentReadFields)
+        .eq('organization_id', organizationId)
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
+        .limit(250)
+    );
+
+    return {
+      status: 200,
+      data: {
+        organizationId,
+        documents,
+      },
+    };
+  }
+
+  const download =
+    path.match(/^\/api\/documents\/([^/]+)\/download$/);
+
+  if (req.method === 'GET' && download) {
+    const organizationIds =
+      url.searchParams.getAll('organizationId');
+
+    if (organizationIds.length !== 1) {
+      throw new OfficeError(
+        400,
+        'ORGANIZATION_REQUIRED',
+        'Kies ??n onderneming.'
+      );
+    }
+
+    const organizationId =
+      organizationIds[0];
+
+    const documentId =
+      decodeURIComponent(download[1]);
+
+    if (!uuid.test(documentId)) {
+      throw new OfficeError(
+        400,
+        'INVALID_DOCUMENT',
+        'Ongeldig document.'
+      );
+    }
+
+    await entity(
+      client,
+      'organizations',
+      organizationId,
+      orgFields
+    );
+
+    const document = checkQuery(
+      await client
+        .from('documents')
+        .select('id,organization_id,storage_path,filename')
+        .eq('id', documentId)
+        .eq('organization_id', organizationId)
+        .maybeSingle()
+    );
+
+    if (!document) {
+      throw new OfficeError(
+        404,
+        'DOCUMENT_NOT_FOUND',
+        'Document niet gevonden.'
+      );
+    }
+
+    const {
+      data,
+      error,
+    } = await client.storage
+      .from('documents')
+      .createSignedUrl(
+        document.storage_path,
+        60
+      );
+
+    if (error || !data?.signedUrl) {
+      throw new OfficeError(
+        503,
+        'DOCUMENT_DOWNLOAD_FAILED',
+        'Het document kon niet veilig worden geopend.'
+      );
+    }
+
+    return {
+      status: 200,
+      data: {
+        url: data.signedUrl,
+        filename: document.filename,
+      },
+    };
+  }
+
+  return null;
+}
+
+
 export async function handleOfficeApi(req, res, config, fetchImpl) {
   try {
     const url = new URL(req.url, config.origin), path = url.pathname;
@@ -95,6 +241,10 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+
+    const documents = await documentsReadRoute(req, url, client);
+    if (documents) return sendJson(res, documents.status, documents.data);
+
     const tasks=await tasksRoute(req,url,client,user,body);
     if(tasks)return sendJson(res,tasks.status,tasks.data);
     const address=await addressRoute(req,url,client,user,config,fetchImpl);
