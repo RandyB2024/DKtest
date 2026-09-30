@@ -108,9 +108,14 @@ async function renderRoute() {
       html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
     } else if (path === '/documents') {
       header('Documenten');
-      const data = await api('/api/clients');
-      recordData = data;
-      html = '<div id="office-documents"></div>';
+      html = `
+        <section class="panel">
+          <p class="eyebrow">Destination Known Office</p>
+          <h2>Documenten</h2>
+          <p>De nieuwe documentenmodule is actief.</p>
+          <p class="muted">Stap 1 ? basispagina zonder databasekoppeling.</p>
+        </section>
+      `;
     } else if (path === '/settings') {
       header('Instellingen');html='<section class="panel" id="passkey-settings"></section>';
     } else {
@@ -122,9 +127,6 @@ async function renderRoute() {
       if(path==='/clients'||path==='/dashboard'){
         const {mountClientWorkspace}=await import('/client-workspace.js');
         if(activeGeneration===generation&&currentUser)mountClientWorkspace($('#client-workspace'),recordData,{canCreate:currentUser.canManageCustomers,onCreate:()=>customerForm('new')});
-      }else if(path==='/documents'){
-        const {mountOfficeDocuments}=await import('/office-documents.js');
-        if(activeGeneration===generation&&currentUser)mountOfficeDocuments($('#office-documents'),api,recordData);
       }else customerControls(path, recordData);
       if(path==='/dashboard'){const {mountTasks}=await import('/tasks.js');if(activeGeneration===generation&&currentUser)await Promise.all([mountTasks($('#tasks-today'),api,{bucket:'today'}),mountTasks($('#tasks-overdue'),api,{bucket:'overdue'})]);}
       if(recordData?.relationship || recordData?.organization){
