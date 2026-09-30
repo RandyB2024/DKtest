@@ -16,10 +16,12 @@ import {
   MessagesSquare,
   Settings,
   Umbrella,
+  WalletCards,
 } from "lucide-react";
 
 import type { PortalContext } from "@/lib/portal-access";
 
+import BankingView from "./banking-view";
 import CustomerDashboard from "./customer-dashboard";
 import InstallApp from "./install-app";
 import InvoiceDetailView from "./invoice-detail-view";
@@ -30,6 +32,7 @@ import ReceivablesView from "./receivables-view";
 
 const nav = [
   ["Dashboard", LayoutDashboard],
+  ["Bankieren", WalletCards],
   ["Facturen", FileText],
   ["Crediteuren", Landmark],
   ["Documenten", FolderOpen],
@@ -173,6 +176,18 @@ export default function Portal({
     if (view === "Dashboard") {
       return (
         <CustomerDashboard
+          context={context}
+          organization={
+            organization
+          }
+          onGo={setView}
+        />
+      );
+    }
+
+    if (view === "Bankieren") {
+      return (
+        <BankingView
           context={context}
           organization={
             organization

@@ -2,19 +2,21 @@
 
 import {
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
 
 import {
+  ArrowDownLeft,
   ArrowRight,
+  ArrowUpRight,
   Building2,
   CalendarDays,
   ChartNoAxesCombined,
   CheckCircle2,
   ChevronDown,
   CircleAlert,
-  Clock3,
   FileText,
   Landmark,
   MessageSquare,
@@ -62,10 +64,56 @@ type OpenPositions = {
     overdueCents: number;
     count: number;
   };
+
   payables: {
     totalCents: number;
     overdueCents: number;
     count: number;
+  };
+};
+
+type BankTransaction = {
+  id: string;
+
+  bankAccount: {
+    id: string;
+    name: string;
+    iban: string | null;
+  };
+
+  bookedAt: string;
+  valueDate: string | null;
+
+  amountCents: number;
+  currency: string;
+
+  counterpartyName: string | null;
+  counterpartyIban: string | null;
+
+  description: string | null;
+  reference: string | null;
+
+  reconciliationStatus: string;
+  paymentId: string | null;
+};
+
+type BankResponse = {
+  accounts: Array<{
+    id: string;
+    accountName: string;
+    iban: string | null;
+    status: string;
+  }>;
+
+  transactions: {
+    summary: {
+      count: number;
+      unmatchedCount: number;
+      suggestedCount: number;
+      matchedCount: number;
+    };
+
+    items: BankTransaction[];
   };
 };
 
@@ -84,10 +132,22 @@ const comparisons: Comparison[] = [
   "Vorig jaar",
 ];
 
-const euro = new Intl.NumberFormat("nl-NL", {
-  style: "currency",
-  currency: "EUR",
-});
+const euro = new Intl.NumberFormat(
+  "nl-NL",
+  {
+    style: "currency",
+    currency: "EUR",
+  },
+);
+
+const shortDate =
+  new Intl.DateTimeFormat(
+    "nl-NL",
+    {
+      day: "2-digit",
+      month: "2-digit",
+    },
+  );
 
 function money(cents: number) {
   return euro.format(cents / 100);
@@ -116,17 +176,37 @@ function MetricCard({
       </div>
 
       <strong>
-        {loading ? "Laden..." : value}
+        {loading
+          ? "Laden..."
+          : value}
       </strong>
 
       <small>{subtitle}</small>
 
       <div className="customer-kpi-bottom">
-        <span>Bekijk details</span>
+        <span>
+          Bekijk details
+        </span>
+
         <ArrowRight />
       </div>
     </button>
   );
+}
+
+function getQuarter() {
+  const now = new Date();
+
+  const quarter =
+    Math.floor(
+      now.getMonth() / 3,
+    ) + 1;
+
+  return {
+    quarter,
+    year: now.getFullYear(),
+    label: `Q${quarter} ${now.getFullYear()}`,
+  };
 }
 
 export default function CustomerDashboard({
@@ -137,34 +217,81 @@ export default function CustomerDashboard({
   const [period, setPeriod] =
     useState<Period>("Maand");
 
-  const [comparison, setComparison] =
-    useState<Comparison>("Vorig jaar");
+  const [
+    comparison,
+    setComparison,
+  ] =
+    useState<Comparison>(
+      "Vorig jaar",
+    );
 
-  const [openPositions, setOpenPositions] =
-    useState<OpenPositions | null>(null);
+  const [
+    openPositions,
+    setOpenPositions,
+  ] =
+    useState<OpenPositions | null>(
+      null,
+    );
 
-  const [financialLoading, setFinancialLoading] =
+  const [
+    bankData,
+    setBankData,
+  ] =
+    useState<BankResponse | null>(
+      null,
+    );
+
+  const [
+    financialLoading,
+    setFinancialLoading,
+  ] =
     useState(false);
 
-  const [financialError, setFinancialError] =
+  const [
+    bankLoading,
+    setBankLoading,
+  ] =
+    useState(false);
+
+  const [
+    financialError,
+    setFinancialError,
+  ] =
+    useState("");
+
+  const [
+    bankError,
+    setBankError,
+  ] =
     useState("");
 
   const firstName =
     context.profile.display_name
       .trim()
-      .split(/\s+/)[0] || "daar";
+      .split(/\s+/)[0] ||
+    "daar";
 
   const companyName =
     organization?.name ??
-    (context.organizationId === "all"
+    (context.organizationId ===
+    "all"
       ? "Alle administraties"
       : "Uw administratie");
+
+  const quarter =
+    useMemo(
+      () => getQuarter(),
+      [],
+    );
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadOpenPositions() {
-      if (context.organizationId === "all") {
+      if (
+        context.organizationId ===
+        "all"
+      ) {
         setOpenPositions(null);
         setFinancialError("");
         return;
@@ -174,37 +301,42 @@ export default function CustomerDashboard({
       setFinancialError("");
 
       try {
-        const response = await fetch(
-          `/api/financial/open-positions?organizationId=${encodeURIComponent(
-            context.organizationId,
-          )}`,
-          {
-            method: "GET",
-            cache: "no-store",
-          },
-        );
+        const response =
+          await fetch(
+            `/api/financial/open-positions?organizationId=${encodeURIComponent(
+              context.organizationId,
+            )}`,
+            {
+              method: "GET",
+              cache: "no-store",
+            },
+          );
 
-        const data = (await response.json()) as
-          | OpenPositions
-          | {
-              error?: string;
-              code?: string;
-            };
+        const data =
+          (await response.json()) as
+            | OpenPositions
+            | {
+                error?: string;
+              };
 
         if (!response.ok) {
           throw new Error(
-            "error" in data && data.error
+            "error" in data &&
+              data.error
               ? data.error
               : "Financiële gegevens konden niet worden geladen.",
           );
         }
 
         if (!cancelled) {
-          setOpenPositions(data as OpenPositions);
+          setOpenPositions(
+            data as OpenPositions,
+          );
         }
       } catch (error) {
         if (!cancelled) {
           setOpenPositions(null);
+
           setFinancialError(
             error instanceof Error
               ? error.message
@@ -213,7 +345,9 @@ export default function CustomerDashboard({
         }
       } finally {
         if (!cancelled) {
-          setFinancialLoading(false);
+          setFinancialLoading(
+            false,
+          );
         }
       }
     }
@@ -223,9 +357,88 @@ export default function CustomerDashboard({
     return () => {
       cancelled = true;
     };
-  }, [context.organizationId]);
+  }, [
+    context.organizationId,
+  ]);
 
-  function go(view: string, detail?: string) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBank() {
+      if (
+        context.organizationId ===
+        "all"
+      ) {
+        setBankData(null);
+        setBankError("");
+        return;
+      }
+
+      setBankLoading(true);
+      setBankError("");
+
+      try {
+        const response =
+          await fetch(
+            `/api/financial/bank?organizationId=${encodeURIComponent(
+              context.organizationId,
+            )}`,
+            {
+              cache: "no-store",
+            },
+          );
+
+        const data =
+          (await response.json()) as
+            | BankResponse
+            | {
+                error?: string;
+              };
+
+        if (!response.ok) {
+          throw new Error(
+            "error" in data &&
+              data.error
+              ? data.error
+              : "Bankgegevens konden niet worden geladen.",
+          );
+        }
+
+        if (!cancelled) {
+          setBankData(
+            data as BankResponse,
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setBankData(null);
+
+          setBankError(
+            error instanceof Error
+              ? error.message
+              : "Bankgegevens konden niet worden geladen.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setBankLoading(false);
+        }
+      }
+    }
+
+    void loadBank();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    context.organizationId,
+  ]);
+
+  function go(
+    view: string,
+    detail?: string,
+  ) {
     if (detail) {
       sessionStorage.setItem(
         "customer-dashboard-detail",
@@ -243,35 +456,46 @@ export default function CustomerDashboard({
   }
 
   const receivablesValue =
-    context.organizationId === "all"
+    context.organizationId ===
+    "all"
       ? "Selecteer onderneming"
       : openPositions
         ? money(
-            openPositions.receivables.totalCents,
+            openPositions
+              .receivables
+              .totalCents,
           )
         : "Nog geen gegevens";
 
   const payablesValue =
-    context.organizationId === "all"
+    context.organizationId ===
+    "all"
       ? "Selecteer onderneming"
       : openPositions
         ? money(
-            openPositions.payables.totalCents,
+            openPositions
+              .payables
+              .totalCents,
           )
         : "Nog geen gegevens";
 
   const receivablesSubtitle =
     openPositions &&
-    context.organizationId !== "all"
+    context.organizationId !==
+      "all"
       ? `${openPositions.receivables.count} openstaand${
-          openPositions.receivables.count === 1
+          openPositions
+            .receivables.count ===
+          1
             ? "e factuur"
             : "e facturen"
         }${
-          openPositions.receivables
+          openPositions
+            .receivables
             .overdueCents > 0
             ? ` · ${money(
-                openPositions.receivables
+                openPositions
+                  .receivables
                   .overdueCents,
               )} vervallen`
             : ""
@@ -280,20 +504,30 @@ export default function CustomerDashboard({
 
   const payablesSubtitle =
     openPositions &&
-    context.organizationId !== "all"
+    context.organizationId !==
+      "all"
       ? `${openPositions.payables.count} openstaand${
-          openPositions.payables.count === 1
+          openPositions
+            .payables.count === 1
             ? "e factuur"
             : "e facturen"
         }${
-          openPositions.payables.overdueCents > 0
+          openPositions.payables
+            .overdueCents > 0
             ? ` · ${money(
-                openPositions.payables
+                openPositions
+                  .payables
                   .overdueCents,
               )} vervallen`
             : ""
         }`
       : "Bedrag dat u nog moet betalen";
+
+  const recentBankTransactions =
+    bankData?.transactions.items.slice(
+      0,
+      4,
+    ) ?? [];
 
   return (
     <div className="customer-dashboard-v2">
@@ -308,9 +542,12 @@ export default function CustomerDashboard({
           </h1>
 
           <p>
-            In één oogopslag de financiële
-            stand van{" "}
-            <strong>{companyName}</strong>.
+            In één oogopslag de
+            financiële stand van{" "}
+            <strong>
+              {companyName}
+            </strong>
+            .
           </p>
         </div>
 
@@ -336,6 +573,15 @@ export default function CustomerDashboard({
         </div>
       )}
 
+      {bankError && (
+        <div
+          className="notice"
+          role="alert"
+        >
+          {bankError}
+        </div>
+      )}
+
       <section className="customer-kpi-grid">
         <MetricCard
           title="Omzet"
@@ -343,7 +589,10 @@ export default function CustomerDashboard({
           subtitle="Omzet binnen de geselecteerde periode"
           icon={<ReceiptText />}
           onClick={() =>
-            go("Rapportages", "omzet")
+            go(
+              "Rapportages",
+              "omzet",
+            )
           }
         />
 
@@ -353,35 +602,54 @@ export default function CustomerDashboard({
           subtitle="Omzet minus verwerkte kosten"
           icon={<WalletCards />}
           onClick={() =>
-            go("Rapportages", "resultaat")
+            go(
+              "Rapportages",
+              "resultaat",
+            )
           }
         />
 
         <MetricCard
           title="Debiteuren"
-          value={receivablesValue}
-          subtitle={receivablesSubtitle}
+          value={
+            receivablesValue
+          }
+          subtitle={
+            receivablesSubtitle
+          }
           icon={<FileText />}
           loading={
             financialLoading &&
-            context.organizationId !== "all"
+            context.organizationId !==
+              "all"
           }
           onClick={() =>
-            go("Facturen", "debiteuren")
+            go(
+              "Facturen",
+              "debiteuren",
+            )
           }
         />
 
         <MetricCard
           title="Crediteuren"
-          value={payablesValue}
-          subtitle={payablesSubtitle}
+          value={
+            payablesValue
+          }
+          subtitle={
+            payablesSubtitle
+          }
           icon={<Landmark />}
           loading={
             financialLoading &&
-            context.organizationId !== "all"
+            context.organizationId !==
+              "all"
           }
           onClick={() =>
-            go("Crediteuren", "crediteuren")
+            go(
+              "Crediteuren",
+              "crediteuren",
+            )
           }
         />
       </section>
@@ -390,15 +658,18 @@ export default function CustomerDashboard({
         <div className="customer-chart-heading">
           <div>
             <span className="customer-section-label">
-              Financiële ontwikkeling
+              Financiële
+              ontwikkeling
             </span>
 
-            <h2>Hoe staat u ervoor?</h2>
+            <h2>
+              Hoe staat u ervoor?
+            </h2>
 
             <p>
               Bekijk omzet, kosten en
-              resultaat over de gewenste
-              periode.
+              resultaat over de
+              gewenste periode.
             </p>
           </div>
 
@@ -409,18 +680,24 @@ export default function CustomerDashboard({
               <div>
                 <select
                   value={period}
-                  onChange={(event) =>
+                  onChange={(
+                    event,
+                  ) =>
                     setPeriod(
                       event.target
                         .value as Period,
                     )
                   }
                 >
-                  {periods.map((item) => (
-                    <option key={item}>
-                      {item}
-                    </option>
-                  ))}
+                  {periods.map(
+                    (item) => (
+                      <option
+                        key={item}
+                      >
+                        {item}
+                      </option>
+                    ),
+                  )}
                 </select>
 
                 <ChevronDown />
@@ -428,12 +705,18 @@ export default function CustomerDashboard({
             </label>
 
             <label>
-              <span>Vergelijken met</span>
+              <span>
+                Vergelijken met
+              </span>
 
               <div>
                 <select
-                  value={comparison}
-                  onChange={(event) =>
+                  value={
+                    comparison
+                  }
+                  onChange={(
+                    event,
+                  ) =>
                     setComparison(
                       event.target
                         .value as Comparison,
@@ -442,7 +725,9 @@ export default function CustomerDashboard({
                 >
                   {comparisons.map(
                     (item) => (
-                      <option key={item}>
+                      <option
+                        key={item}
+                      >
                         {item}
                       </option>
                     ),
@@ -466,9 +751,10 @@ export default function CustomerDashboard({
           </strong>
 
           <p>
-            Zodra boekingen beschikbaar
-            zijn, ziet u hier omzet, kosten
-            en resultaat per{" "}
+            Zodra boekingen
+            beschikbaar zijn, ziet u
+            hier omzet, kosten en
+            resultaat per{" "}
             {period.toLowerCase()}.
           </p>
 
@@ -507,7 +793,9 @@ export default function CustomerDashboard({
                 Prioriteit
               </span>
 
-              <h2>Aandacht nodig</h2>
+              <h2>
+                Aandacht nodig
+              </h2>
             </div>
 
             <CircleAlert />
@@ -527,12 +815,13 @@ export default function CustomerDashboard({
 
             <span>
               <b>
-                Ontbrekende documenten
+                Ontbrekende
+                documenten
               </b>
 
               <small>
-                Bonnen of facturen die nog
-                nodig zijn
+                Bonnen of facturen
+                die nog nodig zijn
               </small>
             </span>
 
@@ -555,8 +844,8 @@ export default function CustomerDashboard({
               <b>Open vragen</b>
 
               <small>
-                Vragen waarop nog antwoord
-                nodig is
+                Vragen waarop nog
+                antwoord nodig is
               </small>
             </span>
 
@@ -579,8 +868,9 @@ export default function CustomerDashboard({
               <b>Aangiften</b>
 
               <small>
-                Aangiften die controle of
-                akkoord nodig hebben
+                Aangiften die
+                controle of akkoord
+                nodig hebben
               </small>
             </span>
 
@@ -588,88 +878,203 @@ export default function CustomerDashboard({
           </button>
         </article>
 
-        <article className="customer-dashboard-card tasks">
+        <article className="customer-dashboard-card bank-summary">
           <div className="customer-card-heading">
             <div>
               <span className="customer-section-label">
-                Vandaag
+                Bank
               </span>
 
-              <h2>Uw acties</h2>
+              <h2>
+                Bankmutaties
+              </h2>
             </div>
 
-            <Clock3 />
+            <WalletCards />
           </div>
 
-          <div className="customer-task-total">
-            <span>Open acties</span>
-            <strong>0</strong>
+          {bankLoading ? (
+            <p>
+              Bankgegevens worden
+              geladen...
+            </p>
+          ) : recentBankTransactions
+              .length === 0 ? (
+            <div className="customer-bank-empty">
+              <span>
+                Nog geen
+                banktransacties
+              </span>
+
+              <small>
+                Zodra de
+                bankkoppeling actief
+                is verschijnen hier
+                de laatste mutaties.
+              </small>
+            </div>
+          ) : (
+            <div className="customer-bank-list">
+              {recentBankTransactions.map(
+                (item) => {
+                  const incoming =
+                    item.amountCents >
+                    0;
+
+                  const linked =
+                    item.reconciliationStatus ===
+                    "matched";
+
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      className="customer-bank-row"
+                      onClick={() =>
+                        go(
+                          "Bankieren",
+                        )
+                      }
+                    >
+                      <span
+                        className={`customer-bank-direction ${
+                          incoming
+                            ? "incoming"
+                            : "outgoing"
+                        }`}
+                      >
+                        {incoming ? (
+                          <ArrowDownLeft />
+                        ) : (
+                          <ArrowUpRight />
+                        )}
+                      </span>
+
+                      <span className="customer-bank-copy">
+                        <b>
+                          {item.counterpartyName ||
+                            "Onbekende tegenpartij"}
+                        </b>
+
+                        <small>
+                          {shortDate.format(
+                            new Date(
+                              item.bookedAt,
+                            ),
+                          )}
+                        </small>
+                      </span>
+
+                      <span className="customer-bank-amount">
+                        <strong>
+                          {money(
+                            item.amountCents,
+                          )}
+                        </strong>
+
+                        <small
+                          className={
+                            linked
+                              ? "linked"
+                              : "unlinked"
+                          }
+                        >
+                          {linked
+                            ? "Gekoppeld"
+                            : "Niet gekoppeld"}
+                        </small>
+                      </span>
+                    </button>
+                  );
+                },
+              )}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="customer-text-link"
+            onClick={() =>
+              go("Bankieren")
+            }
+          >
+            Bekijk bankieren
+            <ArrowRight />
+          </button>
+        </article>
+
+        <article className="customer-dashboard-card vat-summary">
+          <div className="customer-card-heading">
+            <div>
+              <span className="customer-section-label">
+                Omzetbelasting
+              </span>
+
+              <h2>
+                {quarter.label}
+              </h2>
+            </div>
+
+            <ReceiptText />
           </div>
 
-          <div className="customer-task-total overdue">
-            <span>Achterstallig</span>
-            <strong>0</strong>
+          <div className="customer-vat-main">
+            <span>
+              Verwachte btw
+            </span>
+
+            <strong>
+              Nog geen gegevens
+            </strong>
+
+            <small>
+              Te betalen of terug te
+              ontvangen wordt hier
+              automatisch berekend
+              zodra de btw-boekingen
+              beschikbaar zijn.
+            </small>
           </div>
+
+          <dl className="customer-vat-list">
+            <div>
+              <dt>
+                Verschuldigde btw
+              </dt>
+
+              <dd>—</dd>
+            </div>
+
+            <div>
+              <dt>
+                Voorbelasting
+              </dt>
+
+              <dd>—</dd>
+            </div>
+
+            <div>
+              <dt>
+                Saldo
+              </dt>
+
+              <dd>—</dd>
+            </div>
+          </dl>
 
           <button
             type="button"
             className="customer-text-link"
             onClick={() =>
               go(
-                "Notificaties",
-                "alle-acties",
+                "Aangiften",
+                "omzetbelasting",
               )
             }
           >
-            Bekijk alle acties
+            Bekijk omzetbelasting
             <ArrowRight />
           </button>
-        </article>
-
-        <article className="customer-dashboard-card status">
-          <div className="customer-card-heading">
-            <div>
-              <span className="customer-section-label">
-                Administratie
-              </span>
-
-              <h2>Status</h2>
-            </div>
-
-            <CheckCircle2 />
-          </div>
-
-          <dl>
-            <div>
-              <dt>Onderneming</dt>
-              <dd>{companyName}</dd>
-            </div>
-
-            <div>
-              <dt>KvK-nummer</dt>
-
-              <dd>
-                {organization
-                  ?.registration_number ||
-                  "Nog niet ingevuld"}
-              </dd>
-            </div>
-
-            <div>
-              <dt>Account</dt>
-              <dd>Actief</dd>
-            </div>
-
-            <div>
-              <dt>Beveiliging</dt>
-
-              <dd>
-                {context.aal2
-                  ? "2FA actief"
-                  : "Ingelogd"}
-              </dd>
-            </div>
-          </dl>
         </article>
       </section>
 
@@ -699,7 +1104,9 @@ export default function CustomerDashboard({
                 )
               }
             >
-              <span>Te ontvangen</span>
+              <span>
+                Te ontvangen
+              </span>
 
               <strong>
                 {financialLoading
@@ -729,12 +1136,14 @@ export default function CustomerDashboard({
               type="button"
               onClick={() =>
                 go(
-                  "Documenten",
+                  "Crediteuren",
                   "crediteuren",
                 )
               }
             >
-              <span>Te betalen</span>
+              <span>
+                Te betalen
+              </span>
 
               <strong>
                 {financialLoading
@@ -769,7 +1178,9 @@ export default function CustomerDashboard({
                 Direct regelen
               </span>
 
-              <h2>Snelle acties</h2>
+              <h2>
+                Snelle acties
+              </h2>
             </div>
           </div>
 
@@ -791,7 +1202,8 @@ export default function CustomerDashboard({
                 </b>
 
                 <small>
-                  Bon of factuur toevoegen
+                  Bon of factuur
+                  toevoegen
                 </small>
               </span>
             </button>
@@ -808,7 +1220,9 @@ export default function CustomerDashboard({
               <MessageSquare />
 
               <span>
-                <b>Vraag stellen</b>
+                <b>
+                  Vraag stellen
+                </b>
 
                 <small>
                   Contact met uw
@@ -829,10 +1243,13 @@ export default function CustomerDashboard({
               <ReceiptText />
 
               <span>
-                <b>Factuur maken</b>
+                <b>
+                  Factuur maken
+                </b>
 
                 <small>
-                  Nieuwe verkoopfactuur
+                  Nieuwe
+                  verkoopfactuur
                 </small>
               </span>
             </button>
@@ -854,7 +1271,8 @@ export default function CustomerDashboard({
                 </b>
 
                 <small>
-                  Financiële stand bekijken
+                  Financiële stand
+                  bekijken
                 </small>
               </span>
             </button>
@@ -875,7 +1293,8 @@ export default function CustomerDashboard({
         </span>
 
         <span>
-          Laatst bijgewerkt: vandaag
+          Laatst bijgewerkt:
+          vandaag
         </span>
       </footer>
     </div>

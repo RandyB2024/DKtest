@@ -623,4 +623,162 @@
   .customer-dashboard-footer span:last-child{
     margin-left:0;
   }
+}.customer-bank-list {
+  display: grid;
+}
+
+.customer-bank-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns:
+    auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+
+  padding: 11px 0;
+
+  border: 0;
+  border-bottom: 1px solid #edf1f4;
+  background: transparent;
+
+  text-align: left;
+  cursor: pointer;
+}
+
+.customer-bank-row:last-child {
+  border-bottom: 0;
+}
+
+.customer-bank-direction {
+  width: 34px;
+  height: 34px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+}
+
+.customer-bank-direction.incoming {
+  background: #e6f5ed;
+  color: #238153;
+}
+
+.customer-bank-direction.outgoing {
+  background: #fff0eb;
+  color: #bd563b;
+}
+
+.customer-bank-direction svg {
+  width: 16px;
+  height: 16px;
+}
+
+.customer-bank-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.customer-bank-copy b,
+.customer-bank-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-bank-copy b {
+  color: #18304d;
+  font-size: 13px;
+}
+
+.customer-bank-copy small {
+  color: #7a8b9e;
+  font-size: 11px;
+}
+
+.customer-bank-amount {
+  display: grid;
+  gap: 3px;
+  text-align: right;
+}
+
+.customer-bank-amount strong {
+  color: #152846;
+  font-size: 13px;
+}
+
+.customer-bank-amount small {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.customer-bank-amount small.linked {
+  color: #238153;
+}
+
+.customer-bank-amount small.unlinked {
+  color: #bd563b;
+}
+
+.customer-bank-empty {
+  display: grid;
+  gap: 5px;
+  padding: 18px 0;
+}
+
+.customer-bank-empty span {
+  color: #1b304c;
+  font-weight: 700;
+}
+
+.customer-bank-empty small {
+  color: #77899d;
+  line-height: 1.45;
+}
+
+.customer-vat-main {
+  display: grid;
+  gap: 7px;
+  padding: 12px 0 16px;
+}
+
+.customer-vat-main span {
+  color: #718398;
+  font-size: 13px;
+}
+
+.customer-vat-main strong {
+  color: #102442;
+  font-size: 22px;
+}
+
+.customer-vat-main small {
+  color: #77899d;
+  line-height: 1.45;
+}
+
+.customer-vat-list {
+  margin: 0;
+}
+
+.customer-vat-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 9px 0;
+
+  border-bottom: 1px solid #edf1f4;
+}
+
+.customer-vat-list dt {
+  color: #718398;
+}
+
+.customer-vat-list dd {
+  margin: 0;
+
+  color: #142a47;
+  font-weight: 700;
 }

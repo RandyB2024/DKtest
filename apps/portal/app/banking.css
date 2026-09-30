@@ -1,0 +1,273 @@
+.bank-account-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bank-account-card {
+  display: grid;
+  grid-template-columns:
+    auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.bank-account-icon {
+  width: 44px;
+  height: 44px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background: #eef1ff;
+  color: #574cff;
+}
+
+.bank-account-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.bank-account-card small {
+  color: #718398;
+}
+
+.bank-account-card h2 {
+  margin: 4px 0;
+}
+
+.bank-account-card p {
+  margin: 0;
+  color: #667a8e;
+}
+
+.bank-empty-account {
+  grid-column: 1 / -1;
+
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bank-empty-account > svg {
+  width: 32px;
+  height: 32px;
+  color: #657b91;
+}
+
+.bank-empty-account h2,
+.bank-empty-account p {
+  margin: 0;
+}
+
+.bank-empty-account p {
+  margin-top: 5px;
+  color: #718398;
+}
+
+.bank-transaction-list {
+  display: grid;
+}
+
+.bank-transaction {
+  display: grid;
+
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    minmax(120px, auto)
+    minmax(130px, auto)
+    auto;
+
+  gap: 16px;
+  align-items: center;
+
+  padding: 17px 0;
+
+  border-bottom:
+    1px solid #edf1f4;
+}
+
+.bank-transaction:last-child {
+  border-bottom: 0;
+}
+
+.bank-direction {
+  width: 38px;
+  height: 38px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 11px;
+}
+
+.bank-direction.incoming {
+  background: #e7f6ee;
+  color: #238153;
+}
+
+.bank-direction.outgoing {
+  background: #fff0eb;
+  color: #bd563b;
+}
+
+.bank-direction svg {
+  width: 18px;
+  height: 18px;
+}
+
+.bank-transaction-main {
+  min-width: 0;
+
+  display: grid;
+  gap: 4px;
+}
+
+.bank-transaction-main strong {
+  color: #142a47;
+}
+
+.bank-transaction-main span,
+.bank-transaction-main small {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: #718398;
+}
+
+.bank-transaction-main span {
+  font-size: 14px;
+}
+
+.bank-transaction-main small {
+  font-size: 12px;
+}
+
+.bank-transaction-amount {
+  display: grid;
+  gap: 4px;
+
+  text-align: right;
+}
+
+.bank-transaction-amount strong {
+  color: #1b2f49;
+}
+
+.bank-transaction-amount strong.positive {
+  color: #238153;
+}
+
+.bank-transaction-amount small {
+  color: #7a8b9e;
+  font-size: 11px;
+}
+
+.bank-match-state {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #5e7185;
+  font-size: 13px;
+
+  white-space: nowrap;
+}
+
+.bank-match-state svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bank-empty {
+  min-height: 180px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  color: #718398;
+}
+
+.bank-empty > svg {
+  width: 32px;
+  height: 32px;
+
+  margin-bottom: 8px;
+}
+
+.bank-empty h3 {
+  margin: 0;
+
+  color: #1a2d48;
+}
+
+.bank-empty p {
+  margin: 6px 0 0;
+}
+
+@media (max-width: 950px) {
+  .bank-account-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bank-transaction {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr)
+      auto;
+  }
+
+  .bank-transaction-amount {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .bank-match-state {
+    grid-column: 2;
+  }
+
+  .bank-transaction > .btn {
+    grid-column: 3;
+    grid-row: 1 / 4;
+  }
+}
+
+@media (max-width: 600px) {
+  .bank-transaction {
+    grid-template-columns:
+      auto minmax(0, 1fr);
+
+    gap: 11px;
+  }
+
+  .bank-transaction-amount,
+  .bank-match-state,
+  .bank-transaction > .btn {
+    grid-column: 2;
+  }
+
+  .bank-transaction > .btn {
+    grid-row: auto;
+    width: fit-content;
+  }
+
+  .bank-account-card {
+    grid-template-columns:
+      auto 1fr;
+  }
+
+  .bank-account-card > .status {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

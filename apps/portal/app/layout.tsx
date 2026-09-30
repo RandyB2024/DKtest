@@ -14,6 +14,7 @@ import "./financial-dashboard.css";
 import "./compact-dashboard.css";
 import "./customer-dashboard.css";
 import "./financial-lists.css";
+import "./banking.css";
 import "./mobile-fixes.css";
 
 import ServiceWorker from "@/components/service-worker";
