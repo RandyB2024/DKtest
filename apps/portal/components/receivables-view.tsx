@@ -489,29 +489,23 @@ export default function ReceivablesView({
 
                       <div className="invoice-actions">
                         <button
-                          type="button"
-                          className="btn"
-                          onClick={() => {
-                            sessionStorage.setItem(
-                              "customer-receivable-detail",
-                              JSON.stringify(
-                                item,
-                              ),
-                            );
-                          }}
-                        >
-                          <FileText
-                            size={
-                              15
-                            }
-                          />
-                          Bekijk factuur
-                          <ArrowRight
-                            size={
-                              15
-                            }
-                          />
-                        </button>
+  type="button"
+  className="btn"
+  onClick={() => {
+    sessionStorage.setItem(
+      "customer-receivable-detail",
+      JSON.stringify(item),
+    );
+
+    onGo("Factuurdetail");
+  }}
+>
+  <FileText size={15} />
+
+  Bekijk factuur
+
+  <ArrowRight size={15} />
+</button>
                       </div>
                     </article>
                   ),

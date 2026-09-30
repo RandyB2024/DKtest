@@ -494,6 +494,10 @@ export default function PayablesView({
                                 item,
                               ),
                             );
+
+                            onGo(
+                              "Inkoopfactuurdetail",
+                            );
                           }}
                         >
                           <FileText
@@ -533,17 +537,22 @@ export default function PayablesView({
               </div>
 
               <p>
-                <CheckCircle2 size={16} />{" "}
+                <CheckCircle2
+                  size={16}
+                />{" "}
                 Openstaand totaal:{" "}
                 <strong>
                   {money(
-                    data.summary.totalCents,
+                    data.summary
+                      .totalCents,
                   )}
                 </strong>
               </p>
 
               <p>
-                <CircleAlert size={16} />{" "}
+                <CircleAlert
+                  size={16}
+                />{" "}
                 Daarvan vervallen:{" "}
                 <strong>
                   {money(
@@ -554,9 +563,11 @@ export default function PayablesView({
               </p>
 
               <p>
-                <CalendarDays size={16} />{" "}
-                {data.summary.count} openstaande
-                factuur
+                <CalendarDays
+                  size={16}
+                />{" "}
+                {data.summary.count}{" "}
+                openstaande factuur
                 {data.summary.count === 1
                   ? ""
                   : "en"}
@@ -566,11 +577,14 @@ export default function PayablesView({
             <article className="card">
               <div className="section-heading">
                 <div>
-                  <h2>Leveranciers</h2>
+                  <h2>
+                    Leveranciers
+                  </h2>
 
                   <p>
-                    Openstaande verplichtingen
-                    richting leveranciers.
+                    Openstaande
+                    verplichtingen richting
+                    leveranciers.
                   </p>
                 </div>
 
@@ -580,8 +594,7 @@ export default function PayablesView({
               <p>
                 Deze pagina wordt later
                 uitgebreid met leveranciers,
-                betaaladvies en
-                bankmatching.
+                betaaladvies en bankmatching.
               </p>
             </article>
           </section>
