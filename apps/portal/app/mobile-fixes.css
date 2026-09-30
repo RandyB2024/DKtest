@@ -1,14 +1,33 @@
 @media (max-width: 700px) {
+  /*
+   * De desktop-sidebar mag op mobiel absoluut niet
+   * in de bovenbalk verschijnen.
+   *
+   * multi.css zet deze anders opnieuw op display:contents
+   * en plaatst het logo fixed bovenop de topbar.
+   */
+  .sidebar {
+    display: none !important;
+  }
+
+  .sidebar > .brand,
+  .sidebar .brand,
+  .sidebar .mark,
+  .sidebar .org-switcher {
+    display: none !important;
+  }
+
   .topbar {
     height: 64px;
     min-height: 64px;
     width: 100%;
-    padding: 0 12px;
 
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
+
     gap: 10px;
+    padding: 0 12px;
 
     overflow: hidden;
     background: #fff;
@@ -16,12 +35,14 @@
 
   .topbar-left {
     min-width: 0;
+    width: 100%;
     overflow: hidden;
   }
 
   .topbar-left .field {
     display: block;
     min-width: 0;
+    width: 100%;
   }
 
   .topbar-left .field label {
@@ -29,28 +50,33 @@
   }
 
   .topbar-left .field select {
+    display: block;
+
     width: 100%;
     min-width: 0;
     max-width: 100%;
 
+    margin: 0;
+    padding: 0 18px 0 0;
+
     border: 0;
+    outline: 0;
     background: transparent;
-    padding: 0;
 
     color: #17304f;
     font-size: 14px;
     font-weight: 700;
-    line-height: 1.2;
+    line-height: 40px;
 
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-
-    appearance: none;
   }
 
   .topbar-left > strong {
     display: block;
+
+    width: 100%;
     max-width: 100%;
 
     overflow: hidden;
@@ -76,9 +102,10 @@
   .topbar .profile {
     display: flex;
     align-items: center;
-    gap: 0;
 
     flex: 0 0 auto;
+    gap: 0;
+    min-width: 0;
   }
 
   .topbar .avatar,
@@ -87,6 +114,9 @@
   }
 
   .install-app-header {
+    display: grid;
+    place-items: center;
+
     width: 40px;
     min-width: 40px;
     height: 40px;
@@ -94,10 +124,9 @@
 
     padding: 0;
 
-    display: grid;
-    place-items: center;
-
     flex: 0 0 40px;
+
+    border-radius: 11px;
   }
 
   .install-app-header span {
@@ -110,18 +139,22 @@
   }
 
   .topbar .profile .btn {
-    height: 40px;
-    min-width: auto;
-    padding: 0 12px;
-
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    white-space: nowrap;
+    width: auto;
+    min-width: auto;
+    height: 40px;
+
+    padding: 0 12px;
+
+    border-radius: 11px;
 
     font-size: 13px;
     font-weight: 700;
     line-height: 1;
+
+    white-space: nowrap;
   }
 }
