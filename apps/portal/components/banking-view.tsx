@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -10,11 +11,12 @@ import {
   ArrowDownLeft,
   ArrowLeft,
   ArrowUpRight,
-  Building2,
   CheckCircle2,
   CircleAlert,
+  FileCheck2,
   Landmark,
   Link2,
+  LoaderCircle,
   Search,
   Sparkles,
   WalletCards,
@@ -64,6 +66,41 @@ type BankTransaction = {
   paymentId: string | null;
 };
 
+type MatchSuggestion = {
+  transactionId: string;
+
+  amountCents: number;
+  bookedAt: string;
+
+  counterpartyName: string | null;
+  description: string | null;
+  reference: string | null;
+
+  suggestion: null | {
+    invoiceId: string;
+
+    invoiceType:
+      | "sales"
+      | "purchase";
+
+    invoiceNumber: string;
+    relationName: string;
+
+    totalCents: number;
+    paidCents: number;
+    outstandingCents: number;
+
+    score: number;
+
+    strength:
+      | "strong"
+      | "possible"
+      | "weak";
+
+    reason: string;
+  };
+};
+
 type BankResponse = {
   accounts: BankAccount[];
 
@@ -77,6 +114,8 @@ type BankResponse = {
 
     items: BankTransaction[];
   };
+
+  matches: MatchSuggestion[];
 };
 
 type Props = {
@@ -85,13 +124,20 @@ type Props = {
   onGo: (view: string) => void;
 };
 
-const euro = new Intl.NumberFormat(
-  "nl-NL",
-  {
-    style: "currency",
-    currency: "EUR",
-  },
-);
+type Filter =
+  | "all"
+  | "unmatched"
+  | "suggested"
+  | "matched";
+
+const euro =
+  new Intl.NumberFormat(
+    "nl-NL",
+    {
+      style: "currency",
+      currency: "EUR",
+    },
+  );
 
 const dateFormatter =
   new Intl.DateTimeFormat(
@@ -119,26 +165,25 @@ function date(
   );
 }
 
-function statusLabel(
-  status: string,
+function matchStrengthLabel(
+  strength:
+    | "strong"
+    | "possible"
+    | "weak",
 ) {
-  if (status === "matched") {
-    return "Gekoppeld";
+  if (
+    strength === "strong"
+  ) {
+    return "Sterke match";
   }
 
   if (
-    status === "suggested"
+    strength === "possible"
   ) {
-    return "Voorstel";
+    return "Mogelijke match";
   }
 
-  if (
-    status === "ignored"
-  ) {
-    return "Genegeerd";
-  }
-
-  return "Niet gekoppeld";
+  return "Zwakke match";
 }
 
 export default function BankingView({
@@ -157,73 +202,84 @@ export default function BankingView({
   const [error, setError] =
     useState("");
 
+  const [success, setSuccess] =
+    useState("");
+
   const [query, setQuery] =
     useState("");
 
   const [filter, setFilter] =
-    useState<
-      | "all"
-      | "unmatched"
-      | "suggested"
-      | "matched"
-    >("all");
+    useState<Filter>("all");
 
-  useEffect(() => {
-    let cancelled = false;
+  const [
+    expandedTransaction,
+    setExpandedTransaction,
+  ] =
+    useState<string | null>(
+      null,
+    );
 
-    async function load() {
-      if (
-        context.organizationId ===
-        "all"
-      ) {
-        setLoading(false);
+  const [
+    confirmingTransaction,
+    setConfirmingTransaction,
+  ] =
+    useState<string | null>(
+      null,
+    );
 
-        setError(
-          "Selecteer eerst één onderneming om banktransacties te bekijken.",
-        );
+  const load =
+    useCallback(
+      async () => {
+        if (
+          context.organizationId ===
+          "all"
+        ) {
+          setData(null);
+          setLoading(false);
 
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-
-      try {
-        const response =
-          await fetch(
-            `/api/financial/bank?organizationId=${encodeURIComponent(
-              context.organizationId,
-            )}`,
-            {
-              cache: "no-store",
-            },
+          setError(
+            "Selecteer eerst één onderneming om banktransacties te bekijken.",
           );
 
-        const result =
-          (await response.json()) as
-            | BankResponse
-            | {
-                error?: string;
-              };
-
-        if (!response.ok) {
-          throw new Error(
-            "error" in result &&
-              result.error
-              ? result.error
-              : "Bankgegevens konden niet worden geladen.",
-          );
+          return;
         }
 
-        if (!cancelled) {
+        setLoading(true);
+        setError("");
+
+        try {
+          const response =
+            await fetch(
+              `/api/financial/bank?organizationId=${encodeURIComponent(
+                context.organizationId,
+              )}`,
+              {
+                cache: "no-store",
+              },
+            );
+
+          const result =
+            (await response.json()) as
+              | BankResponse
+              | {
+                  error?: string;
+                };
+
+          if (!response.ok) {
+            throw new Error(
+              "error" in result &&
+                result.error
+                ? result.error
+                : "Bankgegevens konden niet worden geladen.",
+            );
+          }
+
           setData(
             result as BankResponse,
           );
-        }
-      } catch (
-        caughtError
-      ) {
-        if (!cancelled) {
+        } catch (
+          caughtError
+        ) {
           setData(null);
 
           setError(
@@ -232,22 +288,162 @@ export default function BankingView({
               ? caughtError.message
               : "Bankgegevens konden niet worden geladen.",
           );
-        }
-      } finally {
-        if (!cancelled) {
+        } finally {
           setLoading(false);
         }
+      },
+      [
+        context.organizationId,
+      ],
+    );
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const matchMap =
+    useMemo(() => {
+      const map =
+        new Map<
+          string,
+          MatchSuggestion
+        >();
+
+      for (
+        const match of
+        data?.matches ?? []
+      ) {
+        map.set(
+          match.transactionId,
+          match,
+        );
       }
+
+      return map;
+    }, [data]);
+
+  function getEffectiveStatus(
+    transaction:
+      BankTransaction,
+  ): Filter {
+    if (
+      transaction
+        .reconciliationStatus ===
+      "matched"
+    ) {
+      return "matched";
     }
 
-    void load();
+    const match =
+      matchMap.get(
+        transaction.id,
+      );
 
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    context.organizationId,
-  ]);
+    if (match?.suggestion) {
+      return "suggested";
+    }
+
+    return "unmatched";
+  }
+
+  async function confirmMatch(
+    transaction:
+      BankTransaction,
+    match:
+      MatchSuggestion,
+  ) {
+    if (
+      context.organizationId ===
+      "all"
+    ) {
+      return;
+    }
+
+    if (!match.suggestion) {
+      return;
+    }
+
+    setConfirmingTransaction(
+      transaction.id,
+    );
+
+    setError("");
+    setSuccess("");
+
+    try {
+      const response =
+        await fetch(
+          "/api/financial/bank",
+          {
+            method: "POST",
+
+            headers: {
+              "content-type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              organizationId:
+                context.organizationId,
+
+              transactionId:
+                transaction.id,
+
+              invoiceId:
+                match.suggestion
+                  .invoiceId,
+
+              invoiceType:
+                match.suggestion
+                  .invoiceType,
+            }),
+          },
+        );
+
+      const result =
+        (await response.json()) as {
+          error?: string;
+
+          result?: {
+            invoiceNumber?:
+              string;
+          };
+        };
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+            "De match kon niet worden bevestigd.",
+        );
+      }
+
+      setSuccess(
+        result.result
+          ?.invoiceNumber
+          ? `Banktransactie is gekoppeld aan factuur ${result.result.invoiceNumber}.`
+          : "Banktransactie is succesvol gekoppeld.",
+      );
+
+      setExpandedTransaction(
+        null,
+      );
+
+      await load();
+    } catch (
+      caughtError
+    ) {
+      setError(
+        caughtError instanceof
+          Error
+          ? caughtError.message
+          : "De match kon niet worden bevestigd.",
+      );
+    } finally {
+      setConfirmingTransaction(
+        null,
+      );
+    }
+  }
 
   const visibleTransactions =
     useMemo(() => {
@@ -262,9 +458,14 @@ export default function BankingView({
 
       return data.transactions.items.filter(
         (item) => {
+          const effectiveStatus =
+            getEffectiveStatus(
+              item,
+            );
+
           if (
             filter !== "all" &&
-            item.reconciliationStatus !==
+            effectiveStatus !==
               filter
           ) {
             return false;
@@ -274,11 +475,20 @@ export default function BankingView({
             return true;
           }
 
+          const match =
+            matchMap.get(
+              item.id,
+            );
+
           return [
             item.counterpartyName,
             item.counterpartyIban,
             item.description,
             item.reference,
+            match?.suggestion
+              ?.invoiceNumber,
+            match?.suggestion
+              ?.relationName,
           ]
             .filter(Boolean)
             .some((value) =>
@@ -292,6 +502,58 @@ export default function BankingView({
       data,
       filter,
       query,
+      matchMap,
+    ]);
+
+  const summary =
+    useMemo(() => {
+      if (!data) {
+        return {
+          count: 0,
+          unmatchedCount: 0,
+          suggestedCount: 0,
+          matchedCount: 0,
+        };
+      }
+
+      let unmatchedCount = 0;
+      let suggestedCount = 0;
+      let matchedCount = 0;
+
+      for (
+        const transaction of
+        data.transactions.items
+      ) {
+        const status =
+          getEffectiveStatus(
+            transaction,
+          );
+
+        if (
+          status === "matched"
+        ) {
+          matchedCount += 1;
+        } else if (
+          status === "suggested"
+        ) {
+          suggestedCount += 1;
+        } else {
+          unmatchedCount += 1;
+        }
+      }
+
+      return {
+        count:
+          data.transactions.items
+            .length,
+
+        unmatchedCount,
+        suggestedCount,
+        matchedCount,
+      };
+    }, [
+      data,
+      matchMap,
     ]);
 
   const companyName =
@@ -316,8 +578,9 @@ export default function BankingView({
           <h1>Bankieren</h1>
 
           <p>
-            Bankrekeningen en
-            transacties van{" "}
+            Bankrekeningen,
+            transacties en
+            factuurmatching van{" "}
             {companyName}.
           </p>
         </div>
@@ -329,6 +592,18 @@ export default function BankingView({
           role="alert"
         >
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div
+          className="notice"
+          role="status"
+        >
+          <CheckCircle2
+            size={16}
+          />{" "}
+          {success}
         </div>
       )}
 
@@ -413,11 +688,7 @@ export default function BankingView({
                 </label>
 
                 <strong>
-                  {
-                    data
-                      .transactions
-                      .summary.count
-                  }
+                  {summary.count}
                 </strong>
 
                 <span>
@@ -433,10 +704,7 @@ export default function BankingView({
 
                 <strong>
                   {
-                    data
-                      .transactions
-                      .summary
-                      .unmatchedCount
+                    summary.unmatchedCount
                   }
                 </strong>
 
@@ -453,10 +721,7 @@ export default function BankingView({
 
                 <strong>
                   {
-                    data
-                      .transactions
-                      .summary
-                      .suggestedCount
+                    summary.suggestedCount
                   }
                 </strong>
 
@@ -472,15 +737,12 @@ export default function BankingView({
 
                 <strong>
                   {
-                    data
-                      .transactions
-                      .summary
-                      .matchedCount
+                    summary.matchedCount
                   }
                 </strong>
 
                 <span>
-                  Verwerkt
+                  Definitief verwerkt
                 </span>
               </article>
             </section>
@@ -493,11 +755,12 @@ export default function BankingView({
                   </h2>
 
                   <p>
-                    Inkomende en
-                    uitgaande
-                    transacties en
-                    hun
-                    verwerkingsstatus.
+                    Controleer welke
+                    transacties al
+                    gekoppeld zijn en
+                    welke een
+                    factuurvoorstel
+                    hebben.
                   </p>
                 </div>
 
@@ -523,36 +786,28 @@ export default function BankingView({
                           .value,
                       )
                     }
-                    placeholder="Zoek naam, IBAN, omschrijving of referentie"
+                    placeholder="Zoek naam, IBAN, factuurnummer, omschrijving of referentie"
                   />
                 </label>
 
                 <select
-                  value={
-                    filter
-                  }
+                  value={filter}
                   onChange={(
                     event,
                   ) =>
                     setFilter(
                       event
                         .target
-                        .value as
-                        | "all"
-                        | "unmatched"
-                        | "suggested"
-                        | "matched",
+                        .value as Filter,
                     )
                   }
                 >
                   <option value="all">
-                    Alle
-                    transacties
+                    Alle transacties
                   </option>
 
                   <option value="unmatched">
-                    Niet
-                    gekoppeld
+                    Niet gekoppeld
                   </option>
 
                   <option value="suggested">
@@ -576,134 +831,364 @@ export default function BankingView({
                   </h3>
 
                   <p>
-                    Er zijn nog geen
-                    transacties voor
-                    deze onderneming.
+                    Er zijn geen
+                    transacties die
+                    aan het huidige
+                    filter voldoen.
                   </p>
                 </div>
               ) : (
                 <div className="bank-transaction-list">
                   {visibleTransactions.map(
-                    (
-                      item,
-                    ) => {
+                    (item) => {
                       const incoming =
                         item.amountCents >
                         0;
 
+                      const effectiveStatus =
+                        getEffectiveStatus(
+                          item,
+                        );
+
+                      const match =
+                        matchMap.get(
+                          item.id,
+                        );
+
+                      const suggestion =
+                        match?.suggestion ??
+                        null;
+
+                      const expanded =
+                        expandedTransaction ===
+                        item.id;
+
+                      const confirming =
+                        confirmingTransaction ===
+                        item.id;
+
                       return (
                         <article
-                          className="bank-transaction"
+                          className={`bank-transaction-card ${
+                            expanded
+                              ? "expanded"
+                              : ""
+                          }`}
                           key={
                             item.id
                           }
                         >
-                          <div
-                            className={`bank-direction ${
-                              incoming
-                                ? "incoming"
-                                : "outgoing"
-                            }`}
-                          >
-                            {incoming ? (
-                              <ArrowDownLeft />
-                            ) : (
-                              <ArrowUpRight />
-                            )}
-                          </div>
-
-                          <div className="bank-transaction-main">
-                            <strong>
-                              {item.counterpartyName ||
-                                "Onbekende tegenpartij"}
-                            </strong>
-
-                            <span>
-                              {item.description ||
-                                item.reference ||
-                                "Geen omschrijving"}
-                            </span>
-
-                            <small>
-                              {date(
-                                item.bookedAt,
-                              )}
-                              {" · "}
-                              {
-                                item
-                                  .bankAccount
-                                  .name
-                              }
-                            </small>
-                          </div>
-
-                          <div className="bank-transaction-amount">
-                            <strong
-                              className={
+                          <div className="bank-transaction">
+                            <div
+                              className={`bank-direction ${
                                 incoming
-                                  ? "positive"
-                                  : ""
-                              }
+                                  ? "incoming"
+                                  : "outgoing"
+                              }`}
                             >
-                              {money(
-                                item.amountCents,
+                              {incoming ? (
+                                <ArrowDownLeft />
+                              ) : (
+                                <ArrowUpRight />
                               )}
-                            </strong>
+                            </div>
 
-                            {item.counterpartyIban && (
+                            <div className="bank-transaction-main">
+                              <strong>
+                                {item.counterpartyName ||
+                                  "Onbekende tegenpartij"}
+                              </strong>
+
+                              <span>
+                                {item.description ||
+                                  item.reference ||
+                                  "Geen omschrijving"}
+                              </span>
+
                               <small>
+                                {date(
+                                  item.bookedAt,
+                                )}
+                                {" · "}
                                 {
-                                  item.counterpartyIban
+                                  item
+                                    .bankAccount
+                                    .name
                                 }
                               </small>
-                            )}
-                          </div>
+                            </div>
 
-                          <div className="bank-match-state">
-                            {item.reconciliationStatus ===
-                              "matched" && (
-                              <CheckCircle2 />
-                            )}
+                            <div className="bank-transaction-amount">
+                              <strong
+                                className={
+                                  incoming
+                                    ? "positive"
+                                    : ""
+                                }
+                              >
+                                {money(
+                                  item.amountCents,
+                                )}
+                              </strong>
 
-                            {item.reconciliationStatus ===
-                              "suggested" && (
-                              <Sparkles />
-                            )}
-
-                            {item.reconciliationStatus ===
-                              "unmatched" && (
-                              <CircleAlert />
-                            )}
-
-                            <span>
-                              {statusLabel(
-                                item.reconciliationStatus,
+                              {item.counterpartyIban && (
+                                <small>
+                                  {
+                                    item.counterpartyIban
+                                  }
+                                </small>
                               )}
-                            </span>
+                            </div>
+
+                            <div
+                              className={`bank-match-state ${effectiveStatus}`}
+                            >
+                              {effectiveStatus ===
+                                "matched" && (
+                                <CheckCircle2 />
+                              )}
+
+                              {effectiveStatus ===
+                                "suggested" && (
+                                <Sparkles />
+                              )}
+
+                              {effectiveStatus ===
+                                "unmatched" && (
+                                <CircleAlert />
+                              )}
+
+                              <span>
+                                {effectiveStatus ===
+                                "matched"
+                                  ? "Gekoppeld"
+                                  : effectiveStatus ===
+                                      "suggested"
+                                    ? "Voorstel"
+                                    : "Niet gekoppeld"}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              className="btn"
+                              disabled={
+                                effectiveStatus ===
+                                  "matched" ||
+                                confirming
+                              }
+                              onClick={() =>
+                                setExpandedTransaction(
+                                  expanded
+                                    ? null
+                                    : item.id,
+                                )
+                              }
+                            >
+                              {effectiveStatus ===
+                              "suggested" ? (
+                                <Sparkles
+                                  size={
+                                    15
+                                  }
+                                />
+                              ) : (
+                                <Link2
+                                  size={
+                                    15
+                                  }
+                                />
+                              )}
+
+                              {effectiveStatus ===
+                              "suggested"
+                                ? "Controleer"
+                                : effectiveStatus ===
+                                    "matched"
+                                  ? "Gekoppeld"
+                                  : "Koppelen"}
+                            </button>
                           </div>
 
-                          <button
-                            type="button"
-                            className="btn"
-                            disabled={
-                              item.reconciliationStatus ===
-                              "matched"
-                            }
-                          >
-                            <Link2
-                              size={
-                                15
-                              }
-                            />
+                          {expanded && (
+                            <div className="bank-match-panel">
+                              {suggestion &&
+                              match ? (
+                                <>
+                                  <div className="bank-match-panel-heading">
+                                    <div>
+                                      <span>
+                                        Automatisch
+                                        matchvoorstel
+                                      </span>
 
-                            {item.reconciliationStatus ===
-                            "suggested"
-                              ? "Controleer"
-                              : item.reconciliationStatus ===
-                                  "matched"
-                                ? "Gekoppeld"
-                                : "Koppelen"}
-                          </button>
+                                      <h3>
+                                        {matchStrengthLabel(
+                                          suggestion.strength,
+                                        )}
+                                      </h3>
+                                    </div>
+
+                                    <strong>
+                                      {
+                                        suggestion.score
+                                      }
+                                      /100
+                                    </strong>
+                                  </div>
+
+                                  <div className="bank-match-details">
+                                    <div>
+                                      <span>
+                                        Type
+                                      </span>
+
+                                      <strong>
+                                        {suggestion.invoiceType ===
+                                        "sales"
+                                          ? "Verkoopfactuur"
+                                          : "Inkoopfactuur"}
+                                      </strong>
+                                    </div>
+
+                                    <div>
+                                      <span>
+                                        Factuurnummer
+                                      </span>
+
+                                      <strong>
+                                        {
+                                          suggestion.invoiceNumber
+                                        }
+                                      </strong>
+                                    </div>
+
+                                    <div>
+                                      <span>
+                                        Relatie
+                                      </span>
+
+                                      <strong>
+                                        {
+                                          suggestion.relationName
+                                        }
+                                      </strong>
+                                    </div>
+
+                                    <div>
+                                      <span>
+                                        Openstaand
+                                      </span>
+
+                                      <strong>
+                                        {money(
+                                          suggestion.outstandingCents,
+                                        )}
+                                      </strong>
+                                    </div>
+                                  </div>
+
+                                  <div className="bank-match-reason">
+                                    <FileCheck2 />
+
+                                    <span>
+                                      {
+                                        suggestion.reason
+                                      }
+                                    </span>
+                                  </div>
+
+                                  <div className="notice">
+                                    Controleer de
+                                    factuur zorgvuldig.
+                                    Na bevestigen wordt
+                                    deze bankmutatie
+                                    definitief als
+                                    betaling geboekt.
+                                  </div>
+
+                                  <div className="bank-match-actions">
+                                    <button
+                                      type="button"
+                                      className="btn"
+                                      disabled={
+                                        confirming
+                                      }
+                                      onClick={() =>
+                                        confirmMatch(
+                                          item,
+                                          match,
+                                        )
+                                      }
+                                    >
+                                      {confirming ? (
+                                        <LoaderCircle
+                                          size={
+                                            15
+                                          }
+                                        />
+                                      ) : (
+                                        <CheckCircle2
+                                          size={
+                                            15
+                                          }
+                                        />
+                                      )}
+
+                                      {confirming
+                                        ? "Verwerken..."
+                                        : "Match bevestigen"}
+                                    </button>
+
+                                    <small>
+                                      Bedrag:{" "}
+                                      {money(
+                                        Math.abs(
+                                          item.amountCents,
+                                        ),
+                                      )}
+                                    </small>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="bank-match-panel-heading">
+                                    <div>
+                                      <span>
+                                        Automatische
+                                        matching
+                                      </span>
+
+                                      <h3>
+                                        Geen geschikte
+                                        factuur gevonden
+                                      </h3>
+                                    </div>
+
+                                    <CircleAlert />
+                                  </div>
+
+                                  <p className="bank-match-no-result">
+                                    Het systeem vond
+                                    geen voldoende
+                                    passende openstaande
+                                    factuur op basis van
+                                    bedrag, referentie
+                                    en tegenpartij.
+                                  </p>
+
+                                  <div className="notice">
+                                    Deze transactie
+                                    blijft ongekoppeld.
+                                    Handmatige
+                                    grootboekverwerking
+                                    bouwen we later in
+                                    de Office-omgeving.
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </article>
                       );
                     },
@@ -716,31 +1201,69 @@ export default function BankingView({
               <div className="section-heading">
                 <div>
                   <h2>
-                    Automatische
-                    matching
+                    Matchingregels
                   </h2>
 
                   <p>
-                    De volgende stap
-                    koppelt
-                    transacties aan
-                    facturen.
+                    Matchvoorstellen
+                    worden eerst met
+                    controleerbare regels
+                    bepaald.
                   </p>
                 </div>
 
-                <Building2 />
+                <FileCheck2 />
               </div>
 
-              <div className="notice">
-                Eerst wordt gematcht
-                op factuurnummer,
-                betalingsreferentie,
-                bedrag en
-                tegenpartij. Een
-                voorstel wordt pas
-                definitief nadat de
-                boekhoudlogica dit
-                veilig toestaat.
+              <div className="bank-matching-rules">
+                <div>
+                  <strong>
+                    100 punten
+                  </strong>
+
+                  <span>
+                    Bedrag én
+                    factuurnummer of
+                    betalingsreferentie
+                    komen overeen.
+                  </span>
+                </div>
+
+                <div>
+                  <strong>
+                    90 punten
+                  </strong>
+
+                  <span>
+                    Bedrag én
+                    tegenpartij komen
+                    overeen.
+                  </span>
+                </div>
+
+                <div>
+                  <strong>
+                    75 punten
+                  </strong>
+
+                  <span>
+                    Het openstaande
+                    bedrag komt exact
+                    overeen.
+                  </span>
+                </div>
+
+                <div>
+                  <strong>
+                    50 punten
+                  </strong>
+
+                  <span>
+                    Er is alleen een
+                    gedeeltelijke
+                    referentiematch.
+                  </span>
+                </div>
               </div>
             </section>
           </>

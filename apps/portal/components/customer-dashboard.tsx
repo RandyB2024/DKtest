@@ -117,6 +117,26 @@ type BankResponse = {
   };
 };
 
+type PeriodSummary = {
+  period:
+    | "day"
+    | "week"
+    | "month"
+    | "quarter"
+    | "halfyear"
+    | "year";
+
+  startDate: string;
+  endDate: string;
+
+  revenueCents: number;
+  costsCents: number;
+  resultCents: number;
+
+  salesInvoiceCount: number;
+  purchaseInvoiceCount: number;
+};
+
 const periods: Period[] = [
   "Dag",
   "Week",
@@ -125,6 +145,18 @@ const periods: Period[] = [
   "Halfjaar",
   "Jaar",
 ];
+
+const periodApiValue: Record<
+  Period,
+  PeriodSummary["period"]
+> = {
+  Dag: "day",
+  Week: "week",
+  Maand: "month",
+  Kwartaal: "quarter",
+  Halfjaar: "halfyear",
+  Jaar: "year",
+};
 
 const comparisons: Comparison[] = [
   "Geen vergelijking",
@@ -146,6 +178,16 @@ const shortDate =
     {
       day: "2-digit",
       month: "2-digit",
+    },
+  );
+
+const fullDate =
+  new Intl.DateTimeFormat(
+    "nl-NL",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     },
   );
 
@@ -242,6 +284,14 @@ export default function CustomerDashboard({
     );
 
   const [
+    periodSummary,
+    setPeriodSummary,
+  ] =
+    useState<PeriodSummary | null>(
+      null,
+    );
+
+  const [
     financialLoading,
     setFinancialLoading,
   ] =
@@ -254,6 +304,12 @@ export default function CustomerDashboard({
     useState(false);
 
   const [
+    periodSummaryLoading,
+    setPeriodSummaryLoading,
+  ] =
+    useState(false);
+
+  const [
     financialError,
     setFinancialError,
   ] =
@@ -262,6 +318,12 @@ export default function CustomerDashboard({
   const [
     bankError,
     setBankError,
+  ] =
+    useState("");
+
+  const [
+    periodSummaryError,
+    setPeriodSummaryError,
   ] =
     useState("");
 
@@ -435,6 +497,86 @@ export default function CustomerDashboard({
     context.organizationId,
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPeriodSummary() {
+      if (
+        context.organizationId ===
+        "all"
+      ) {
+        setPeriodSummary(null);
+        setPeriodSummaryError("");
+        return;
+      }
+
+      setPeriodSummaryLoading(true);
+      setPeriodSummaryError("");
+
+      try {
+        const response =
+          await fetch(
+            `/api/financial/period-summary?organizationId=${encodeURIComponent(
+              context.organizationId,
+            )}&period=${encodeURIComponent(
+              periodApiValue[period],
+            )}`,
+            {
+              method: "GET",
+              cache: "no-store",
+            },
+          );
+
+        const data =
+          (await response.json()) as
+            | PeriodSummary
+            | {
+                error?: string;
+              };
+
+        if (!response.ok) {
+          throw new Error(
+            "error" in data &&
+              data.error
+              ? data.error
+              : "Periodecijfers konden niet worden geladen.",
+          );
+        }
+
+        if (!cancelled) {
+          setPeriodSummary(
+            data as PeriodSummary,
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPeriodSummary(null);
+
+          setPeriodSummaryError(
+            error instanceof Error
+              ? error.message
+              : "Periodecijfers konden niet worden geladen.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setPeriodSummaryLoading(
+            false,
+          );
+        }
+      }
+    }
+
+    void loadPeriodSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    context.organizationId,
+    period,
+  ]);
+
   function go(
     view: string,
     detail?: string,
@@ -454,6 +596,64 @@ export default function CustomerDashboard({
 
     onGo?.(view);
   }
+
+  const revenueValue =
+    context.organizationId ===
+    "all"
+      ? "Selecteer onderneming"
+      : periodSummary
+        ? money(
+            periodSummary.revenueCents,
+          )
+        : "Nog geen gegevens";
+
+  const resultValue =
+    context.organizationId ===
+    "all"
+      ? "Selecteer onderneming"
+      : periodSummary
+        ? money(
+            periodSummary.resultCents,
+          )
+        : "Nog geen gegevens";
+
+  const costsValue =
+    context.organizationId ===
+    "all"
+      ? "Selecteer onderneming"
+      : periodSummary
+        ? money(
+            periodSummary.costsCents,
+          )
+        : "Nog geen gegevens";
+
+  const periodRange =
+    periodSummary
+      ? `${fullDate.format(
+          new Date(
+            `${periodSummary.startDate}T12:00:00`,
+          ),
+        )} t/m ${fullDate.format(
+          new Date(
+            `${periodSummary.endDate}T12:00:00`,
+          ),
+        )}`
+      : period;
+
+  const revenueSubtitle =
+    periodSummary
+      ? `${periodRange} · ${periodSummary.salesInvoiceCount} verkoopfactuur${
+          periodSummary.salesInvoiceCount ===
+          1
+            ? ""
+            : "en"
+        }`
+      : `Omzet binnen deze ${period.toLowerCase()}`;
+
+  const resultSubtitle =
+    periodSummary
+      ? `Kosten ${costsValue} · ${periodRange}`
+      : "Omzet minus kosten binnen dezelfde periode";
 
   const receivablesValue =
     context.organizationId ===
@@ -582,12 +782,26 @@ export default function CustomerDashboard({
         </div>
       )}
 
+      {periodSummaryError && (
+        <div
+          className="notice"
+          role="alert"
+        >
+          {periodSummaryError}
+        </div>
+      )}
+
       <section className="customer-kpi-grid">
         <MetricCard
           title="Omzet"
-          value="Nog geen gegevens"
-          subtitle="Omzet binnen de geselecteerde periode"
+          value={revenueValue}
+          subtitle={revenueSubtitle}
           icon={<ReceiptText />}
+          loading={
+            periodSummaryLoading &&
+            context.organizationId !==
+              "all"
+          }
           onClick={() =>
             go(
               "Rapportages",
@@ -598,9 +812,14 @@ export default function CustomerDashboard({
 
         <MetricCard
           title="Resultaat"
-          value="Nog geen gegevens"
-          subtitle="Omzet minus verwerkte kosten"
+          value={resultValue}
+          subtitle={resultSubtitle}
           icon={<WalletCards />}
+          loading={
+            periodSummaryLoading &&
+            context.organizationId !==
+              "all"
+          }
           onClick={() =>
             go(
               "Rapportages",
@@ -746,23 +965,36 @@ export default function CustomerDashboard({
           </div>
 
           <strong>
-            Financiële grafiek wordt
-            automatisch gevuld
+            {periodSummaryLoading
+              ? "Periodecijfers worden geladen..."
+              : `Financieel overzicht · ${period}`}
           </strong>
 
-          <p>
-            Zodra boekingen
-            beschikbaar zijn, ziet u
-            hier omzet, kosten en
-            resultaat per{" "}
-            {period.toLowerCase()}.
-          </p>
+          {periodSummary ? (
+            <p>
+              Omzet {revenueValue} ·
+              Kosten {costsValue} ·
+              Resultaat {resultValue}
+              <br />
+              {periodRange}
+            </p>
+          ) : (
+            <p>
+              Zodra boekingen
+              beschikbaar zijn, ziet u
+              hier omzet, kosten en
+              resultaat per{" "}
+              {period.toLowerCase()}.
+            </p>
+          )}
 
           {comparison !==
             "Geen vergelijking" && (
             <small>
               Vergelijking:{" "}
-              {comparison.toLowerCase()}
+              {comparison.toLowerCase()}{" "}
+              (vergelijkingscijfers volgen
+              in de volgende rapportagestap)
             </small>
           )}
         </div>

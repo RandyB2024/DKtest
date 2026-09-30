@@ -1,9 +1,14 @@
 import {
+  AccessError,
   requireAal2,
   requireOrganization,
   requirePortalIdentity,
 } from "@/lib/portal-access";
-import { portalApi } from "@/lib/portal-api";
+
+import {
+  portalApi,
+  readBody,
+} from "@/lib/portal-api";
 
 type BankAccount = {
   id: string;
@@ -55,6 +60,44 @@ type BankTransactionsResponse = {
   items: BankTransaction[];
 };
 
+type MatchSuggestion = {
+  transactionId: string;
+
+  amountCents: number;
+  bookedAt: string;
+
+  counterpartyName: string | null;
+  description: string | null;
+  reference: string | null;
+
+  suggestion: null | {
+    invoiceId: string;
+
+    invoiceType:
+      | "sales"
+      | "purchase";
+
+    invoiceNumber: string;
+    relationName: string;
+
+    totalCents: number;
+    paidCents: number;
+    outstandingCents: number;
+
+    score: number;
+
+    strength:
+      | "strong"
+      | "possible"
+      | "weak";
+
+    reason: string;
+  };
+};
+
+const uuidPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export async function GET(
   request: Request,
 ) {
@@ -82,6 +125,7 @@ export async function GET(
       const [
         accountsResult,
         transactionsResult,
+        matchesResult,
       ] = await Promise.all([
         client.rpc(
           "get_bank_accounts",
@@ -96,6 +140,17 @@ export async function GET(
           {
             p_organization_id:
               organizationId,
+
+            p_limit: 100,
+          },
+        ),
+
+        client.rpc(
+          "get_bank_match_suggestions",
+          {
+            p_organization_id:
+              organizationId,
+
             p_limit: 100,
           },
         ),
@@ -104,13 +159,7 @@ export async function GET(
       if (accountsResult.error) {
         console.error(
           "get_bank_accounts failed",
-          {
-            code:
-              accountsResult.error.code,
-            message:
-              accountsResult.error
-                .message,
-          },
+          accountsResult.error,
         );
 
         return Response.json(
@@ -129,14 +178,7 @@ export async function GET(
       ) {
         console.error(
           "get_bank_transactions failed",
-          {
-            code:
-              transactionsResult
-                .error.code,
-            message:
-              transactionsResult
-                .error.message,
-          },
+          transactionsResult.error,
         );
 
         return Response.json(
@@ -150,12 +192,191 @@ export async function GET(
         );
       }
 
+      if (matchesResult.error) {
+        console.error(
+          "get_bank_match_suggestions failed",
+          matchesResult.error,
+        );
+
+        return Response.json(
+          {
+            error:
+              "Matchvoorstellen kunnen tijdelijk niet worden geladen.",
+          },
+          {
+            status: 503,
+          },
+        );
+      }
+
       return Response.json({
         accounts:
-          accountsResult.data as BankAccount[],
+          accountsResult.data as
+            BankAccount[],
 
         transactions:
-          transactionsResult.data as BankTransactionsResponse,
+          transactionsResult.data as
+            BankTransactionsResponse,
+
+        matches:
+          matchesResult.data as
+            MatchSuggestion[],
+      });
+    },
+  );
+}
+
+
+export async function POST(
+  request: Request,
+) {
+  return portalApi(
+    request,
+    async ({ client }) => {
+      const identity =
+        await requirePortalIdentity(
+          client,
+        );
+
+      requireAal2(identity);
+
+      const body =
+        await readBody(request);
+
+      const organizationId =
+        requireOrganization(
+          identity,
+          body.organizationId,
+        );
+
+      const transactionId =
+        body.transactionId;
+
+      const invoiceId =
+        body.invoiceId;
+
+      const invoiceType =
+        body.invoiceType;
+
+      if (
+        typeof transactionId !==
+          "string" ||
+        !uuidPattern.test(
+          transactionId,
+        )
+      ) {
+        throw new AccessError(
+          400,
+          "Ongeldige banktransactie.",
+        );
+      }
+
+      if (
+        typeof invoiceId !==
+          "string" ||
+        !uuidPattern.test(
+          invoiceId,
+        )
+      ) {
+        throw new AccessError(
+          400,
+          "Ongeldige factuur.",
+        );
+      }
+
+      if (
+        invoiceType !== "sales" &&
+        invoiceType !== "purchase"
+      ) {
+        throw new AccessError(
+          400,
+          "Ongeldig factuurtype.",
+        );
+      }
+
+      const {
+        data,
+        error,
+      } = await client.rpc(
+        "confirm_bank_match",
+        {
+          p_organization_id:
+            organizationId,
+
+          p_transaction_id:
+            transactionId,
+
+          p_invoice_id:
+            invoiceId,
+
+          p_invoice_type:
+            invoiceType,
+        },
+      );
+
+      if (error) {
+        console.error(
+          "confirm_bank_match failed",
+          {
+            code: error.code,
+            message: error.message,
+          },
+        );
+
+        if (
+          error.message.includes(
+            "Office-gebruiker",
+          )
+        ) {
+          return Response.json(
+            {
+              error:
+                "Deze boeking kan alleen door een bevoegde medewerker worden bevestigd.",
+            },
+            {
+              status: 403,
+            },
+          );
+        }
+
+        if (
+          error.message.includes(
+            "al gekoppeld",
+          ) ||
+          error.message.includes(
+            "openstaand",
+          ) ||
+          error.message.includes(
+            "groter dan",
+          ) ||
+          error.message.includes(
+            "Alleen geboekte",
+          )
+        ) {
+          return Response.json(
+            {
+              error:
+                "De match kan niet meer worden bevestigd. Vernieuw de bankgegevens en controleer de factuur opnieuw.",
+            },
+            {
+              status: 409,
+            },
+          );
+        }
+
+        return Response.json(
+          {
+            error:
+              "De bankmatch kon niet worden verwerkt.",
+          },
+          {
+            status: 503,
+          },
+        );
+      }
+
+      return Response.json({
+        result: data,
       });
     },
   );
