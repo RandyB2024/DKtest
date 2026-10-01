@@ -280,6 +280,48 @@ export function mountOfficeDocumentsReadonly(
             </select>
           </label>
 
+          <label>
+            Boekjaar
+            <input
+              name="bookYear"
+              type="number"
+              min="2000"
+              max="2100"
+              value="${new Date().getFullYear()}"
+              required
+            >
+          </label>
+
+          <label>
+            Maand
+            <select
+              name="bookMonth"
+              required
+            >
+              ${[
+                'Januari',
+                'Februari',
+                'Maart',
+                'April',
+                'Mei',
+                'Juni',
+                'Juli',
+                'Augustus',
+                'September',
+                'Oktober',
+                'November',
+                'December',
+              ].map(
+                (label, index) =>
+                  `<option value="${index + 1}" ${
+                    new Date().getMonth() === index
+                      ? 'selected'
+                      : ''
+                  }>${label}</option>`
+              ).join('')}
+            </select>
+          </label>
+
           <label class="documents-check">
             <input
               name="visibleToCustomer"
@@ -418,6 +460,10 @@ export function mountOfficeDocumentsReadonly(
           file.size,
         documentType:
           form.elements.documentType.value,
+        bookYear:
+          Number(form.elements.bookYear.value),
+        bookMonth:
+          Number(form.elements.bookMonth.value),
         visibleToCustomer:
           visible.checked,
         acknowledgementRequired:
@@ -813,6 +859,7 @@ export function mountOfficeDocumentsReadonly(
 
               ${
                 document.source === 'customer'
+                && document.status !== 'archived'
                   ? `<button
                       type="button"
                       data-process="${escapeHtml(document.id)}"

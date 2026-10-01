@@ -95,6 +95,12 @@ async function documentsReadRoute(req, url, client, readBody, user) {
     const documentType =
       input.documentType;
 
+    const bookYear =
+      Number(input.bookYear);
+
+    const bookMonth =
+      Number(input.bookMonth);
+
     const allowedMimeTypes =
       new Set([
         'application/pdf',
@@ -153,12 +159,38 @@ async function documentsReadRoute(req, url, client, readBody, user) {
       );
     }
 
+    if (
+      !Number.isInteger(bookYear)
+      || bookYear < 2000
+      || bookYear > 2100
+    ) {
+      throw new OfficeError(
+        400,
+        'INVALID_BOOK_YEAR',
+        'Kies een geldig boekjaar.'
+      );
+    }
+
+    if (
+      !Number.isInteger(bookMonth)
+      || bookMonth < 1
+      || bookMonth > 12
+    ) {
+      throw new OfficeError(
+        400,
+        'INVALID_BOOK_MONTH',
+        'Kies een geldige maand.'
+      );
+    }
+
     return {
       organizationId,
       filename,
       mimeType,
       sizeBytes,
       documentType,
+      bookYear,
+      bookMonth,
       visibleToCustomer:
         input.visibleToCustomer === true,
       acknowledgementRequired:
@@ -291,6 +323,10 @@ async function documentsReadRoute(req, url, client, readBody, user) {
               input.sizeBytes,
             p_document_type:
               input.documentType,
+            p_book_year:
+              input.bookYear,
+            p_book_month:
+              input.bookMonth,
             p_visible_to_customer:
               input.visibleToCustomer,
             p_acknowledgement_required:

@@ -787,7 +787,11 @@ export default function DocumentsView({
       );
 
       setSuccess(
-        "Uw leesbevestiging is opgeslagen.",
+        "Uw leesbevestiging is opgeslagen. Het document is automatisch gearchiveerd.",
+      );
+
+      await loadDocuments(
+        scope,
       );
     } catch (
       caughtError
