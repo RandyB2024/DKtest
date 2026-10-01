@@ -13,12 +13,10 @@ import {
   ArrowUpRight,
   CheckCircle2,
   CircleAlert,
-  FileCheck2,
+  Clock3,
   Landmark,
-  Link2,
-  LoaderCircle,
   Search,
-  Sparkles,
+  UploadCloud,
   WalletCards,
 } from "lucide-react";
 
@@ -69,35 +67,14 @@ type BankTransaction = {
 type MatchSuggestion = {
   transactionId: string;
 
-  amountCents: number;
-  bookedAt: string;
-
-  counterpartyName: string | null;
-  description: string | null;
-  reference: string | null;
-
   suggestion: null | {
     invoiceId: string;
-
     invoiceType:
       | "sales"
       | "purchase";
-
     invoiceNumber: string;
     relationName: string;
-
-    totalCents: number;
-    paidCents: number;
-    outstandingCents: number;
-
     score: number;
-
-    strength:
-      | "strong"
-      | "possible"
-      | "weak";
-
-    reason: string;
   };
 };
 
@@ -124,11 +101,14 @@ type Props = {
   onGo: (view: string) => void;
 };
 
+type CustomerStatus =
+  | "matched"
+  | "processing"
+  | "missing_document";
+
 type Filter =
   | "all"
-  | "unmatched"
-  | "suggested"
-  | "matched";
+  | CustomerStatus;
 
 const euro =
   new Intl.NumberFormat(
@@ -165,66 +145,43 @@ function date(
   );
 }
 
-function matchStrengthLabel(
-  strength:
-    | "strong"
-    | "possible"
-    | "weak",
-) {
-  if (
-    strength === "strong"
-  ) {
-    return "Sterke match";
-  }
-
-  if (
-    strength === "possible"
-  ) {
-    return "Mogelijke match";
-  }
-
-  return "Zwakke match";
-}
-
 export default function BankingView({
   context,
   organization,
   onGo,
 }: Props) {
-  const [data, setData] =
+  const [
+    data,
+    setData,
+  ] =
     useState<BankResponse | null>(
       null,
     );
 
-  const [loading, setLoading] =
+  const [
+    loading,
+    setLoading,
+  ] =
     useState(true);
 
-  const [error, setError] =
+  const [
+    error,
+    setError,
+  ] =
     useState("");
-
-  const [success, setSuccess] =
-    useState("");
-
-  const [query, setQuery] =
-    useState("");
-
-  const [filter, setFilter] =
-    useState<Filter>("all");
 
   const [
-    expandedTransaction,
-    setExpandedTransaction,
+    query,
+    setQuery,
   ] =
-    useState<string | null>(
-      null,
-    );
+    useState("");
 
   const [
-    confirmingTransaction,
-    setConfirmingTransaction,
+    filter,
+    setFilter,
   ] =
-    useState<string | null>(
-      null,
+    useState<Filter>(
+      "all",
     );
 
   const load =
@@ -238,7 +195,7 @@ export default function BankingView({
           setLoading(false);
 
           setError(
-            "Selecteer eerst één onderneming om banktransacties te bekijken.",
+            "Selecteer eerst ??n onderneming om banktransacties te bekijken.",
           );
 
           return;
@@ -254,7 +211,8 @@ export default function BankingView({
                 context.organizationId,
               )}`,
               {
-                cache: "no-store",
+                cache:
+                  "no-store",
               },
             );
 
@@ -322,14 +280,15 @@ export default function BankingView({
       return map;
     }, [data]);
 
-  function getEffectiveStatus(
+  function customerStatus(
     transaction:
       BankTransaction,
-  ): Filter {
+  ): CustomerStatus {
     if (
       transaction
         .reconciliationStatus ===
-      "matched"
+        "matched" ||
+      transaction.paymentId
     ) {
       return "matched";
     }
@@ -339,110 +298,26 @@ export default function BankingView({
         transaction.id,
       );
 
-    if (match?.suggestion) {
-      return "suggested";
-    }
-
-    return "unmatched";
-  }
-
-  async function confirmMatch(
-    transaction:
-      BankTransaction,
-    match:
-      MatchSuggestion,
-  ) {
     if (
-      context.organizationId ===
-      "all"
+      match?.suggestion
     ) {
-      return;
+      return "processing";
     }
 
-    if (!match.suggestion) {
-      return;
-    }
-
-    setConfirmingTransaction(
-      transaction.id,
-    );
-
-    setError("");
-    setSuccess("");
-
-    try {
-      const response =
-        await fetch(
-          "/api/financial/bank",
-          {
-            method: "POST",
-
-            headers: {
-              "content-type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              organizationId:
-                context.organizationId,
-
-              transactionId:
-                transaction.id,
-
-              invoiceId:
-                match.suggestion
-                  .invoiceId,
-
-              invoiceType:
-                match.suggestion
-                  .invoiceType,
-            }),
-          },
-        );
-
-      const result =
-        (await response.json()) as {
-          error?: string;
-
-          result?: {
-            invoiceNumber?:
-              string;
-          };
-        };
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-            "De match kon niet worden bevestigd.",
-        );
-      }
-
-      setSuccess(
-        result.result
-          ?.invoiceNumber
-          ? `Banktransactie is gekoppeld aan factuur ${result.result.invoiceNumber}.`
-          : "Banktransactie is succesvol gekoppeld.",
-      );
-
-      setExpandedTransaction(
-        null,
-      );
-
-      await load();
-    } catch (
-      caughtError
+    /*
+     * Uitgaande betaling zonder gevonden inkoopfactuur:
+     * klant kan de ontbrekende factuur/bon aanleveren.
+     *
+     * Inkomende betaling zonder definitieve match:
+     * administratie verwerkt deze verder.
+     */
+    if (
+      transaction.amountCents < 0
     ) {
-      setError(
-        caughtError instanceof
-          Error
-          ? caughtError.message
-          : "De match kon niet worden bevestigd.",
-      );
-    } finally {
-      setConfirmingTransaction(
-        null,
-      );
+      return "missing_document";
     }
+
+    return "processing";
   }
 
   const visibleTransactions =
@@ -458,15 +333,14 @@ export default function BankingView({
 
       return data.transactions.items.filter(
         (item) => {
-          const effectiveStatus =
-            getEffectiveStatus(
+          const status =
+            customerStatus(
               item,
             );
 
           if (
             filter !== "all" &&
-            effectiveStatus !==
-              filter
+            status !== filter
           ) {
             return false;
           }
@@ -475,26 +349,19 @@ export default function BankingView({
             return true;
           }
 
-          const match =
-            matchMap.get(
-              item.id,
-            );
-
           return [
             item.counterpartyName,
             item.counterpartyIban,
             item.description,
             item.reference,
-            match?.suggestion
-              ?.invoiceNumber,
-            match?.suggestion
-              ?.relationName,
           ]
             .filter(Boolean)
             .some((value) =>
               value!
                 .toLowerCase()
-                .includes(search),
+                .includes(
+                  search,
+                ),
             );
         },
       );
@@ -507,49 +374,41 @@ export default function BankingView({
 
   const summary =
     useMemo(() => {
-      if (!data) {
-        return {
-          count: 0,
-          unmatchedCount: 0,
-          suggestedCount: 0,
-          matchedCount: 0,
-        };
-      }
-
-      let unmatchedCount = 0;
-      let suggestedCount = 0;
-      let matchedCount = 0;
+      let matched = 0;
+      let processing = 0;
+      let missingDocument = 0;
 
       for (
         const transaction of
-        data.transactions.items
+        data?.transactions.items ??
+        []
       ) {
         const status =
-          getEffectiveStatus(
+          customerStatus(
             transaction,
           );
 
         if (
           status === "matched"
         ) {
-          matchedCount += 1;
+          matched += 1;
         } else if (
-          status === "suggested"
+          status ===
+          "missing_document"
         ) {
-          suggestedCount += 1;
+          missingDocument += 1;
         } else {
-          unmatchedCount += 1;
+          processing += 1;
         }
       }
 
       return {
-        count:
-          data.transactions.items
-            .length,
-
-        unmatchedCount,
-        suggestedCount,
-        matchedCount,
+        total:
+          data?.transactions.items
+            .length ?? 0,
+        matched,
+        processing,
+        missingDocument,
       };
     }, [
       data,
@@ -568,20 +427,23 @@ export default function BankingView({
             type="button"
             className="customer-text-link"
             onClick={() =>
-              onGo("Dashboard")
+              onGo(
+                "Dashboard",
+              )
             }
           >
             <ArrowLeft />
             Terug naar dashboard
           </button>
 
-          <h1>Bankieren</h1>
+          <h1>
+            Bankieren
+          </h1>
 
           <p>
-            Bankrekeningen,
-            transacties en
-            factuurmatching van{" "}
-            {companyName}.
+            Bekijk bankmutaties en
+            de verwerkingsstatus
+            van {companyName}.
           </p>
         </div>
       </div>
@@ -592,18 +454,6 @@ export default function BankingView({
           role="alert"
         >
           {error}
-        </div>
-      )}
-
-      {success && (
-        <div
-          className="notice"
-          role="status"
-        >
-          <CheckCircle2
-            size={16}
-          />{" "}
-          {success}
         </div>
       )}
 
@@ -635,10 +485,9 @@ export default function BankingView({
                     <p>
                       Zodra een
                       bankrekening is
-                      gekoppeld, worden
-                      transacties hier
-                      automatisch
-                      weergegeven.
+                      gekoppeld,
+                      verschijnen de
+                      transacties hier.
                     </p>
                   </div>
                 </article>
@@ -684,49 +533,50 @@ export default function BankingView({
             <section className="grid metrics">
               <article className="card metric">
                 <label>
-                  Transacties
+                  Bankmutaties
                 </label>
 
                 <strong>
-                  {summary.count}
+                  {
+                    summary.total
+                  }
                 </strong>
 
                 <span>
-                  In huidige
-                  transactieset
+                  In overzicht
                 </span>
               </article>
 
               <article className="card metric">
                 <label>
-                  Niet gekoppeld
+                  Actie nodig
                 </label>
 
                 <strong>
                   {
-                    summary.unmatchedCount
+                    summary.missingDocument
                   }
                 </strong>
 
                 <span>
-                  Vereist nog
-                  verwerking
+                  Factuur of bon
+                  ontbreekt
                 </span>
               </article>
 
               <article className="card metric">
                 <label>
-                  Matchvoorstellen
+                  Wordt verwerkt
                 </label>
 
                 <strong>
                   {
-                    summary.suggestedCount
+                    summary.processing
                   }
                 </strong>
 
                 <span>
-                  Te controleren
+                  Bij administratie
                 </span>
               </article>
 
@@ -737,12 +587,13 @@ export default function BankingView({
 
                 <strong>
                   {
-                    summary.matchedCount
+                    summary.matched
                   }
                 </strong>
 
                 <span>
-                  Definitief verwerkt
+                  Administratief
+                  verwerkt
                 </span>
               </article>
             </section>
@@ -755,12 +606,11 @@ export default function BankingView({
                   </h2>
 
                   <p>
-                    Controleer welke
-                    transacties al
-                    gekoppeld zijn en
-                    welke een
-                    factuurvoorstel
-                    hebben.
+                    De administratie
+                    controleert en
+                    koppelt betalingen.
+                    U ziet hier de
+                    actuele status.
                   </p>
                 </div>
 
@@ -781,23 +631,23 @@ export default function BankingView({
                       event,
                     ) =>
                       setQuery(
-                        event
-                          .target
+                        event.target
                           .value,
                       )
                     }
-                    placeholder="Zoek naam, IBAN, factuurnummer, omschrijving of referentie"
+                    placeholder="Zoek naam, IBAN, omschrijving of referentie"
                   />
                 </label>
 
                 <select
-                  value={filter}
+                  value={
+                    filter
+                  }
                   onChange={(
                     event,
                   ) =>
                     setFilter(
-                      event
-                        .target
+                      event.target
                         .value as Filter,
                     )
                   }
@@ -806,12 +656,12 @@ export default function BankingView({
                     Alle transacties
                   </option>
 
-                  <option value="unmatched">
-                    Niet gekoppeld
+                  <option value="missing_document">
+                    Actie nodig
                   </option>
 
-                  <option value="suggested">
-                    Matchvoorstel
+                  <option value="processing">
+                    Wordt verwerkt
                   </option>
 
                   <option value="matched">
@@ -845,35 +695,14 @@ export default function BankingView({
                         item.amountCents >
                         0;
 
-                      const effectiveStatus =
-                        getEffectiveStatus(
+                      const status =
+                        customerStatus(
                           item,
                         );
 
-                      const match =
-                        matchMap.get(
-                          item.id,
-                        );
-
-                      const suggestion =
-                        match?.suggestion ??
-                        null;
-
-                      const expanded =
-                        expandedTransaction ===
-                        item.id;
-
-                      const confirming =
-                        confirmingTransaction ===
-                        item.id;
-
                       return (
                         <article
-                          className={`bank-transaction-card ${
-                            expanded
-                              ? "expanded"
-                              : ""
-                          }`}
+                          className="bank-transaction-card"
                           key={
                             item.id
                           }
@@ -909,7 +738,7 @@ export default function BankingView({
                                 {date(
                                   item.bookedAt,
                                 )}
-                                {" · "}
+                                {" ? "}
                                 {
                                   item
                                     .bankAccount
@@ -941,254 +770,61 @@ export default function BankingView({
                             </div>
 
                             <div
-                              className={`bank-match-state ${effectiveStatus}`}
+                              className={`bank-match-state ${status}`}
                             >
-                              {effectiveStatus ===
+                              {status ===
                                 "matched" && (
                                 <CheckCircle2 />
                               )}
 
-                              {effectiveStatus ===
-                                "suggested" && (
-                                <Sparkles />
+                              {status ===
+                                "processing" && (
+                                <Clock3 />
                               )}
 
-                              {effectiveStatus ===
-                                "unmatched" && (
+                              {status ===
+                                "missing_document" && (
                                 <CircleAlert />
                               )}
 
                               <span>
-                                {effectiveStatus ===
+                                {status ===
                                 "matched"
                                   ? "Gekoppeld"
-                                  : effectiveStatus ===
-                                      "suggested"
-                                    ? "Voorstel"
-                                    : "Niet gekoppeld"}
+                                  : status ===
+                                      "missing_document"
+                                    ? "Factuur/bon ontbreekt"
+                                    : "Wordt verwerkt"}
                               </span>
                             </div>
 
-                            <button
-                              type="button"
-                              className="btn"
-                              disabled={
-                                effectiveStatus ===
-                                  "matched" ||
-                                confirming
-                              }
-                              onClick={() =>
-                                setExpandedTransaction(
-                                  expanded
-                                    ? null
-                                    : item.id,
-                                )
-                              }
-                            >
-                              {effectiveStatus ===
-                              "suggested" ? (
-                                <Sparkles
+                            {status ===
+                            "missing_document" ? (
+                              <button
+                                type="button"
+                                className="btn"
+                                onClick={() =>
+                                  onGo(
+                                    "Documenten",
+                                  )
+                                }
+                              >
+                                <UploadCloud
                                   size={
                                     15
                                   }
                                 />
-                              ) : (
-                                <Link2
-                                  size={
-                                    15
-                                  }
-                                />
-                              )}
-
-                              {effectiveStatus ===
-                              "suggested"
-                                ? "Controleer"
-                                : effectiveStatus ===
-                                    "matched"
-                                  ? "Gekoppeld"
-                                  : "Koppelen"}
-                            </button>
+                                Factuur/bon uploaden
+                              </button>
+                            ) : (
+                              <span className="bank-customer-readonly">
+                                {status ===
+                                "matched"
+                                  ? "Afgerond"
+                                  : "Geen actie nodig"}
+                              </span>
+                            )}
                           </div>
-
-                          {expanded && (
-                            <div className="bank-match-panel">
-                              {suggestion &&
-                              match ? (
-                                <>
-                                  <div className="bank-match-panel-heading">
-                                    <div>
-                                      <span>
-                                        Automatisch
-                                        matchvoorstel
-                                      </span>
-
-                                      <h3>
-                                        {matchStrengthLabel(
-                                          suggestion.strength,
-                                        )}
-                                      </h3>
-                                    </div>
-
-                                    <strong>
-                                      {
-                                        suggestion.score
-                                      }
-                                      /100
-                                    </strong>
-                                  </div>
-
-                                  <div className="bank-match-details">
-                                    <div>
-                                      <span>
-                                        Type
-                                      </span>
-
-                                      <strong>
-                                        {suggestion.invoiceType ===
-                                        "sales"
-                                          ? "Verkoopfactuur"
-                                          : "Inkoopfactuur"}
-                                      </strong>
-                                    </div>
-
-                                    <div>
-                                      <span>
-                                        Factuurnummer
-                                      </span>
-
-                                      <strong>
-                                        {
-                                          suggestion.invoiceNumber
-                                        }
-                                      </strong>
-                                    </div>
-
-                                    <div>
-                                      <span>
-                                        Relatie
-                                      </span>
-
-                                      <strong>
-                                        {
-                                          suggestion.relationName
-                                        }
-                                      </strong>
-                                    </div>
-
-                                    <div>
-                                      <span>
-                                        Openstaand
-                                      </span>
-
-                                      <strong>
-                                        {money(
-                                          suggestion.outstandingCents,
-                                        )}
-                                      </strong>
-                                    </div>
-                                  </div>
-
-                                  <div className="bank-match-reason">
-                                    <FileCheck2 />
-
-                                    <span>
-                                      {
-                                        suggestion.reason
-                                      }
-                                    </span>
-                                  </div>
-
-                                  <div className="notice">
-                                    Controleer de
-                                    factuur zorgvuldig.
-                                    Na bevestigen wordt
-                                    deze bankmutatie
-                                    definitief als
-                                    betaling geboekt.
-                                  </div>
-
-                                  <div className="bank-match-actions">
-                                    <button
-                                      type="button"
-                                      className="btn"
-                                      disabled={
-                                        confirming
-                                      }
-                                      onClick={() =>
-                                        confirmMatch(
-                                          item,
-                                          match,
-                                        )
-                                      }
-                                    >
-                                      {confirming ? (
-                                        <LoaderCircle
-                                          size={
-                                            15
-                                          }
-                                        />
-                                      ) : (
-                                        <CheckCircle2
-                                          size={
-                                            15
-                                          }
-                                        />
-                                      )}
-
-                                      {confirming
-                                        ? "Verwerken..."
-                                        : "Match bevestigen"}
-                                    </button>
-
-                                    <small>
-                                      Bedrag:{" "}
-                                      {money(
-                                        Math.abs(
-                                          item.amountCents,
-                                        ),
-                                      )}
-                                    </small>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="bank-match-panel-heading">
-                                    <div>
-                                      <span>
-                                        Automatische
-                                        matching
-                                      </span>
-
-                                      <h3>
-                                        Geen geschikte
-                                        factuur gevonden
-                                      </h3>
-                                    </div>
-
-                                    <CircleAlert />
-                                  </div>
-
-                                  <p className="bank-match-no-result">
-                                    Het systeem vond
-                                    geen voldoende
-                                    passende openstaande
-                                    factuur op basis van
-                                    bedrag, referentie
-                                    en tegenpartij.
-                                  </p>
-
-                                  <div className="notice">
-                                    Deze transactie
-                                    blijft ongekoppeld.
-                                    Handmatige
-                                    grootboekverwerking
-                                    bouwen we later in
-                                    de Office-omgeving.
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          )}
                         </article>
                       );
                     },
@@ -1197,73 +833,24 @@ export default function BankingView({
               )}
             </section>
 
-            <section className="card">
+            <section className="card bank-customer-info">
               <div className="section-heading">
                 <div>
                   <h2>
-                    Matchingregels
+                    Wie doet wat?
                   </h2>
 
                   <p>
-                    Matchvoorstellen
-                    worden eerst met
-                    controleerbare regels
-                    bepaald.
+                    U levert documenten
+                    aan. De administratie
+                    controleert de
+                    boekhouding en maakt
+                    de definitieve
+                    koppeling.
                   </p>
                 </div>
 
-                <FileCheck2 />
-              </div>
-
-              <div className="bank-matching-rules">
-                <div>
-                  <strong>
-                    100 punten
-                  </strong>
-
-                  <span>
-                    Bedrag én
-                    factuurnummer of
-                    betalingsreferentie
-                    komen overeen.
-                  </span>
-                </div>
-
-                <div>
-                  <strong>
-                    90 punten
-                  </strong>
-
-                  <span>
-                    Bedrag én
-                    tegenpartij komen
-                    overeen.
-                  </span>
-                </div>
-
-                <div>
-                  <strong>
-                    75 punten
-                  </strong>
-
-                  <span>
-                    Het openstaande
-                    bedrag komt exact
-                    overeen.
-                  </span>
-                </div>
-
-                <div>
-                  <strong>
-                    50 punten
-                  </strong>
-
-                  <span>
-                    Er is alleen een
-                    gedeeltelijke
-                    referentiematch.
-                  </span>
-                </div>
+                <CheckCircle2 />
               </div>
             </section>
           </>

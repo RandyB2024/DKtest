@@ -489,3 +489,42 @@
     flex-direction: column;
   }
 }
+
+/* Klantportaal: bankmatching is read-only */
+.bank-match-state.processing {
+  color: #66758a;
+}
+
+.bank-match-state.missing_document {
+  color: #bd563b;
+}
+
+.bank-customer-readonly {
+  color: #718398;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.bank-customer-info {
+  margin-top: 16px;
+}
+
+.bank-customer-info .section-heading {
+  margin-bottom: 0;
+}
+
+@media (max-width: 950px) {
+  .bank-customer-readonly {
+    grid-column: 3;
+    grid-row: 1 / 4;
+    align-self: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .bank-customer-readonly {
+    grid-column: 2;
+    grid-row: auto;
+  }
+}
