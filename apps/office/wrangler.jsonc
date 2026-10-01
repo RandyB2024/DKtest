@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "destination-known-office-test",
   "main": "src/worker.mjs",
   "compatibility_date": "2026-09-27",
@@ -15,7 +15,11 @@
     "MFA_TRUST_MAX_AGE_SECONDS": "86400",
     "PASSKEYS_ENABLED": "false",
     "KVK_API_MODE": "test",
-    "KVK_API_BASE_URL": "https://api.kvk.nl/test/api"
+    "KVK_API_BASE_URL": "https://api.kvk.nl/test/api",
+    "EMAILJS_SERVICE_ID": "service_crgn6gs",
+    "EMAILJS_TEMPLATE_ID": "template_gmaawki",
+    "EMAILJS_PUBLIC_KEY": "NQoJjpyBsuRCXnbyP",
+    "PORTAL_BASE_URL": "https://mijn.testadmin.nl"
   }
 }
 
