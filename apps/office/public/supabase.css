@@ -160,3 +160,52 @@
 .office-documents-empty{display:grid;gap:6px;padding:34px 16px;text-align:center;color:var(--muted)}
 .office-documents-empty strong{color:var(--blue-dark)}
 @media(max-width:800px){.office-documents-header{flex-direction:column}.office-documents-header button{width:100%;justify-content:center}.office-documents-row--head{display:none}.office-documents-table{display:grid;gap:10px;border-top:0}.office-documents-row{grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:10px;padding:13px}.office-documents-row>div:first-child{grid-column:1/-1}.office-documents-row button{grid-column:1/-1;width:100%;justify-content:center}}
+
+
+/* Office documents processing v1 */
+.documents-count{
+  display:grid;
+  place-items:center;
+  min-width:42px;
+  height:42px;
+  padding:0 10px;
+  border-radius:10px;
+  background:var(--blue);
+  color:#fff;
+  font-weight:800;
+  font-size:1rem;
+}
+.documents-row-actions{
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+.documents-row-actions button{
+  min-height:36px;
+  padding:7px 10px;
+}
+.documents-process-dialog select,
+.documents-process-dialog input{
+  width:100%;
+  box-sizing:border-box;
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  font:inherit;
+}
+.documents-process-dialog fieldset{
+  display:grid;
+  gap:12px;
+}
+@media(max-width:800px){
+  .documents-row-actions{
+    grid-column:1/-1;
+    justify-content:stretch;
+  }
+  .documents-row-actions button{
+    flex:1;
+    justify-content:center;
+  }
+}

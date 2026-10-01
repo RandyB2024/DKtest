@@ -49,8 +49,28 @@ const documentReadFields = [
   'archived_at',
 ].join(',');
 
-async function documentsReadRoute(req, url, client) {
+async function documentsReadRoute(req, url, client, readBody) {
   const path = url.pathname;
+
+  if (req.method === 'GET' && path === '/api/documents/inbox') {
+    const documents = checkQuery(
+      await client
+        .from('documents')
+        .select(documentReadFields)
+        .eq('source', 'customer')
+        .eq('status', 'new')
+        .is('archived_at', null)
+        .order('created_at', { ascending: false })
+        .limit(100)
+    );
+
+    return {
+      status: 200,
+      data: {
+        documents,
+      },
+    };
+  }
 
   if (req.method === 'GET' && path === '/api/documents') {
     const organizationIds = url.searchParams.getAll('organizationId');
@@ -88,6 +108,131 @@ async function documentsReadRoute(req, url, client) {
         organizationId,
         documents,
       },
+    };
+  }
+
+  const processDocument =
+    path.match(/^\/api\/documents\/([^/]+)\/process$/);
+
+  if (req.method === 'PATCH' && processDocument) {
+    const documentId =
+      decodeURIComponent(processDocument[1]);
+
+    if (!uuid.test(documentId)) {
+      throw new OfficeError(
+        400,
+        'INVALID_DOCUMENT',
+        'Ongeldig document.'
+      );
+    }
+
+    const input = await readBody(req);
+
+    const organizationId =
+      input.organizationId;
+
+    await entity(
+      client,
+      'organizations',
+      organizationId,
+      orgFields
+    );
+
+    const allowedStatuses = new Set([
+      'new',
+      'in_review',
+      'needs_customer_action',
+      'ready',
+      'processed',
+    ]);
+
+    const allowedTypes = new Set([
+      'purchase_invoice',
+      'sales_invoice',
+      'bank_document',
+      'tax_document',
+      'payroll',
+      'contract',
+      'other',
+    ]);
+
+    if (!allowedStatuses.has(input.status)) {
+      throw new OfficeError(
+        400,
+        'INVALID_STATUS',
+        'Ongeldige documentstatus.'
+      );
+    }
+
+    if (!allowedTypes.has(input.documentType)) {
+      throw new OfficeError(
+        400,
+        'INVALID_DOCUMENT_TYPE',
+        'Ongeldig documenttype.'
+      );
+    }
+
+    const bookYear =
+      input.bookYear === null ||
+      input.bookYear === '' ||
+      input.bookYear === undefined
+        ? null
+        : Number(input.bookYear);
+
+    const bookMonth =
+      input.bookMonth === null ||
+      input.bookMonth === '' ||
+      input.bookMonth === undefined
+        ? null
+        : Number(input.bookMonth);
+
+    if (
+      bookYear !== null &&
+      (
+        !Number.isInteger(bookYear) ||
+        bookYear < 2000 ||
+        bookYear > 2100
+      )
+    ) {
+      throw new OfficeError(
+        400,
+        'INVALID_BOOK_YEAR',
+        'Ongeldig boekjaar.'
+      );
+    }
+
+    if (
+      bookMonth !== null &&
+      (
+        !Number.isInteger(bookMonth) ||
+        bookMonth < 1 ||
+        bookMonth > 12
+      )
+    ) {
+      throw new OfficeError(
+        400,
+        'INVALID_BOOK_MONTH',
+        'Ongeldige maand.'
+      );
+    }
+
+    const result = checkQuery(
+      await client.rpc(
+        'office_process_customer_document',
+        {
+          p_organization_id: organizationId,
+          p_document_id: documentId,
+          p_status: input.status,
+          p_document_type: input.documentType,
+          p_book_year: bookYear,
+          p_book_month: bookMonth,
+        }
+      )
+    );
+
+    return {
+      status: 200,
+      data: result,
     };
   }
 
@@ -242,7 +387,12 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
 
-    const documents = await documentsReadRoute(req, url, client);
+    const documents = await documentsReadRoute(
+      req,
+      url,
+      client,
+      body
+    );
     if (documents) return sendJson(res, documents.status, documents.data);
 
     const tasks=await tasksRoute(req,url,client,user,body);
