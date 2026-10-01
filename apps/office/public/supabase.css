@@ -209,3 +209,37 @@
     justify-content:center;
   }
 }
+
+
+/* Office document upload v1 */
+.office-documents-upload{
+  border-top:3px solid var(--blue);
+}
+.documents-upload-dialog fieldset{
+  display:grid;
+  gap:14px;
+}
+.documents-upload-dialog input[type="file"],
+.documents-upload-dialog select{
+  width:100%;
+  box-sizing:border-box;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  color:var(--ink);
+  font:inherit;
+}
+.documents-check{
+  display:flex!important;
+  grid-template-columns:none!important;
+  flex-direction:row;
+  align-items:center;
+  gap:10px;
+  font-weight:500;
+}
+.documents-check input{
+  width:18px!important;
+  height:18px;
+  margin:0;
+}

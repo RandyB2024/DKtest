@@ -49,8 +49,261 @@ const documentReadFields = [
   'archived_at',
 ].join(',');
 
-async function documentsReadRoute(req, url, client, readBody) {
+async function documentsReadRoute(req, url, client, readBody, user) {
   const path = url.pathname;
+
+  const writableRoles = new Set([
+    'owner',
+    'admin',
+    'accountant',
+    'handler',
+  ]);
+
+  const requireDocumentWrite = () => {
+    if (!writableRoles.has(user?.roleCode)) {
+      throw new OfficeError(
+        403,
+        'DOCUMENT_WRITE_DENIED',
+        'Uw Office-rol heeft alleen leesrechten.'
+      );
+    }
+  };
+
+  const validateUploadInput = input => {
+    if (!input || typeof input !== 'object') {
+      throw new OfficeError(
+        400,
+        'INVALID_UPLOAD',
+        'Ongeldige upload.'
+      );
+    }
+
+    const organizationId =
+      input.organizationId;
+
+    const filename =
+      typeof input.filename === 'string'
+        ? input.filename.trim()
+        : '';
+
+    const mimeType =
+      input.mimeType;
+
+    const sizeBytes =
+      Number(input.sizeBytes);
+
+    const documentType =
+      input.documentType;
+
+    const allowedMimeTypes =
+      new Set([
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+      ]);
+
+    const allowedDocumentTypes =
+      new Set([
+        'purchase_invoice',
+        'sales_invoice',
+        'bank_document',
+        'tax_document',
+        'payroll',
+        'contract',
+        'other',
+      ]);
+
+    if (
+      !filename ||
+      filename.length > 180 ||
+      /[\u0000-\u001f\u007f]/.test(filename)
+    ) {
+      throw new OfficeError(
+        400,
+        'INVALID_FILENAME',
+        'Ongeldige bestandsnaam.'
+      );
+    }
+
+    if (!allowedMimeTypes.has(mimeType)) {
+      throw new OfficeError(
+        415,
+        'INVALID_FILE_TYPE',
+        'Alleen PDF, PNG en JPG zijn toegestaan.'
+      );
+    }
+
+    if (
+      !Number.isInteger(sizeBytes) ||
+      sizeBytes <= 0 ||
+      sizeBytes > 52428800
+    ) {
+      throw new OfficeError(
+        413,
+        'INVALID_FILE_SIZE',
+        'Een document mag maximaal 50 MB zijn.'
+      );
+    }
+
+    if (!allowedDocumentTypes.has(documentType)) {
+      throw new OfficeError(
+        400,
+        'INVALID_DOCUMENT_TYPE',
+        'Ongeldig documenttype.'
+      );
+    }
+
+    return {
+      organizationId,
+      filename,
+      mimeType,
+      sizeBytes,
+      documentType,
+      visibleToCustomer:
+        input.visibleToCustomer === true,
+      acknowledgementRequired:
+        input.visibleToCustomer === true
+        && input.acknowledgementRequired === true,
+    };
+  };
+
+  if (
+    req.method === 'POST'
+    && path === '/api/documents/upload-ticket'
+  ) {
+    requireDocumentWrite();
+
+    const input =
+      validateUploadInput(
+        await readBody(req)
+      );
+
+    await entity(
+      client,
+      'organizations',
+      input.organizationId,
+      orgFields
+    );
+
+    const documentId =
+      crypto.randomUUID();
+
+    const extension =
+      input.mimeType === 'application/pdf'
+        ? 'pdf'
+        : input.mimeType === 'image/png'
+          ? 'png'
+          : 'jpg';
+
+    const storagePath =
+      `${input.organizationId}/inbox/${documentId}/file.${extension}`;
+
+    const signed =
+      await client.storage
+        .from('documents')
+        .createSignedUploadUrl(
+          storagePath,
+          {
+            upsert: false,
+          }
+        );
+
+    if (
+      signed.error
+      || !signed.data?.signedUrl
+    ) {
+      throw new OfficeError(
+        503,
+        'UPLOAD_TICKET_FAILED',
+        'De beveiligde upload kon niet worden voorbereid.'
+      );
+    }
+
+    return {
+      status: 200,
+      data: {
+        documentId,
+        storagePath,
+        signedUrl:
+          signed.data.signedUrl,
+        token:
+          signed.data.token,
+      },
+    };
+  }
+
+  if (
+    req.method === 'POST'
+    && path === '/api/documents/upload-complete'
+  ) {
+    requireDocumentWrite();
+
+    const raw =
+      await readBody(req);
+
+    const input =
+      validateUploadInput(raw);
+
+    const documentId =
+      raw.documentId;
+
+    if (!uuid.test(documentId ?? '')) {
+      throw new OfficeError(
+        400,
+        'INVALID_DOCUMENT',
+        'Ongeldig document.'
+      );
+    }
+
+    await entity(
+      client,
+      'organizations',
+      input.organizationId,
+      orgFields
+    );
+
+    const extension =
+      input.mimeType === 'application/pdf'
+        ? 'pdf'
+        : input.mimeType === 'image/png'
+          ? 'png'
+          : 'jpg';
+
+    const storagePath =
+      `${input.organizationId}/inbox/${documentId}/file.${extension}`;
+
+    const result =
+      checkQuery(
+        await client.rpc(
+          'office_register_document_upload',
+          {
+            p_document_id:
+              documentId,
+            p_organization_id:
+              input.organizationId,
+            p_storage_path:
+              storagePath,
+            p_filename:
+              input.filename,
+            p_mime_type:
+              input.mimeType,
+            p_size_bytes:
+              input.sizeBytes,
+            p_document_type:
+              input.documentType,
+            p_visible_to_customer:
+              input.visibleToCustomer,
+            p_acknowledgement_required:
+              input.acknowledgementRequired,
+          }
+        )
+      );
+
+    return {
+      status: 200,
+      data: result,
+    };
+  }
 
   if (req.method === 'GET' && path === '/api/documents/inbox') {
     const documents = checkQuery(
@@ -391,7 +644,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
       req,
       url,
       client,
-      body
+      body,
+      user
     );
     if (documents) return sendJson(res, documents.status, documents.data);
 

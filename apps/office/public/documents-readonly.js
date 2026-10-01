@@ -93,6 +93,31 @@ export function mountOfficeDocumentsReadonly(
     );
 
   root.innerHTML = `
+    <section class="panel office-documents-upload">
+      <div class="office-documents-header">
+        <div>
+          <p class="eyebrow">Office ? klant</p>
+          <h2>Document delen</h2>
+          <p class="small-copy">
+            Upload veilig een document naar het dossier van een klant.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          id="documents-upload-open"
+        >
+          Document uploaden
+        </button>
+      </div>
+
+      <p
+        id="documents-upload-status"
+        class="small-copy"
+        role="status"
+      ></p>
+    </section>
+
     <section class="panel office-documents-readonly">
       <div class="office-documents-header">
         <div>
@@ -171,7 +196,355 @@ export function mountOfficeDocumentsReadonly(
   const refresh =
     root.querySelector('#documents-refresh');
 
+  const uploadOpen =
+    root.querySelector('#documents-upload-open');
+
+  const uploadStatus =
+    root.querySelector('#documents-upload-status');
+
   let requestVersion = 0;
+
+  function uploadDialog() {
+    if (!organizations.length) {
+      uploadStatus.textContent =
+        'Er is geen onderneming beschikbaar.';
+      return;
+    }
+
+    const dialog =
+      window.document.createElement('dialog');
+
+    dialog.className =
+      'customer-dialog documents-upload-dialog';
+
+    dialog.innerHTML = `
+      <form>
+        <p class="eyebrow">Office ? klant</p>
+        <h2>Document uploaden</h2>
+
+        <fieldset>
+          <label>
+            Onderneming
+            <select
+              name="organizationId"
+              required
+            >
+              ${organizations.map(
+                organization =>
+                  `<option value="${escapeHtml(organization.id)}">${escapeHtml(organization.name)}</option>`
+              ).join('')}
+            </select>
+          </label>
+
+          <label>
+            Bestand
+            <input
+              name="file"
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
+              required
+            >
+          </label>
+
+          <p class="small-copy">
+            Toegestaan: PDF, PNG en JPG. Maximaal 50 MB.
+          </p>
+
+          <label>
+            Documenttype
+            <select
+              name="documentType"
+              required
+            >
+              <option value="other">
+                Overig
+              </option>
+              <option value="tax_document">
+                Belastingdocument
+              </option>
+              <option value="contract">
+                Contract
+              </option>
+              <option value="bank_document">
+                Bankdocument
+              </option>
+              <option value="purchase_invoice">
+                Inkoopfactuur
+              </option>
+              <option value="sales_invoice">
+                Verkoopfactuur
+              </option>
+              <option value="payroll">
+                Loonadministratie
+              </option>
+            </select>
+          </label>
+
+          <label class="documents-check">
+            <input
+              name="visibleToCustomer"
+              type="checkbox"
+              checked
+            >
+            <span>
+              Zichtbaar maken voor klant
+            </span>
+          </label>
+
+          <label class="documents-check">
+            <input
+              name="acknowledgementRequired"
+              type="checkbox"
+            >
+            <span>
+              Leesbevestiging verplicht
+            </span>
+          </label>
+        </fieldset>
+
+        <p
+          class="mutation-error"
+          role="alert"
+        ></p>
+
+        <div class="customer-buttons">
+          <button
+            type="submit"
+            class="primary"
+          >
+            Uploaden
+          </button>
+
+          <button
+            type="button"
+            data-cancel
+          >
+            Annuleren
+          </button>
+        </div>
+      </form>
+    `;
+
+    root.append(dialog);
+
+    const form =
+      dialog.querySelector('form');
+
+    const visible =
+      form.elements.visibleToCustomer;
+
+    const acknowledgement =
+      form.elements.acknowledgementRequired;
+
+    const syncAcknowledgement = () => {
+      acknowledgement.disabled =
+        !visible.checked;
+
+      if (!visible.checked) {
+        acknowledgement.checked =
+          false;
+      }
+    };
+
+    visible.addEventListener(
+      'change',
+      syncAcknowledgement
+    );
+
+    syncAcknowledgement();
+
+    dialog
+      .querySelector('[data-cancel]')
+      .onclick =
+        () => dialog.close();
+
+    dialog.addEventListener(
+      'close',
+      () => dialog.remove()
+    );
+
+    form.onsubmit = async event => {
+      event.preventDefault();
+
+      const submit =
+        form.querySelector(
+          '[type=submit]'
+        );
+
+      const errorBox =
+        form.querySelector(
+          '.mutation-error'
+        );
+
+      const file =
+        form.elements.file.files?.[0];
+
+      if (!file) {
+        errorBox.textContent =
+          'Kies eerst een document.';
+        return;
+      }
+
+      const allowed =
+        new Set([
+          'application/pdf',
+          'image/png',
+          'image/jpeg',
+        ]);
+
+      if (!allowed.has(file.type)) {
+        errorBox.textContent =
+          'Alleen PDF, PNG en JPG zijn toegestaan.';
+        return;
+      }
+
+      if (
+        file.size <= 0
+        || file.size > 52428800
+      ) {
+        errorBox.textContent =
+          'Een document mag maximaal 50 MB zijn.';
+        return;
+      }
+
+      const payload = {
+        organizationId:
+          form.elements.organizationId.value,
+        filename:
+          file.name,
+        mimeType:
+          file.type,
+        sizeBytes:
+          file.size,
+        documentType:
+          form.elements.documentType.value,
+        visibleToCustomer:
+          visible.checked,
+        acknowledgementRequired:
+          acknowledgement.checked,
+      };
+
+      submit.disabled = true;
+      errorBox.textContent = '';
+
+      try {
+        uploadStatus.textContent =
+          'Beveiligde upload voorbereiden...';
+
+        const ticket =
+          await api(
+            '/api/documents/upload-ticket',
+            payload
+          );
+
+        uploadStatus.textContent =
+          'Bestand uploaden...';
+
+        if (
+          !ticket.signedUrl
+          || !ticket.token
+        ) {
+          throw new Error(
+            'De beveiligde uploadgegevens zijn onvolledig.'
+          );
+        }
+
+        const uploadUrl =
+          new URL(ticket.signedUrl);
+
+        if (
+          !uploadUrl.searchParams.has('token')
+        ) {
+          uploadUrl.searchParams.set(
+            'token',
+            ticket.token
+          );
+        }
+
+        const uploadBody =
+          new FormData();
+
+        uploadBody.append(
+          'cacheControl',
+          '3600'
+        );
+
+        uploadBody.append(
+          '',
+          file
+        );
+
+        const uploadResponse =
+          await fetch(
+            uploadUrl.toString(),
+            {
+              method: 'PUT',
+              headers: {
+                'x-upsert':
+                  'false',
+              },
+              body:
+                uploadBody,
+            }
+          );
+
+        if (!uploadResponse.ok) {
+          let detail = '';
+
+          try {
+            detail =
+              await uploadResponse.text();
+          } catch {}
+
+          throw new Error(
+            detail
+              ? `Upload mislukt: ${detail}`
+              : 'Het bestand kon niet naar de beveiligde opslag worden verzonden.'
+          );
+        }
+
+        uploadStatus.textContent =
+          'Document registreren...';
+
+        await api(
+          '/api/documents/upload-complete',
+          {
+            ...payload,
+            documentId:
+              ticket.documentId,
+          }
+        );
+
+        uploadStatus.textContent =
+          'Document is veilig toegevoegd.';
+
+        dialog.close();
+
+        select.value =
+          payload.organizationId;
+
+        await Promise.all([
+          loadInbox(),
+          loadOrganization(),
+        ]);
+      } catch (uploadError) {
+        errorBox.textContent =
+          uploadError.message ||
+          'Uploaden is niet gelukt.';
+
+        uploadStatus.textContent = '';
+      } finally {
+        submit.disabled = false;
+      }
+    };
+
+    dialog.showModal();
+  }
+
+  uploadOpen.addEventListener(
+    'click',
+    uploadDialog
+  );
 
   async function openDocument(document) {
     const result = await api(
