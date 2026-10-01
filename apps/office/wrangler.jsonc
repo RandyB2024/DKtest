@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "destination-known-office-test",
   "main": "src/worker.mjs",
   "compatibility_date": "2026-09-27",
@@ -18,3 +18,4 @@
     "KVK_API_BASE_URL": "https://api.kvk.nl/test/api"
   }
 }
+

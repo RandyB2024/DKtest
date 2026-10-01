@@ -106,6 +106,11 @@ async function renderRoute() {
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
       const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header('Onderneming');
       html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
+    } else if (path === '/banking') {
+      header('Bankieren');
+      const data = await api('/api/clients');
+      recordData = data;
+      html = '<div id="office-banking"></div>';
     } else if (path === '/documents') {
       header('Documenten');
       const data = await api('/api/clients');
@@ -114,7 +119,7 @@ async function renderRoute() {
     } else if (path === '/settings') {
       header('Instellingen');html='<section class="panel" id="passkey-settings"></section>';
     } else {
-      const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/settings':'Instellingen' };
+      const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/banking':'Bankieren','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/settings':'Instellingen' };
       header(titles[path] || 'Office');
       html = `<section class="panel empty"><p class="eyebrow">Fase 1 · Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
     }
@@ -122,6 +127,9 @@ async function renderRoute() {
       if(path==='/clients'||path==='/dashboard'){
         const {mountClientWorkspace}=await import('/client-workspace.js');
         if(activeGeneration===generation&&currentUser)mountClientWorkspace($('#client-workspace'),recordData,{canCreate:currentUser.canManageCustomers,onCreate:()=>customerForm('new')});
+      }else if(path==='/banking'){
+        const {mountOfficeBanking}=await import('/banking.js');
+        if(activeGeneration===generation&&currentUser)mountOfficeBanking($('#office-banking'),api,recordData);
       }else if(path==='/documents'){
         const {mountOfficeDocumentsReadonly}=await import('/documents-readonly.js');
         if(activeGeneration===generation&&currentUser)mountOfficeDocumentsReadonly($('#office-documents-readonly'),api,recordData);

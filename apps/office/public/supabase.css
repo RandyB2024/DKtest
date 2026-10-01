@@ -243,3 +243,304 @@
   height:18px;
   margin:0;
 }
+
+
+/* ==========================================================
+   Office banking
+   ========================================================== */
+
+.office-banking-shell {
+  display: grid;
+  gap: 22px;
+}
+
+.office-bank-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.office-bank-heading h2 {
+  margin: 2px 0 6px;
+}
+
+.office-bank-heading p {
+  margin-bottom: 0;
+}
+
+.office-bank-toolbar {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1fr)
+    minmax(180px, .55fr)
+    minmax(260px, 1.2fr);
+  gap: 14px;
+}
+
+.office-bank-toolbar label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.office-bank-toolbar select,
+.office-bank-toolbar input {
+  width: 100%;
+  min-height: 44px;
+}
+
+.office-bank-summary {
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.office-bank-summary article {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid #dfe6ee;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.office-bank-summary span {
+  color: #718398;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.office-bank-summary strong {
+  color: #142a47;
+  font-size: 24px;
+}
+
+.office-bank-list {
+  display: grid;
+}
+
+.office-bank-row {
+  display: grid;
+  grid-template-columns:
+    auto
+    minmax(220px, 1fr)
+    minmax(120px, auto)
+    minmax(130px, auto)
+    auto;
+  gap: 16px;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #e8edf2;
+}
+
+.office-bank-row:last-child {
+  border-bottom: 0;
+}
+
+.office-bank-direction {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-weight: 800;
+}
+
+.office-bank-direction.incoming {
+  background: #e7f6ee;
+  color: #238153;
+}
+
+.office-bank-direction.outgoing {
+  background: #fff0eb;
+  color: #bd563b;
+}
+
+.office-bank-main,
+.office-bank-amount {
+  display: grid;
+  gap: 4px;
+}
+
+.office-bank-main strong {
+  color: #142a47;
+}
+
+.office-bank-main span,
+.office-bank-main small,
+.office-bank-amount small {
+  color: #718398;
+}
+
+.office-bank-main span {
+  font-size: 13px;
+}
+
+.office-bank-main small,
+.office-bank-amount small {
+  font-size: 11px;
+}
+
+.office-bank-amount {
+  text-align: right;
+}
+
+.office-bank-state {
+  display: inline-flex;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.office-bank-state.matched {
+  background: #e7f6ee;
+  color: #238153;
+}
+
+.office-bank-state.suggested {
+  background: #eeedff;
+  color: #5d55bd;
+}
+
+.office-bank-state.missing_document {
+  background: #fff0eb;
+  color: #bd563b;
+}
+
+.office-bank-state.review {
+  background: #edf2f6;
+  color: #596d82;
+}
+
+.office-bank-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.office-bank-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d9e1e8;
+  border-radius: 10px;
+  color: #17324d;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.office-bank-done {
+  color: #718398;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.office-bank-match {
+  grid-column: 2 / -1;
+  display: grid;
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 15px;
+  border: 1px solid #dde5ec;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.office-bank-match > div {
+  display: grid;
+  gap: 4px;
+}
+
+.office-bank-match span {
+  color: #718398;
+  font-size: 11px;
+}
+
+.office-bank-match strong {
+  color: #17324d;
+  font-size: 13px;
+}
+
+.office-bank-match p {
+  grid-column: 1 / -1;
+  margin: 3px 0 0;
+  color: #607388;
+  font-size: 12px;
+}
+
+.office-bank-empty {
+  min-height: 150px;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  text-align: center;
+  color: #718398;
+}
+
+@media (max-width: 1050px) {
+  .office-bank-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .office-bank-search {
+    grid-column: 1 / -1;
+  }
+
+  .office-bank-summary {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .office-bank-row {
+    grid-template-columns:
+      auto 1fr auto;
+  }
+
+  .office-bank-amount,
+  .office-bank-state,
+  .office-bank-actions {
+    grid-column: 2;
+  }
+
+  .office-bank-amount {
+    text-align: left;
+  }
+
+  .office-bank-match {
+    grid-column: 2 / -1;
+    grid-template-columns:
+      1fr 1fr;
+  }
+}
+
+@media (max-width: 650px) {
+  .office-bank-heading {
+    flex-direction: column;
+  }
+
+  .office-bank-toolbar,
+  .office-bank-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .office-bank-search {
+    grid-column: auto;
+  }
+
+  .office-bank-row {
+    grid-template-columns:
+      auto minmax(0, 1fr);
+  }
+
+  .office-bank-match {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+}

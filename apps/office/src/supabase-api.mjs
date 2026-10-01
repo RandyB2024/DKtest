@@ -1,3 +1,4 @@
+import { bankingRoute } from './banking.mjs';
 import {tasksRoute} from './tasks.mjs';
 import {addressRoute} from './addresses.mjs';
 import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
@@ -675,6 +676,17 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+
+    const banking = await bankingRoute(
+      req,
+      url,
+      client,
+      user,
+      body,
+      config,
+      fetchImpl
+    );
+    if (banking) return sendJson(res, banking.status, banking.data);
 
     const documents = await documentsReadRoute(
       req,
