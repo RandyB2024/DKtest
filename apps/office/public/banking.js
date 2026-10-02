@@ -52,7 +52,8 @@ function date(value) {
 
 function statusFor(
   transaction,
-  suggestion
+  suggestion,
+  documentRequest
 ) {
   if (
     transaction.reconciliationStatus ===
@@ -60,6 +61,20 @@ function statusFor(
     || transaction.paymentId
   ) {
     return 'matched';
+  }
+
+  if (
+    documentRequest?.status ===
+      'received'
+  ) {
+    return 'document_received';
+  }
+
+  if (
+    documentRequest?.status ===
+      'requested'
+  ) {
+    return 'document_requested';
   }
 
   if (suggestion?.suggestion) {
@@ -87,6 +102,12 @@ function statusLabel(status) {
 
     case 'missing_document':
       return 'Factuur ontbreekt';
+
+    case 'document_requested':
+      return 'Factuur opgevraagd';
+
+    case 'document_received':
+      return 'Factuur ontvangen';
 
     default:
       return 'Te beoordelen';
@@ -282,9 +303,36 @@ export function mountOfficeBanking(
     );
   }
 
+  function documentRequestMap() {
+    const map =
+      new Map();
+
+    for (
+      const request of
+      current?.documentRequests ??
+      []
+    ) {
+      if (
+        !map.has(
+          request.bank_transaction_id
+        )
+      ) {
+        map.set(
+          request.bank_transaction_id,
+          request
+        );
+      }
+    }
+
+    return map;
+  }
+
   function filteredItems() {
     const map =
       suggestionMap();
+
+    const requestMap =
+      documentRequestMap();
 
     const filter =
       filterSelect.value;
@@ -307,7 +355,10 @@ export function mountOfficeBanking(
         const state =
           statusFor(
             transaction,
-            suggestion
+            suggestion,
+            requestMap.get(
+              transaction.id
+            )
           );
 
         if (
@@ -354,10 +405,15 @@ export function mountOfficeBanking(
     const map =
       suggestionMap();
 
+    const requestMap =
+      documentRequestMap();
+
     const counts = {
       total: 0,
       suggested: 0,
       missing_document: 0,
+      document_requested: 0,
+      document_received: 0,
       review: 0,
       matched: 0,
     };
@@ -371,6 +427,9 @@ export function mountOfficeBanking(
         statusFor(
           transaction,
           map.get(
+            transaction.id
+          ),
+          requestMap.get(
             transaction.id
           )
         );
@@ -488,6 +547,9 @@ export function mountOfficeBanking(
     const map =
       suggestionMap();
 
+    const requestMap =
+      documentRequestMap();
+
     const items =
       filteredItems();
 
@@ -522,10 +584,16 @@ export function mountOfficeBanking(
                 ?.suggestion ??
               null;
 
+            const request =
+              requestMap.get(
+                transaction.id
+              );
+
             const state =
               statusFor(
                 transaction,
-                suggestion
+                suggestion,
+                request
               );
 
             const incoming =
@@ -658,6 +726,29 @@ export function mountOfficeBanking(
                           </button>
                         `
                         : state ===
+                            'document_requested'
+                          ? `
+                            <span class="office-bank-done">
+                              Wacht op klant
+                            </span>
+                          `
+                        : state ===
+                            'document_received'
+                          ? `
+                            <button
+                              type="button"
+                              data-open-document="${escapeHtml(
+                                request?.document_id || ''
+                              )}"
+                              class="primary"
+                              ${request?.document_id
+                                ? ''
+                                : 'disabled'}
+                            >
+                              Document bekijken
+                            </button>
+                          `
+                        : state ===
                             'matched'
                           ? `
                             <span class="office-bank-done">
@@ -783,6 +874,64 @@ export function mountOfficeBanking(
                   suggestion,
                   button
                 );
+              }
+            };
+        }
+      );
+
+    list
+      .querySelectorAll(
+        '[data-open-document]'
+      )
+      .forEach(
+        button => {
+          button.onclick =
+            async () => {
+              const documentId =
+                button.dataset
+                  .openDocument;
+
+              if (!documentId) {
+                return;
+              }
+
+              button.disabled =
+                true;
+
+              status.textContent =
+                'Document veilig openen...';
+
+              try {
+                const result =
+                  await api(
+                    `/api/documents/${encodeURIComponent(
+                      documentId
+                    )}/download?organizationId=${encodeURIComponent(
+                      organizationSelect.value
+                    )}`
+                  );
+
+                if (!result?.url) {
+                  throw new Error(
+                    'Het document kon niet worden geopend.'
+                  );
+                }
+
+                window.open(
+                  result.url,
+                  '_blank',
+                  'noopener,noreferrer'
+                );
+
+                status.textContent =
+                  'Document geopend.';
+              } catch (error) {
+                status.textContent =
+                  error.message
+                  || 'Het document kon niet worden geopend.';
+              } finally {
+                button.disabled =
+                  false;
               }
             };
         }
