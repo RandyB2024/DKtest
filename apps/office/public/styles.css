@@ -568,3 +568,173 @@ tbody tr[data-client]:focus{
     padding:17px;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD SIDEBAR TUNING V2
+   Alleen visueel – geen functies aangepast
+   ========================================================== */
+
+:root{
+  --bestemd-sidebar-bg:#eaf1f6;
+  --bestemd-sidebar-bg-2:#e2ebf2;
+  --bestemd-sidebar-border:#d3dee8;
+  --bestemd-sidebar-text:#18344b;
+  --bestemd-sidebar-muted:#5f768a;
+  --bestemd-sidebar-hover:#dbe7ef;
+  --bestemd-sidebar-active:#d2f3f7;
+  --bestemd-sidebar-active-line:#21c8d8;
+  --bestemd-content-bg:#f4f8fb;
+  --bestemd-card-border:#dce6ee;
+}
+
+html,
+body{
+  background:
+    linear-gradient(
+      180deg,
+      #f7fafc 0%,
+      #f1f6fa 100%
+    );
+}
+
+.app-shell{
+  background:transparent;
+}
+
+/* Sidebar */
+.sidebar{
+  background:
+    linear-gradient(
+      180deg,
+      var(--bestemd-sidebar-bg) 0%,
+      var(--bestemd-sidebar-bg-2) 100%
+    );
+  border-right:
+    1px solid
+    var(--bestemd-sidebar-border);
+  box-shadow:
+    4px 0 24px
+    rgba(11,43,69,.05);
+}
+
+.sidebar .brand{
+  filter:none;
+}
+
+.office-label{
+  color:#70879a;
+  letter-spacing:.2em;
+}
+
+.sidebar a,
+.sidebar button{
+  color:
+    var(--bestemd-sidebar-text);
+  border-radius:12px;
+  font-weight:620;
+  transition:
+    background .16s ease,
+    color .16s ease,
+    transform .16s ease;
+}
+
+.sidebar a:hover,
+.sidebar button:hover{
+  background:
+    var(--bestemd-sidebar-hover);
+  color:#0e2e47;
+}
+
+.sidebar a.active{
+  background:
+    var(--bestemd-sidebar-active);
+  color:#082f49;
+  position:relative;
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(33,200,216,.18);
+}
+
+.sidebar a.active::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:9px;
+  bottom:9px;
+  width:4px;
+  border-radius:
+    0 6px 6px 0;
+  background:
+    var(--bestemd-sidebar-active-line);
+}
+
+.sidebar-bottom{
+  border-top:
+    1px solid
+    var(--bestemd-sidebar-border);
+}
+
+/* Werkgebied */
+.workspace{
+  background:transparent;
+}
+
+/* Kaarten meer contrast */
+.panel,
+.metrics article,
+.client-hero,
+.mailbox,
+.attention{
+  background:
+    rgba(255,255,255,.96);
+  border:
+    1px solid
+    var(--bestemd-card-border);
+  box-shadow:
+    0 8px 24px
+    rgba(9,39,61,.05);
+}
+
+/* Tabellen */
+th{
+  background:#edf4f8;
+  color:#36566e;
+}
+
+/* Primaire knoppen */
+.primary,
+.attention button{
+  background:
+    linear-gradient(
+      135deg,
+      #0a7aa4,
+      #09597d
+    );
+  border:0;
+  box-shadow:
+    0 8px 16px
+    rgba(10,122,164,.14);
+}
+
+.primary:hover,
+.attention button:hover{
+  background:
+    linear-gradient(
+      135deg,
+      #096d93,
+      #084f6f
+    );
+}
+
+/* Ingeklapte sidebar */
+@media(min-width:961px){
+  body.sidebar-collapsed .sidebar{
+    background:
+      linear-gradient(
+        180deg,
+        #e6eef4 0%,
+        #dde7ef 100%
+      );
+  }
+}
