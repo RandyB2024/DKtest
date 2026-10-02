@@ -1577,3 +1577,61 @@ body.sidebar-collapsed #logout::after{
     place-items:center;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD SUBTLE SIDEBAR TOGGLE V1
+   Kleinere, rustigere desktop-toggle.
+   ========================================================== */
+
+@media(min-width:961px){
+
+  .sidebar-toggle{
+    width:28px!important;
+    height:28px!important;
+    min-width:28px!important;
+    flex:0 0 28px!important;
+
+    border:
+      1px solid rgba(8,47,73,.08)!important;
+
+    border-radius:8px!important;
+
+    background:
+      rgba(255,255,255,.34)!important;
+
+    color:#496b80!important;
+
+    box-shadow:none!important;
+
+    opacity:.82;
+
+    transition:
+      background .15s ease,
+      color .15s ease,
+      opacity .15s ease;
+  }
+
+  .sidebar-toggle:hover{
+    background:
+      rgba(255,255,255,.7)!important;
+
+    color:#123f5c!important;
+
+    opacity:1;
+  }
+
+  .sidebar-toggle svg{
+    width:13px!important;
+    height:13px!important;
+    stroke-width:1.8!important;
+  }
+
+  body.sidebar-collapsed .sidebar-toggle{
+    top:67px!important;
+    left:25px!important;
+
+    width:28px!important;
+    height:28px!important;
+  }
+}
