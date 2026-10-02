@@ -84,7 +84,7 @@ async function logout() {
 }
 function header(title) {
   $('#page-title').textContent = title;
-  $('#header-kicker').textContent = `Destination Known Office · ${currentUser?.displayName ?? ''}`;
+  $('#header-kicker').textContent = `Bestemd Office · ${currentUser?.displayName ?? ''}`;
   document.querySelectorAll('[data-route]').forEach(a => a.classList.toggle('active', a.pathname === location.pathname || a.pathname === '/clients' && location.pathname.startsWith('/clients/')));
 }
 async function renderRoute() {
@@ -229,7 +229,74 @@ document.addEventListener('click', event => {
   const link = event.target.closest('[data-route]');
   if (link) { event.preventDefault(); closeMenu(); history.pushState({},'',link.getAttribute('href')); void renderRoute(); }
 });
-$('#menu').onclick = () => { const open = !$('#sidebar').classList.contains('mobile-open'); $('#sidebar').classList.toggle('mobile-open',open); $('#nav-overlay').hidden = !open; document.body.classList.toggle('menu-open',open); $('#menu').setAttribute('aria-expanded',String(open)); };
+$('#menu').onclick = () => {
+  if (innerWidth > 960) {
+    const collapsed =
+      !document.body.classList.contains(
+        'sidebar-collapsed'
+      );
+
+    document.body.classList.toggle(
+      'sidebar-collapsed',
+      collapsed
+    );
+
+    localStorage.setItem(
+      'office-sidebar-collapsed',
+      collapsed ? '1' : '0'
+    );
+
+    $('#menu').setAttribute(
+      'aria-label',
+      collapsed
+        ? 'Menu uitklappen'
+        : 'Menu inklappen'
+    );
+
+    return;
+  }
+
+  const open =
+    !$('#sidebar')
+      .classList
+      .contains('mobile-open');
+
+  $('#sidebar')
+    .classList
+    .toggle(
+      'mobile-open',
+      open
+    );
+
+  $('#nav-overlay').hidden =
+    !open;
+
+  document.body.classList.toggle(
+    'menu-open',
+    open
+  );
+
+  $('#menu').setAttribute(
+    'aria-expanded',
+    String(open)
+  );
+};
+
+if (
+  localStorage.getItem(
+    'office-sidebar-collapsed'
+  ) === '1'
+  && innerWidth > 960
+) {
+  document.body.classList.add(
+    'sidebar-collapsed'
+  );
+
+  $('#menu').setAttribute(
+    'aria-label',
+    'Menu uitklappen'
+  );
+}
 $('#nav-overlay').onclick = closeMenu;
 $('#logout').onclick = logout;
 // Legacy local unlock cannot be used for a Supabase session.

@@ -8,7 +8,54 @@ async function getJson(url,options){const r=await api(url,options);const type=r.
 async function status(render=true){const r=await api('/api/auth/status'),payload=await r.json(),d=payload.data;if(!r.ok||!d)throw new Error(payload.error?.message||'Status ophalen mislukt.');sessionUser=d.user;clock=d.clock;if(!d.authenticated)return show('#login');if(d.locked){$('#lock-user').textContent=`${d.user.displayName}, gebruik uw persoonlijke bevestiging.`;return show('#lock')}$('#avatar').textContent=d.user.displayName[0];show('#app');resetTimer(d.idleMinutes);if(render)renderRoute()}
 function resetTimer(m=15){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(lock,m*60000)}async function lock(){if(!sessionUser)return;await api('/api/auth/lock',{method:'POST'});show('#lock');$('#lock-user').textContent=`${sessionUser.displayName}, gebruik uw persoonlijke bevestiging.`}async function logout(){await api('/api/auth/logout',{method:'POST'});sessionUser=null;localStorage.clear();sessionStorage.clear();navigator.serviceWorker?.controller?.postMessage('CLEAR_CACHES');show('#login')}
 function setHeader(title,kicker='Destination Known Office'){if(title.startsWith('Goedemorgen,')&&clock){title=`${clock.greeting}, ${sessionUser.displayName}`;kicker=clock.date}$('#page-title').textContent=title;$('#header-kicker').textContent=kicker;document.querySelectorAll('[data-route]').forEach(a=>a.classList.toggle('active',location.pathname===a.pathname||(a.pathname==='/clients'&&location.pathname.startsWith('/clients/'))))}function loading(){clearTimeout(loadingTimer);const generation=routeGeneration;$('#view').innerHTML='<section class="panel loading" role="status">Gegevens veilig ophalen…</section>';loadingTimer=setTimeout(()=>{if(generation===routeGeneration)errorView('De lokale server reageert niet. Controleer of de app nog draait en probeer opnieuw.')},9000)}function done(){clearTimeout(loadingTimer);loadingTimer=null}function errorView(m){done();$('#view').innerHTML=`<section class="panel empty" role="alert"><h2>Dit onderdeel kon niet worden geladen</h2><p>${esc(m)}</p><button class="primary" data-retry>Opnieuw proberen</button></section>`}
-function openMenu(){if(innerWidth>960)return;$('#sidebar').classList.add('mobile-open');$('#nav-overlay').hidden=false;document.body.classList.add('menu-open');$('#menu').setAttribute('aria-expanded','true')}function closeMenu(){$('#sidebar').classList.remove('mobile-open');$('#nav-overlay').hidden=true;document.body.classList.remove('menu-open');$('#menu').setAttribute('aria-expanded','false')}function toggleMenu(){if($('#sidebar').classList.contains('mobile-open'))closeMenu();else openMenu()}
+function openMenu(){if(innerWidth>960)return;$('#sidebar').classList.add('mobile-open');$('#nav-overlay').hidden=false;document.body.classList.add('menu-open');$('#menu').setAttribute('aria-expanded','true')}function closeMenu(){$('#sidebar').classList.remove('mobile-open');$('#nav-overlay').hidden=true;document.body.classList.remove('menu-open');$('#menu').setAttribute('aria-expanded','false')}function toggleMenu(){
+  if(innerWidth > 960){
+    const collapsed =
+      !document.body.classList.contains(
+        'sidebar-collapsed'
+      );
+
+    document.body.classList.toggle(
+      'sidebar-collapsed',
+      collapsed
+    );
+
+    localStorage.setItem(
+      'office-sidebar-collapsed',
+      collapsed ? '1' : '0'
+    );
+
+    $('#menu').setAttribute(
+      'aria-label',
+      collapsed
+        ? 'Menu uitklappen'
+        : 'Menu inklappen'
+    );
+
+    return;
+  }
+
+  if(
+    $('#sidebar')
+      .classList
+      .contains('mobile-open')
+  ){
+    closeMenu();
+  }else{
+    openMenu();
+  }
+}
+if(
+  localStorage.getItem(
+    'office-sidebar-collapsed'
+  ) === '1'
+  && innerWidth > 960
+){
+  document.body.classList.add(
+    'sidebar-collapsed'
+  );
+}
+
 function miniChart(v){const max=Math.max(...v);return `<div class="mini-chart">${v.map((n,i)=>`<i style="height:${Math.round(n/max*100)}%"><span>${['apr','mei','jun','jul','aug','sep'][i]}</span></i>`).join('')}</div>`}
 async function dashboard(){setHeader(`Goedemorgen, ${sessionUser.displayName}`,'Woensdag 17 september');loading();const s=await getJson('/api/secure/summary');$('#view').innerHTML=`<section class="attention"><div><p class="eyebrow">Vandaag aandacht nodig</p><h2>${s.counters.actions} acties vragen om een beslissing</h2></div><button data-go="/work-queue">Open werkvoorraad</button></section><section class="metrics"><article><span>Actieve klanten</span><strong>${s.counters.clients}</strong><small>Beveiligd geladen</small></article><article><span>Openstaande acties</span><strong>${s.counters.actions}</strong><small>Waarvan 2 urgent</small></article><article><span>Ontbrekende documenten</span><strong>${s.counters.documents}</strong><small>Opvolging nodig</small></article><article><span>Nieuwe berichten</span><strong>${s.counters.messages}</strong><small>Vandaag ontvangen</small></article></section><div class="content-grid"><section class="panel"><p class="eyebrow">Werkvoorraad</p><h2>Prioriteiten van vandaag</h2><div class="task-list"><button data-go="/clients/jansen-bouw"><i class="urgent"></i><span><strong>BTW-aangifte gereed voor controle</strong><small>Jansen Bouw B.V. · deadline vandaag</small></span><em>Randy</em></button><button data-go="/clients/de-boer-advies"><i class="warn"></i><span><strong>Factuur ontbreekt bij betaling</strong><small>De Boer Advies · € 86,40 Shell</small></span><em>Ed</em></button></div></section><section class="panel"><p class="eyebrow">Administraties</p><h2>Voortgang september</h2>${miniChart([62,71,68,82,88,76])}</section></div>`}
 async function clientsPage(){setHeader('Klanten','Beheer relaties, administraties en actuele aandachtspunten');loading();const d=await getJson('/api/clients');done();clientsCache=d.clients;renderClients(d.clients)}
