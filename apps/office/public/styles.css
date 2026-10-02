@@ -1635,3 +1635,66 @@ body.sidebar-collapsed #logout::after{
     height:28px!important;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD SIDEBAR TOGGLE V2
+   Subtiele dubbele chevron
+   ========================================================== */
+
+@media(min-width:961px){
+
+  .sidebar-toggle{
+    width:24px!important;
+    height:24px!important;
+    min-width:24px!important;
+    flex:0 0 24px!important;
+
+    border:
+      1px solid rgba(8,47,73,.07)!important;
+
+    border-radius:50%!important;
+
+    background:
+      rgba(255,255,255,.42)!important;
+
+    color:#6b8495!important;
+
+    box-shadow:none!important;
+
+    opacity:.72;
+  }
+
+  .sidebar-toggle:hover{
+    background:
+      rgba(255,255,255,.78)!important;
+
+    color:#234d67!important;
+
+    opacity:1;
+  }
+
+  .sidebar-toggle svg{
+    display:none!important;
+  }
+
+  .sidebar-toggle::before{
+    content:"‹‹";
+    display:block;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:-3px;
+    line-height:1;
+    transform:translateX(-1px);
+  }
+
+  body.sidebar-collapsed .sidebar-toggle::before{
+    content:"››";
+    transform:translateX(-2px);
+  }
+
+  body.sidebar-collapsed .sidebar-toggle{
+    top:67px!important;
+    left:27px!important;
+  }
+}
