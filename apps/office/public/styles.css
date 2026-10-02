@@ -1865,8 +1865,8 @@ body.sidebar-collapsed #logout::after{
 .bestemd-login-card .login-logo{
   display:block;
 
-  width:220px;
-  max-width:68%;
+  width:300px;
+  max-width:82%;
 
   height:auto;
 
@@ -2156,7 +2156,7 @@ body.sidebar-collapsed #logout::after{
 
   .bestemd-login-card
   .login-logo{
-    width:195px;
+    width:235px;
   }
 
   .bestemd-login-heading h1{
