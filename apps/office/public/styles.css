@@ -1456,3 +1456,105 @@ textarea:focus{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD SIDEBAR ICON FIX V1
+   Verwijdert oude dubbele CSS-iconen.
+   ========================================================== */
+
+/*
+ * Oude redesign-versies voegden via ::after nog symbolen toe.
+ * De navigatie gebruikt nu echte SVG-iconen.
+ */
+body.sidebar-collapsed .sidebar nav a::after,
+body.sidebar-collapsed .sidebar-bottom a::after,
+body.sidebar-collapsed .sidebar-bottom button::after,
+body.sidebar-collapsed #logout::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* Alleen echte SVG-iconen zichtbaar */
+.sidebar .nav-icon{
+  display:grid!important;
+  place-items:center;
+}
+
+.sidebar .nav-icon svg{
+  display:block!important;
+  width:21px;
+  height:21px;
+}
+
+/* Ingeklapt: één icoon exact gecentreerd */
+@media(min-width:961px){
+
+  body.sidebar-collapsed .sidebar a,
+  body.sidebar-collapsed .sidebar-bottom button{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:54px;
+    min-width:54px;
+    padding:0!important;
+  }
+
+  body.sidebar-collapsed .nav-icon{
+    flex:0 0 22px;
+    width:22px;
+    height:22px;
+    margin:0;
+  }
+
+  body.sidebar-collapsed .nav-label{
+    display:none!important;
+  }
+
+  /*
+   * Echt Bestemd icoon.
+   */
+  body.sidebar-collapsed .sidebar-logo-full{
+    display:none!important;
+  }
+
+  body.sidebar-collapsed .sidebar-logo-icon{
+    display:block!important;
+    width:48px;
+    height:48px;
+    object-fit:contain;
+    object-position:center;
+    border-radius:0;
+  }
+
+  body.sidebar-collapsed .sidebar-brand-assets{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:50px;
+    height:50px;
+    flex:0 0 50px;
+    overflow:visible;
+  }
+
+  body.sidebar-collapsed .sidebar-brand{
+    justify-content:center;
+  }
+}
+
+/* Uitgeklapt: volledig echte logo */
+@media(min-width:961px){
+
+  body:not(.sidebar-collapsed) .sidebar-logo-full{
+    display:block!important;
+    width:200px;
+    max-width:100%;
+    height:65px;
+    object-fit:contain;
+    object-position:left center;
+  }
+
+  body:not(.sidebar-collapsed) .sidebar-logo-icon{
+    display:none!important;
+  }
+}
