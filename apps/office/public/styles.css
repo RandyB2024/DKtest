@@ -738,3 +738,721 @@ th{
       );
   }
 }
+
+
+/* ==========================================================
+   BESTEMD MODERN UI V3
+   Presentatielaag.
+   Functionele selectors en logica blijven intact.
+   ========================================================== */
+
+:root{
+  --bestemd-navy:#082f49;
+  --bestemd-blue:#0b6388;
+  --bestemd-cyan:#20c9d7;
+
+  --bestemd-bg:#f3f7fa;
+  --bestemd-surface:#ffffff;
+
+  --bestemd-sidebar:#dce7ee;
+  --bestemd-sidebar-top:#e8f0f5;
+  --bestemd-sidebar-hover:#cfdee8;
+  --bestemd-sidebar-active:#ffffff;
+
+  --bestemd-border:#dce5eb;
+  --bestemd-muted:#6d8192;
+
+  --ink:#18364d;
+  --muted:#6d8192;
+  --paper:#fff;
+  --wash:#f4f8fa;
+
+  --blue:#0b6f97;
+  --blue-dark:#082f49;
+  --blue-steel:#7ba6bb;
+  --blue-soft:#e9f7fa;
+
+  --nav:#dce7ee;
+
+  --shadow:
+    0 5px 20px rgba(16,49,72,.045);
+}
+
+html{
+  background:var(--bestemd-bg);
+}
+
+body{
+  background:
+    linear-gradient(
+      135deg,
+      #f7fafc 0%,
+      #eef5f8 100%
+    );
+}
+
+/* ------------------------------------------
+   SIDEBAR
+   ------------------------------------------ */
+
+.sidebar{
+  width:268px;
+  padding:18px 14px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--bestemd-sidebar-top) 0%,
+      var(--bestemd-sidebar) 100%
+    );
+  color:var(--bestemd-navy);
+  border-right:
+    1px solid #cfdae2;
+  box-shadow:
+    5px 0 22px rgba(10,43,66,.045);
+  transition:
+    width .22s ease,
+    padding .22s ease,
+    transform .22s ease;
+  overflow:hidden;
+}
+
+.sidebar-brand{
+  min-height:61px;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:4px 5px;
+}
+
+.sidebar-brand-logo{
+  flex:0 0 45px;
+  width:45px;
+  height:45px;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  background:
+    linear-gradient(
+      145deg,
+      #0a3552,
+      #0d6689
+    );
+  box-shadow:
+    0 7px 16px rgba(8,47,73,.13);
+}
+
+.sidebar-brand-logo span{
+  color:#fff;
+  font-size:27px;
+  font-weight:900;
+  font-style:italic;
+  line-height:1;
+}
+
+.sidebar-brand-copy{
+  display:grid;
+  gap:1px;
+  min-width:0;
+  white-space:nowrap;
+}
+
+.sidebar-brand-copy strong{
+  color:var(--bestemd-navy);
+  font-size:1.17rem;
+  letter-spacing:.015em;
+}
+
+.sidebar-brand-copy strong span{
+  color:var(--bestemd-cyan);
+}
+
+.sidebar-brand-copy small{
+  color:#748997;
+  font-size:.51rem;
+  font-weight:800;
+  letter-spacing:.22em;
+}
+
+.office-label{
+  margin:8px 8px 17px;
+  color:#788b99;
+  font-size:.6rem;
+  letter-spacing:.24em;
+}
+
+.sidebar-toggle{
+  margin-left:auto;
+  flex:0 0 34px;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  padding:0!important;
+  border:
+    1px solid rgba(8,47,73,.10)!important;
+  border-radius:10px!important;
+  background:
+    rgba(255,255,255,.55)!important;
+  color:var(--bestemd-navy)!important;
+}
+
+.sidebar-toggle svg{
+  width:17px;
+  height:17px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.sidebar nav{
+  display:grid;
+  gap:5px;
+}
+
+.sidebar a,
+.sidebar-bottom button{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
+  min-height:48px;
+  padding:0 13px;
+  border-radius:11px;
+  color:#294c64;
+  font-size:.88rem;
+  font-weight:630;
+  text-decoration:none;
+  transition:
+    background .15s ease,
+    color .15s ease,
+    transform .15s ease;
+}
+
+.sidebar a:hover,
+.sidebar-bottom button:hover{
+  background:
+    rgba(255,255,255,.52);
+  color:var(--bestemd-navy);
+}
+
+.sidebar a.active{
+  background:#fff;
+  color:var(--bestemd-navy);
+  box-shadow:
+    0 4px 14px rgba(16,55,80,.07);
+}
+
+.sidebar a.active::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:10px;
+  bottom:10px;
+  width:3px;
+  border-radius:0 5px 5px 0;
+  background:var(--bestemd-cyan);
+}
+
+.nav-icon{
+  flex:0 0 22px;
+  width:22px;
+  height:22px;
+  display:grid;
+  place-items:center;
+  color:#315c76;
+}
+
+.nav-icon svg{
+  width:21px;
+  height:21px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.sidebar a.active .nav-icon{
+  color:#0786aa;
+}
+
+.nav-label{
+  min-width:0;
+  overflow:hidden;
+  white-space:nowrap;
+}
+
+.sidebar b{
+  margin-left:auto;
+  min-width:22px;
+  padding:3px 6px;
+  background:
+    rgba(32,201,215,.16);
+  color:#0a6b85;
+  border-radius:999px;
+  font-size:.64rem;
+}
+
+.sidebar-bottom{
+  margin-top:auto;
+  padding-top:13px;
+  border-top:
+    1px solid rgba(57,91,112,.13);
+}
+
+/* ------------------------------------------
+   WORKSPACE
+   ------------------------------------------ */
+
+.workspace{
+  margin-left:268px;
+  padding:
+    24px
+    clamp(22px,3vw,46px)
+    30px;
+  transition:
+    margin-left .22s ease;
+}
+
+.workspace header{
+  min-height:69px;
+  margin-bottom:23px;
+  padding-bottom:18px;
+  border-bottom:
+    1px solid #dce5eb;
+}
+
+.workspace header h1{
+  font-size:
+    clamp(1.7rem,2.8vw,2.35rem);
+  color:var(--bestemd-navy);
+  font-weight:780;
+  letter-spacing:-.045em;
+}
+
+.workspace header .eyebrow{
+  color:#71869a;
+  font-size:.68rem;
+}
+
+#menu{
+  width:40px;
+  height:40px;
+  min-width:40px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:
+    1px solid var(--bestemd-border);
+  border-radius:10px;
+  background:#fff;
+  color:var(--bestemd-navy);
+  font-size:1.08rem;
+  cursor:pointer;
+  box-shadow:
+    0 2px 8px rgba(8,47,73,.035);
+}
+
+/* ------------------------------------------
+   PANELS EN CARDS
+   ------------------------------------------ */
+
+.panel,
+.metrics article,
+.client-hero,
+.mailbox,
+.attention{
+  background:
+    rgba(255,255,255,.97);
+  border:
+    1px solid var(--bestemd-border);
+  border-radius:15px;
+  box-shadow:var(--shadow);
+}
+
+.panel{
+  padding:23px;
+}
+
+.panel h2,
+.page-intro h2,
+.client-hero h2{
+  color:var(--bestemd-navy);
+  letter-spacing:-.025em;
+}
+
+.metrics{
+  gap:13px;
+}
+
+.metrics article{
+  padding:19px 20px;
+  overflow:hidden;
+}
+
+.metrics article::before{
+  width:31px;
+  height:4px;
+  margin-bottom:13px;
+  background:
+    linear-gradient(
+      90deg,
+      #15b9ca,
+      #70d9e2
+    );
+}
+
+.metrics strong{
+  color:var(--bestemd-navy);
+  font-size:1.8rem;
+}
+
+.metrics span{
+  font-weight:600;
+}
+
+/* werkvoorraad */
+.attention{
+  background:
+    linear-gradient(
+      135deg,
+      #eefbfc,
+      #fff 72%
+    );
+  border-color:#d8e9ed;
+}
+
+/* ------------------------------------------
+   TABELLEN
+   ------------------------------------------ */
+
+.table-wrap{
+  border:
+    1px solid var(--bestemd-border);
+  border-radius:13px;
+  background:#fff;
+}
+
+table{
+  background:#fff;
+}
+
+th{
+  padding:13px 14px;
+  background:#edf5f8;
+  color:#35546a;
+  font-size:.68rem;
+  letter-spacing:.035em;
+}
+
+td{
+  padding:15px 14px;
+  border-top:
+    1px solid #edf1f4;
+}
+
+tbody tr:hover{
+  background:#f8fbfc;
+}
+
+/* ------------------------------------------
+   FORMS
+   ------------------------------------------ */
+
+input,
+select,
+textarea{
+  border-color:#d7e2e9!important;
+  border-radius:9px!important;
+  background:#fff!important;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  border-color:#6bcbd5!important;
+  outline:none!important;
+  box-shadow:
+    0 0 0 3px rgba(32,201,215,.11)!important;
+}
+
+/* ------------------------------------------
+   BUTTONS
+   ------------------------------------------ */
+
+.primary,
+.attention button{
+  background:
+    linear-gradient(
+      135deg,
+      #0c82aa,
+      #075b81
+    );
+  border-radius:9px;
+  box-shadow:
+    0 5px 13px rgba(11,111,151,.13);
+}
+
+.header-actions button,
+.panel-head button{
+  background:#fff;
+  border-color:#d7e2e9;
+  color:var(--bestemd-navy);
+}
+
+.avatar{
+  background:
+    linear-gradient(
+      135deg,
+      #08344f,
+      #0e6d91
+    );
+}
+
+/* ------------------------------------------
+   BANKIEREN
+   ------------------------------------------ */
+
+.office-bank-summary article{
+  background:#f9fcfd;
+  border-color:#dde7ec;
+}
+
+.office-bank-row{
+  padding:17px 7px;
+}
+
+.office-bank-row:hover{
+  background:#f8fbfc;
+}
+
+/* ------------------------------------------
+   DOCUMENTEN
+   ------------------------------------------ */
+
+.office-documents-row--head{
+  background:#edf5f8;
+}
+
+.office-documents-row{
+  border-bottom-color:#edf1f4;
+}
+
+/* ------------------------------------------
+   DESKTOP INGKLAPT
+   ------------------------------------------ */
+
+@media(min-width:961px){
+
+  body.sidebar-collapsed .sidebar{
+    width:78px;
+    padding-left:10px;
+    padding-right:10px;
+  }
+
+  body.sidebar-collapsed .workspace{
+    margin-left:78px;
+  }
+
+  body.sidebar-collapsed .sidebar-brand{
+    justify-content:center;
+    padding-inline:0;
+  }
+
+  body.sidebar-collapsed
+  .sidebar-brand-logo{
+    flex-basis:44px;
+  }
+
+  body.sidebar-collapsed
+  .sidebar-brand-copy,
+  body.sidebar-collapsed
+  .office-label{
+    display:none;
+  }
+
+  body.sidebar-collapsed
+  .sidebar-toggle{
+    position:absolute;
+    top:69px;
+    left:22px;
+    width:32px;
+    height:32px;
+    background:#fff!important;
+  }
+
+  body.sidebar-collapsed
+  .sidebar-toggle svg{
+    transform:rotate(180deg);
+  }
+
+  body.sidebar-collapsed
+  .sidebar nav{
+    margin-top:52px;
+  }
+
+  body.sidebar-collapsed
+  .sidebar a,
+  body.sidebar-collapsed
+  .sidebar-bottom button{
+    width:54px;
+    justify-content:center;
+    gap:0;
+    padding:0;
+  }
+
+  body.sidebar-collapsed
+  .nav-label{
+    display:none;
+  }
+
+  body.sidebar-collapsed
+  .sidebar b{
+    position:absolute;
+    top:3px;
+    right:2px;
+    min-width:17px;
+    font-size:.57rem;
+    padding:2px 4px;
+  }
+
+}
+
+/* ------------------------------------------
+   MOBILE
+   ------------------------------------------ */
+
+@media(max-width:960px){
+
+  .sidebar{
+    width:268px;
+    z-index:50;
+    transform:translateX(-100%);
+  }
+
+  .sidebar.mobile-open{
+    transform:translateX(0);
+  }
+
+  .workspace{
+    margin-left:0;
+  }
+
+  .sidebar-toggle{
+    display:none!important;
+  }
+
+  body.sidebar-collapsed .sidebar{
+    width:268px;
+  }
+
+  body.sidebar-collapsed .workspace{
+    margin-left:0;
+  }
+
+}
+
+
+
+/* ==========================================================
+   BESTEMD REAL BRAND ASSETS V1
+   ========================================================== */
+
+.sidebar-brand{
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:2px 3px 4px;
+}
+
+.sidebar-brand-assets{
+  min-width:0;
+  flex:1;
+  height:64px;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+}
+
+.sidebar-logo-full{
+  display:block;
+  width:195px;
+  max-width:100%;
+  height:62px;
+  object-fit:contain;
+  object-position:left center;
+}
+
+.sidebar-logo-icon{
+  display:none;
+  width:47px;
+  height:47px;
+  object-fit:contain;
+  border-radius:10px;
+}
+
+.sidebar-brand-logo,
+.sidebar-brand-copy{
+  display:none!important;
+}
+
+/* OPEN SIDEBAR */
+@media(min-width:961px){
+
+  body:not(.sidebar-collapsed)
+  .sidebar-logo-full{
+    display:block;
+  }
+
+  body:not(.sidebar-collapsed)
+  .sidebar-logo-icon{
+    display:none;
+  }
+
+}
+
+/* INGEKLAPTE SIDEBAR */
+@media(min-width:961px){
+
+  body.sidebar-collapsed
+  .sidebar-brand{
+    min-height:60px;
+    justify-content:center;
+  }
+
+  body.sidebar-collapsed
+  .sidebar-brand-assets{
+    flex:0 0 48px;
+    width:48px;
+    height:48px;
+    justify-content:center;
+  }
+
+  body.sidebar-collapsed
+  .sidebar-logo-full{
+    display:none;
+  }
+
+  body.sidebar-collapsed
+  .sidebar-logo-icon{
+    display:block;
+  }
+
+}
+
+/* MOBIEL: volledig logo */
+@media(max-width:960px){
+
+  .sidebar-logo-full{
+    display:block;
+  }
+
+  .sidebar-logo-icon{
+    display:none;
+  }
+
+}
