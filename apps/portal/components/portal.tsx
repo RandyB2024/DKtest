@@ -17,6 +17,7 @@ import {
   Landmark,
   LayoutDashboard,
   MessagesSquare,
+  MoreHorizontal,
   Settings,
   Umbrella,
   WalletCards,
@@ -64,6 +65,11 @@ export default function Portal({
 }) {
   const [view, setView] =
     useState("Dashboard");
+
+  const [
+    mobileMoreOpen,
+    setMobileMoreOpen,
+  ] = useState(false);
 
   useEffect(() => {
     const url =
@@ -658,22 +664,24 @@ if (view === "Documenten") {
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="brand">
-          <span className="mark">
-            DK
-          </span>
+        <div className="brand bestemd-portal-brand">
+          <img
+            src="/logo.png"
+            alt="Bestemd"
+            className="portal-brand-logo"
+          />
 
-          <div>
-            <strong>
-              Mijn Destination Known
-            </strong>
-
+          <div className="portal-brand-user">
             <small>
+              Mijn Bestemming
+            </small>
+
+            <span>
               {
                 context.profile
                   .display_name
               }
-            </small>
+            </span>
           </div>
         </div>
 
@@ -789,9 +797,10 @@ if (view === "Documenten") {
                     ? "active"
                     : ""
                 }
-                onClick={() =>
-                  setView(label)
-                }
+                onClick={() => {
+                  setView(label);
+                  setMobileMoreOpen(false);
+                }}
               >
                 <Icon />
 
@@ -803,22 +812,98 @@ if (view === "Documenten") {
           )}
 
         <button
+          type="button"
           className={
-            view === "Instellingen"
+            mobileMoreOpen
               ? "active"
               : ""
           }
           onClick={() =>
-            setView(
-              "Instellingen",
+            setMobileMoreOpen(
+              (open) => !open,
             )
           }
+          aria-expanded={
+            mobileMoreOpen
+          }
         >
-          <Settings />
+          <MoreHorizontal />
 
-          <span>Profiel</span>
+          <span>Meer</span>
         </button>
       </nav>
+
+      {mobileMoreOpen && (
+        <div
+          className="mobile-more-backdrop"
+          onClick={() =>
+            setMobileMoreOpen(false)
+          }
+        >
+          <section
+            className="mobile-more-sheet"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="mobile-more-head">
+              <div>
+                <strong>
+                  Alle onderdelen
+                </strong>
+
+                <small>
+                  Mijn Bestemming
+                </small>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileMoreOpen(
+                    false,
+                  )
+                }
+                aria-label="Menu sluiten"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mobile-more-grid">
+              {nav
+                .slice(4)
+                .map(
+                  ([label, Icon]) => (
+                    <button
+                      type="button"
+                      key={label}
+                      className={
+                        view === label
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() => {
+                        setView(label);
+                        setMobileMoreOpen(
+                          false,
+                        );
+                      }}
+                    >
+                      <span className="mobile-more-icon">
+                        <Icon />
+                      </span>
+
+                      <span>
+                        {label}
+                      </span>
+                    </button>
+                  ),
+                )}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

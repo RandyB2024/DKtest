@@ -594,3 +594,501 @@
     display:none;
   }
 }
+
+/* ==========================================================
+   BESTEMD CUSTOMER PORTAL V1
+   Presentatie + mobiel Meer-menu.
+   ========================================================== */
+
+:root{
+  --background:#f4f8fb;
+  --foreground:#17354b;
+  --card:#ffffff;
+
+  --primary:#0b6f97;
+  --primary-foreground:#ffffff;
+
+  --secondary:#edf7fa;
+  --muted:#eff4f7;
+  --muted-foreground:#6d8191;
+
+  --accent:#dff6f8;
+
+  --border:#dce6ec;
+  --input:#d4e1e8;
+  --ring:#33becb;
+
+  --bestemd-navy:#082f49;
+  --bestemd-cyan:#20c9d7;
+  --bestemd-sidebar:#e2ebf1;
+  --bestemd-sidebar-top:#edf3f6;
+}
+
+/* algemene achtergrond */
+body{
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbfd 0%,
+      #f1f6f9 100%
+    );
+}
+
+/* ==========================================================
+   DESKTOP SIDEBAR
+   ========================================================== */
+
+.sidebar{
+  background:
+    linear-gradient(
+      180deg,
+      var(--bestemd-sidebar-top),
+      var(--bestemd-sidebar)
+    );
+
+  color:var(--bestemd-navy);
+
+  border-right:
+    1px solid #d4e0e7;
+
+  box-shadow:
+    5px 0 24px
+    rgba(8,47,73,.04);
+}
+
+.bestemd-portal-brand{
+  display:grid;
+  gap:7px;
+
+  margin:
+    0 8px 28px;
+}
+
+.portal-brand-logo{
+  width:185px;
+  max-width:100%;
+  height:auto;
+  object-fit:contain;
+  object-position:left center;
+}
+
+.portal-brand-user{
+  display:grid;
+  gap:2px;
+
+  padding-left:3px;
+}
+
+.portal-brand-user small{
+  color:#718795;
+  font-size:.68rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.portal-brand-user span{
+  color:#315066;
+  font-size:.76rem;
+}
+
+/* navigatie */
+.nav{
+  gap:5px;
+}
+
+.nav button{
+  min-height:46px;
+
+  padding:
+    0 13px;
+
+  border-radius:11px;
+
+  color:#31536b;
+
+  font-weight:620;
+}
+
+.nav button:hover{
+  background:
+    rgba(255,255,255,.48);
+
+  color:var(--bestemd-navy);
+}
+
+.nav button.active{
+  position:relative;
+
+  background:#fff;
+
+  color:var(--bestemd-navy);
+
+  box-shadow:
+    0 4px 14px
+    rgba(8,47,73,.055);
+}
+
+.nav button.active::before{
+  content:"";
+
+  position:absolute;
+
+  left:0;
+  top:9px;
+  bottom:9px;
+
+  width:3px;
+
+  border-radius:
+    0 4px 4px 0;
+
+  background:
+    var(--bestemd-cyan);
+}
+
+.nav svg{
+  width:19px;
+  height:19px;
+
+  color:#3f657d;
+}
+
+.nav button.active svg{
+  color:#0789a5;
+}
+
+.sidebar-foot{
+  border-top:
+    1px solid
+    rgba(49,83,107,.13);
+
+  color:#687f90;
+}
+
+.sidebar-foot strong{
+  color:#31536b;
+}
+
+/* ==========================================================
+   TOPBAR
+   ========================================================== */
+
+.topbar{
+  height:70px;
+
+  background:
+    rgba(255,255,255,.94);
+
+  backdrop-filter:
+    blur(14px);
+
+  border-bottom:
+    1px solid var(--border);
+}
+
+.avatar{
+  background:
+    linear-gradient(
+      135deg,
+      #d9f5f7,
+      #edf9fa
+    );
+
+  color:var(--bestemd-navy);
+}
+
+/* ==========================================================
+   CONTENT / CARDS
+   ========================================================== */
+
+.content{
+  max-width:1380px;
+}
+
+.card,
+.client-metric-card,
+.client-panel,
+.client-head-badge{
+  border-color:
+    var(--border)!important;
+
+  box-shadow:
+    0 7px 24px
+    rgba(8,47,73,.045)!important;
+}
+
+.heading h1,
+.client-dashboard-head h1{
+  color:var(--bestemd-navy);
+  font-family:
+    "Aptos",
+    "Segoe UI",
+    Arial,
+    sans-serif;
+
+  font-weight:780;
+  letter-spacing:-.04em;
+}
+
+/* geen ouderwetse serif meer */
+.login-aside h1,
+.login-box h2{
+  font-family:
+    "Aptos",
+    "Segoe UI",
+    Arial,
+    sans-serif;
+}
+
+/* knoppen */
+.btn.primary{
+  background:
+    linear-gradient(
+      135deg,
+      #0c82aa,
+      #075b80
+    );
+
+  border-color:#075b80;
+
+  box-shadow:
+    0 6px 16px
+    rgba(11,111,151,.13);
+}
+
+/* velden */
+.field input,
+.field select,
+.field textarea{
+  border-color:
+    #d5e1e8;
+
+  border-radius:10px;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus{
+  outline:none;
+
+  border-color:#54c8d2;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(32,201,215,.10);
+}
+
+/* ==========================================================
+   MOBIELE NAVIGATIE
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .mobile-nav{
+    grid-template-columns:
+      repeat(5,1fr);
+
+    padding:
+      7px 5px
+      max(
+        7px,
+        env(safe-area-inset-bottom)
+      );
+
+    box-shadow:
+      0 -5px 24px
+      rgba(8,47,73,.055);
+  }
+
+  .mobile-nav button{
+    min-height:52px;
+
+    color:#607988;
+
+    border-radius:9px;
+  }
+
+  .mobile-nav button.active{
+    color:#087c9c;
+  }
+
+  .mobile-nav button.active svg{
+    stroke-width:2.2;
+  }
+
+  /* Meer overlay */
+  .mobile-more-backdrop{
+    position:fixed;
+    z-index:40;
+
+    inset:0;
+
+    display:flex;
+    align-items:flex-end;
+
+    padding:
+      16px
+      12px
+      calc(
+        77px +
+        env(safe-area-inset-bottom)
+      );
+
+    background:
+      rgba(8,34,52,.26);
+
+    backdrop-filter:
+      blur(3px);
+  }
+
+  .mobile-more-sheet{
+    width:100%;
+
+    max-height:
+      min(
+        72vh,
+        650px
+      );
+
+    overflow:auto;
+
+    padding:
+      18px;
+
+    border:
+      1px solid
+      rgba(255,255,255,.7);
+
+    border-radius:
+      22px;
+
+    background:
+      rgba(255,255,255,.98);
+
+    box-shadow:
+      0 20px 60px
+      rgba(8,47,73,.18);
+  }
+
+  .mobile-more-head{
+    display:flex;
+    align-items:center;
+    justify-content:
+      space-between;
+
+    gap:15px;
+
+    margin-bottom:16px;
+  }
+
+  .mobile-more-head strong,
+  .mobile-more-head small{
+    display:block;
+  }
+
+  .mobile-more-head strong{
+    color:
+      var(--bestemd-navy);
+
+    font-size:1.05rem;
+  }
+
+  .mobile-more-head small{
+    margin-top:3px;
+
+    color:#81929f;
+
+    font-size:.72rem;
+  }
+
+  .mobile-more-head > button{
+    width:34px;
+    height:34px;
+
+    border:0;
+    border-radius:10px;
+
+    background:#f0f5f7;
+
+    color:#4b687b;
+
+    font-size:1.35rem;
+
+    cursor:pointer;
+  }
+
+  .mobile-more-grid{
+    display:grid;
+
+    grid-template-columns:
+      repeat(3,minmax(0,1fr));
+
+    gap:10px;
+  }
+
+  .mobile-more-grid > button{
+    min-height:88px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+
+    gap:8px;
+
+    padding:10px 6px;
+
+    border:
+      1px solid #e1e9ee;
+
+    border-radius:14px;
+
+    background:#f9fbfc;
+
+    color:#36566b;
+
+    font-size:.72rem;
+    font-weight:650;
+
+    cursor:pointer;
+
+    text-align:center;
+  }
+
+  .mobile-more-grid > button.active{
+    border-color:#bfe8ec;
+
+    background:#eafafa;
+
+    color:#087b99;
+  }
+
+  .mobile-more-icon{
+    width:34px;
+    height:34px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:10px;
+
+    background:#eef5f7;
+  }
+
+  .mobile-more-icon svg{
+    width:19px;
+    height:19px;
+  }
+
+}
+
+/* klein mobiel */
+@media(max-width:390px){
+
+  .mobile-more-grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+}
