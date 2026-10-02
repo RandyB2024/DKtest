@@ -1698,3 +1698,69 @@ body.sidebar-collapsed #logout::after{
     left:27px!important;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD SIDEBAR TOGGLE V3
+   Zeer subtiele toggle zonder witte knop
+   ========================================================== */
+
+@media(min-width:961px){
+
+  .sidebar-toggle{
+    width:20px!important;
+    height:30px!important;
+    min-width:20px!important;
+    flex:0 0 20px!important;
+
+    border:0!important;
+    border-radius:0!important;
+
+    background:transparent!important;
+    box-shadow:none!important;
+
+    color:#7f95a4!important;
+
+    opacity:.48;
+
+    padding:0!important;
+
+    transition:
+      opacity .15s ease,
+      color .15s ease,
+      transform .15s ease;
+  }
+
+  .sidebar-toggle:hover{
+    background:transparent!important;
+    color:#35586f!important;
+    opacity:.9;
+  }
+
+  .sidebar-toggle svg{
+    display:none!important;
+  }
+
+  .sidebar-toggle::before{
+    content:"‹";
+    display:block;
+
+    font-size:17px;
+    font-weight:500;
+    line-height:1;
+
+    transform:translateY(-1px);
+  }
+
+  body.sidebar-collapsed
+  .sidebar-toggle::before{
+    content:"›";
+  }
+
+  body.sidebar-collapsed
+  .sidebar-toggle{
+    top:66px!important;
+    left:29px!important;
+  }
+
+}
