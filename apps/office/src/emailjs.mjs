@@ -76,7 +76,7 @@ export async function sendMissingInvoiceEmail({
 
   const uploadUrl =
     new URL(
-      '/documents',
+      '/',
       emailjs.portalBaseUrl
     );
 

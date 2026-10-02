@@ -89,6 +89,7 @@ export async function bankingRoute(
       accounts,
       transactions,
       suggestions,
+      documentRequests,
     ] =
       await Promise.all([
         client.rpc(
@@ -118,6 +119,45 @@ export async function bankingRoute(
               100,
           }
         ),
+
+        client
+          .from(
+            'bank_document_requests'
+          )
+          .select(
+            [
+              'id',
+              'organization_id',
+              'bank_transaction_id',
+              'recipient_email',
+              'counterparty_name',
+              'amount_cents',
+              'transaction_date',
+              'status',
+              'requested_at',
+              'email_sent_at',
+              'document_id',
+              'received_at',
+            ].join(',')
+          )
+          .eq(
+            'organization_id',
+            organizationId
+          )
+          .in(
+            'status',
+            [
+              'requested',
+              'received',
+            ]
+          )
+          .order(
+            'requested_at',
+            {
+              ascending:
+                false,
+            }
+          ),
       ]);
 
     if (accounts.error) {
@@ -144,6 +184,14 @@ export async function bankingRoute(
       );
     }
 
+    if (documentRequests.error) {
+      throw new OfficeError(
+        503,
+        'BANK_DOCUMENT_REQUESTS_UNAVAILABLE',
+        'Factuurverzoeken kunnen niet worden geladen.'
+      );
+    }
+
     return {
       status: 200,
       data: {
@@ -157,6 +205,10 @@ export async function bankingRoute(
           },
         suggestions:
           suggestions.data ?? [],
+
+        documentRequests:
+          documentRequests.data ?? [],
+
         canConfirm:
           writableRoles.has(
             user?.roleCode

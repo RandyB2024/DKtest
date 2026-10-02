@@ -85,6 +85,29 @@ type DocumentsResponse = {
   error?: string;
 };
 
+type BankDocumentRequest = {
+  requestId: string;
+  transactionId: string;
+  organizationId: string;
+  organizationName: string;
+  counterpartyName: string | null;
+  amountCents: number;
+  transactionDate: string;
+  description: string | null;
+  status:
+    | "requested"
+    | "received"
+    | "cancelled";
+  documentId: string | null;
+  requestedAt: string;
+  receivedAt: string | null;
+};
+
+type BankDocumentRequestResponse = {
+  request?: BankDocumentRequest;
+  error?: string;
+};
+
 const maxFileSize =
   50 * 1024 * 1024;
 
@@ -112,6 +135,15 @@ const shortDate =
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+    },
+  );
+
+const euro =
+  new Intl.NumberFormat(
+    "nl-NL",
+    {
+      style: "currency",
+      currency: "EUR",
     },
   );
 
@@ -288,6 +320,20 @@ export default function DocumentsView({
   const [
     dragActive,
     setDragActive,
+  ] =
+    useState(false);
+
+  const [
+    bankRequest,
+    setBankRequest,
+  ] =
+    useState<BankDocumentRequest | null>(
+      null,
+    );
+
+  const [
+    bankRequestLoading,
+    setBankRequestLoading,
   ] =
     useState(false);
 
@@ -526,6 +572,120 @@ export default function DocumentsView({
     scope,
   ]);
 
+  useEffect(() => {
+    let cancelled =
+      false;
+
+    async function loadBankDocumentRequest() {
+      const url =
+        new URL(
+          window.location.href,
+        );
+
+      if (
+        url.searchParams.get(
+          "action",
+        ) !== "upload-document"
+      ) {
+        return;
+      }
+
+      const requestId =
+        url.searchParams.get(
+          "request",
+        );
+
+      const transactionId =
+        url.searchParams.get(
+          "transaction",
+        );
+
+      if (
+        !requestId ||
+        !transactionId
+      ) {
+        setError(
+          "Dit documentverzoek is niet meer beschikbaar.",
+        );
+        return;
+      }
+
+      setBankRequestLoading(
+        true,
+      );
+
+      setError("");
+
+      try {
+        const response =
+          await fetch(
+            `/api/documents/request?requestId=${encodeURIComponent(
+              requestId,
+            )}&transactionId=${encodeURIComponent(
+              transactionId,
+            )}`,
+            {
+              method:
+                "GET",
+              cache:
+                "no-store",
+            },
+          );
+
+        const data =
+          (await response.json()) as
+            BankDocumentRequestResponse;
+
+        if (
+          !response.ok ||
+          !data.request
+        ) {
+          throw new Error(
+            data.error ||
+              "Dit documentverzoek is niet meer beschikbaar.",
+          );
+        }
+
+        if (!cancelled) {
+          setBankRequest(
+            data.request,
+          );
+
+          setScope(
+            "inbox",
+          );
+        }
+      } catch (
+        caughtError
+      ) {
+        if (!cancelled) {
+          setBankRequest(
+            null,
+          );
+
+          setError(
+            caughtError instanceof
+              Error
+              ? caughtError.message
+              : "Dit documentverzoek is niet meer beschikbaar.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setBankRequestLoading(
+            false,
+          );
+        }
+      }
+    }
+
+    void loadBankDocumentRequest();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   async function uploadFile(
     file: File,
   ) {
@@ -568,9 +728,13 @@ export default function DocumentsView({
       const formData =
         new FormData();
 
+      const uploadOrganizationId =
+        bankRequest?.organizationId ??
+        context.organizationId;
+
       formData.append(
         "organizationId",
-        context.organizationId,
+        uploadOrganizationId,
       );
 
       formData.append(
@@ -603,9 +767,97 @@ export default function DocumentsView({
         );
       }
 
-      setSuccess(
-        `${file.name} is veilig toegevoegd aan Documenten.`,
-      );
+      if (
+        bankRequest &&
+        data.item?.id
+      ) {
+        const completeResponse =
+          await fetch(
+            "/api/documents/request",
+            {
+              method:
+                "PATCH",
+
+              headers: {
+                "content-type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify({
+                  requestId:
+                    bankRequest.requestId,
+
+                  transactionId:
+                    bankRequest.transactionId,
+
+                  documentId:
+                    data.item.id,
+                }),
+            },
+          );
+
+        const completeData =
+          (await completeResponse.json()) as
+            BankDocumentRequestResponse;
+
+        if (
+          !completeResponse.ok
+        ) {
+          throw new Error(
+            completeData.error ||
+              "Het document is geüpload, maar kon niet aan het verzoek worden gekoppeld.",
+          );
+        }
+
+        setBankRequest(
+          (current) =>
+            current
+              ? {
+                  ...current,
+                  status:
+                    "received",
+                  documentId:
+                    data.item?.id ??
+                    null,
+                  receivedAt:
+                    new Date()
+                      .toISOString(),
+                }
+              : null,
+        );
+
+        setSuccess(
+          "Document ontvangen. Uw administratie controleert het document en verwerkt daarna de betaling.",
+        );
+
+        const cleanUrl =
+          new URL(
+            window.location.href,
+          );
+
+        cleanUrl.searchParams.delete(
+          "action",
+        );
+
+        cleanUrl.searchParams.delete(
+          "request",
+        );
+
+        cleanUrl.searchParams.delete(
+          "transaction",
+        );
+
+        window.history.replaceState(
+          {},
+          "",
+          `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`,
+        );
+      } else {
+        setSuccess(
+          `${file.name} is veilig toegevoegd aan Documenten.`,
+        );
+      }
 
       setScope(
         "inbox",
@@ -937,7 +1189,8 @@ export default function DocumentsView({
       <div className="documents-context">
         <span>
           <FolderOpen />
-          {organization?.name ??
+          {bankRequest?.organizationName ??
+            organization?.name ??
             "Uw onderneming"}
         </span>
 
@@ -946,6 +1199,119 @@ export default function DocumentsView({
           50 MB
         </span>
       </div>
+
+      {bankRequestLoading && (
+        <div className="notice">
+          Documentverzoek wordt geladen...
+        </div>
+      )}
+
+      {bankRequest && (
+        <section className="card">
+          <span className="documents-section-label">
+            Actie nodig
+          </span>
+
+          <h2>
+            {bankRequest.status ===
+            "received"
+              ? "Document ontvangen"
+              : "Factuur of bon uploaden"}
+          </h2>
+
+          {bankRequest.status ===
+          "received" ? (
+            <p>
+              Dit document is al ontvangen.
+              U hoeft niets meer te doen.
+              Uw administratie controleert
+              het document.
+            </p>
+          ) : (
+            <>
+              <p>
+                Voor onderstaande betaling
+                ontbreekt nog een factuur
+                of bon.
+              </p>
+
+              <dl className="customer-status-list">
+                <div>
+                  <dt>
+                    Leverancier
+                  </dt>
+
+                  <dd>
+                    {bankRequest.counterpartyName ||
+                      "Onbekende leverancier"}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    Bedrag
+                  </dt>
+
+                  <dd>
+                    {euro.format(
+                      Math.abs(
+                        bankRequest.amountCents,
+                      ) / 100,
+                    )}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>
+                    Datum
+                  </dt>
+
+                  <dd>
+                    {shortDate.format(
+                      new Date(
+                        `${bankRequest.transactionDate}T12:00:00`,
+                      ),
+                    )}
+                  </dd>
+                </div>
+
+                {bankRequest.description && (
+                  <div>
+                    <dt>
+                      Omschrijving
+                    </dt>
+
+                    <dd>
+                      {
+                        bankRequest.description
+                      }
+                    </dd>
+                  </div>
+                )}
+              </dl>
+
+              <p>
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={
+                    uploading
+                  }
+                  onClick={() =>
+                    fileInputRef.current?.click()
+                  }
+                >
+                  <UploadCloud />
+
+                  {uploading
+                    ? "Uploaden..."
+                    : "Factuur of bon kiezen"}
+                </button>
+              </p>
+            </>
+          )}
+        </section>
+      )}
 
       {error && (
         <div

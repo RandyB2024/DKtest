@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   Bell,
@@ -61,6 +64,29 @@ export default function Portal({
 }) {
   const [view, setView] =
     useState("Dashboard");
+
+  useEffect(() => {
+    const url =
+      new URL(
+        window.location.href,
+      );
+
+    if (
+      url.searchParams.get(
+        "action",
+      ) === "upload-document" &&
+      url.searchParams.get(
+        "request",
+      ) &&
+      url.searchParams.get(
+        "transaction",
+      )
+    ) {
+      setView(
+        "Documenten",
+      );
+    }
+  }, []);
 
   const [error, setError] =
     useState("");
