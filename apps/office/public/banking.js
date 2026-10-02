@@ -1023,6 +1023,57 @@ export function mountOfficeBanking(
       ++requestVersion;
 
     status.textContent =
+      'Automatische bankmatching controleren...';
+
+    try {
+      const autoMatch =
+        await api(
+          '/api/banking/auto-match',
+          {
+            organizationId,
+          }
+        );
+
+      if (
+        version !==
+        requestVersion
+      ) {
+        return;
+      }
+
+      if (
+        Number(
+          autoMatch?.matched ?? 0
+        ) > 0
+      ) {
+        status.textContent =
+          `${autoMatch.matched} bankmutatie${
+            autoMatch.matched === 1
+              ? ''
+              : 's'
+          } automatisch gekoppeld.`;
+      }
+    } catch (error) {
+      if (
+        version !==
+        requestVersion
+      ) {
+        return;
+      }
+
+      console.error(
+        'Automatic bank matching failed',
+        error
+      );
+
+      /*
+       * Een fout in automatische matching mag het
+       * bankoverzicht niet blokkeren. De medewerker
+       * moet altijd handmatig verder kunnen.
+       */
+    }
+
+    status.textContent =
       'Bankgegevens veilig ophalen...';
 
     list.innerHTML = `

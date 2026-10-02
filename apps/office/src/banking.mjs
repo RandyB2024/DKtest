@@ -219,6 +219,86 @@ export async function bankingRoute(
 
   if (
     req.method === 'POST'
+    && path === '/api/banking/auto-match'
+  ) {
+    if (
+      !writableRoles.has(
+        user?.roleCode
+      )
+    ) {
+      throw new OfficeError(
+        403,
+        'BANK_WRITE_DENIED',
+        'Uw Office-rol heeft alleen leesrechten.'
+      );
+    }
+
+    const input =
+      await readBody(req);
+
+    const organizationId =
+      input.organizationId;
+
+    await requireOrganization(
+      client,
+      organizationId
+    );
+
+    const {
+      data,
+      error,
+    } =
+      await client.rpc(
+        'auto_match_bank_transactions',
+        {
+          p_organization_id:
+            organizationId,
+        }
+      );
+
+    if (error) {
+      if (
+        error.code === '42501'
+      ) {
+        throw new OfficeError(
+          403,
+          'BANK_AUTO_MATCH_DENIED',
+          'U bent niet bevoegd om automatische bankmatches uit te voeren.'
+        );
+      }
+
+      if (
+        error.code === 'P0002'
+      ) {
+        throw new OfficeError(
+          404,
+          'BANK_AUTO_MATCH_ORGANIZATION_NOT_FOUND',
+          'Onderneming niet gevonden.'
+        );
+      }
+
+      throw new OfficeError(
+        503,
+        'BANK_AUTO_MATCH_FAILED',
+        'Automatische bankmatching kon niet worden uitgevoerd.'
+      );
+    }
+
+    return {
+      status: 200,
+      data:
+        data ?? {
+          matched: 0,
+          skipped: 0,
+          failed: 0,
+          items: [],
+        },
+    };
+  }
+
+
+  if (
+    req.method === 'POST'
     && path === '/api/banking/request-invoice'
   ) {
     if (
