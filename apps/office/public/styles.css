@@ -1558,3 +1558,22 @@ body.sidebar-collapsed #logout::after{
     display:none!important;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD DESKTOP HEADER MENU FIX
+   Header-hamburger weg op desktop, behouden op mobiel.
+   ========================================================== */
+
+@media(min-width:961px){
+  #menu{
+    display:none!important;
+  }
+}
+
+@media(max-width:960px){
+  #menu{
+    display:grid!important;
+    place-items:center;
+  }
+}
