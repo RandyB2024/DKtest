@@ -19,7 +19,108 @@ function authError(message) { const target = $('#auth-error'); if (target) targe
 function loginScreen(message = '') {
   screen('login');
   $('#lock').replaceChildren();
-  $('#login').innerHTML = `<main class="login-card"><img class="login-logo" src="/assets/logo.png" alt="Destination Known"><p class="eyebrow">Office</p><h1>Welkom terug</h1><p class="muted">Log in met uw persoonlijke Office-account.</p><form id="office-login"><label>E-mailadres<input name="email" type="email" autocomplete="username" required></label><label>Wachtwoord<input name="password" type="password" autocomplete="current-password" required></label><button class="primary" type="submit">Veilig inloggen</button></form><p id="auth-error" role="alert">${escapeHtml(message)}</p></main>`;
+  $('#login').innerHTML = `
+    <main class="login-card bestemd-login-card">
+
+      <div class="bestemd-login-brand">
+        <img
+          class="login-logo"
+          src="/assets/logo.png"
+          alt="Bestemd"
+        >
+      </div>
+
+      <div class="bestemd-login-heading">
+        <p class="eyebrow">
+          BESTEMD OFFICE
+        </p>
+
+        <h1>
+          Welkom terug
+        </h1>
+
+        <p class="muted">
+          Log veilig in op uw persoonlijke Office-omgeving.
+        </p>
+      </div>
+
+      <form
+        id="office-login"
+        class="bestemd-login-form"
+      >
+
+        <label>
+          <span>E-mailadres</span>
+
+          <input
+            name="email"
+            type="email"
+            autocomplete="username"
+            required
+          >
+        </label>
+
+        <label>
+          <span>Wachtwoord</span>
+
+          <input
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          >
+        </label>
+
+        <button
+          class="primary bestemd-login-submit"
+          type="submit"
+        >
+          Veilig inloggen
+        </button>
+
+      </form>
+
+      <div class="bestemd-login-security">
+
+        <div
+          class="bestemd-security-icon"
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3l7 3v5c0 4.8-2.8 8.2-7 10-4.2-1.8-7-5.2-7-10V6l7-3z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+
+        <div>
+          <strong>
+            Beveiligd met tweestapsverificatie
+          </strong>
+
+          <p>
+            Na uw wachtwoord bevestigt u uw identiteit
+            met uw gekoppelde authenticator-app,
+            bijvoorbeeld Microsoft Authenticator
+            of Google Authenticator.
+          </p>
+        </div>
+
+      </div>
+
+      <p
+        id="auth-error"
+        class="bestemd-login-error"
+        role="alert"
+      >
+        ${escapeHtml(message)}
+      </p>
+
+      <p class="bestemd-login-footer">
+        Bestemd · Rust &amp; Vertrouwen
+      </p>
+
+    </main>
+  `;
   $('#office-login').onsubmit = async event => {
     event.preventDefault(); const form = event.target, button = form.querySelector('button'); button.disabled = true; authError('');
     try { await api('/api/auth/login', { email:form.elements.email.value, password:form.elements.password.value }); epoch++; currentScreen = ''; await refreshStatus(); }
@@ -224,35 +325,93 @@ function archiveForm(kind,record,count=0) {
   mutationDialog('Archiveren bevestigen',`<p>Wilt u <strong>${escapeHtml(record.name)}</strong> archiveren?</p><p>${escapeHtml(explanation)}</p><p>Zakelijke records blijven bewaard. Herstellen is in deze fase niet beschikbaar.</p>`,'Ja, archiveren',()=>api('/api/'+(relationship?'relationships/':'organizations/')+encodeURIComponent(record.id)+'/archive',{}),()=>relationship?'/clients':'/clients/'+encodeURIComponent(record.customer_relationship_id));
 }
 
-function closeMenu() { $('#sidebar').classList.remove('mobile-open'); $('#nav-overlay').hidden = true; document.body.classList.remove('menu-open'); $('#menu').setAttribute('aria-expanded','false'); }
-document.addEventListener('click', event => {
-  const link = event.target.closest('[data-route]');
-  if (link) { event.preventDefault(); closeMenu(); history.pushState({},'',link.getAttribute('href')); void renderRoute(); }
-});
-$('#menu').onclick = () => {
-  if (innerWidth > 960) {
-    const collapsed =
-      !document.body.classList.contains(
-        'sidebar-collapsed'
-      );
+function closeMenu() {
+  $('#sidebar')
+    .classList
+    .remove('mobile-open');
 
-    document.body.classList.toggle(
-      'sidebar-collapsed',
-      collapsed
+  $('#nav-overlay').hidden = true;
+
+  document.body
+    .classList
+    .remove('menu-open');
+
+  $('#menu')
+    .setAttribute(
+      'aria-expanded',
+      'false'
     );
+}
 
-    localStorage.setItem(
-      'office-sidebar-collapsed',
-      collapsed ? '1' : '0'
-    );
+function setSidebarCollapsed(collapsed) {
+  document.body.classList.toggle(
+    'sidebar-collapsed',
+    collapsed
+  );
 
-    $('#menu').setAttribute(
+  localStorage.setItem(
+    'office-sidebar-collapsed',
+    collapsed ? '1' : '0'
+  );
+
+  const toggle =
+    $('#sidebar-toggle');
+
+  if (toggle) {
+    toggle.setAttribute(
       'aria-label',
       collapsed
         ? 'Menu uitklappen'
         : 'Menu inklappen'
     );
 
+    toggle.title =
+      collapsed
+        ? 'Menu uitklappen'
+        : 'Menu inklappen';
+  }
+}
+
+function toggleDesktopSidebar() {
+  setSidebarCollapsed(
+    !document.body
+      .classList
+      .contains(
+        'sidebar-collapsed'
+      )
+  );
+}
+
+document.addEventListener(
+  'click',
+  event => {
+    const link =
+      event.target.closest(
+        '[data-route]'
+      );
+
+    if (!link) {
+      return;
+    }
+
+    event.preventDefault();
+
+    closeMenu();
+
+    history.pushState(
+      {},
+      '',
+      link.getAttribute('href')
+    );
+
+    void renderRoute();
+  }
+);
+
+$('#menu').onclick = () => {
+
+  if (innerWidth > 960) {
+    toggleDesktopSidebar();
     return;
   }
 
@@ -271,33 +430,39 @@ $('#menu').onclick = () => {
   $('#nav-overlay').hidden =
     !open;
 
-  document.body.classList.toggle(
-    'menu-open',
-    open
-  );
+  document.body
+    .classList
+    .toggle(
+      'menu-open',
+      open
+    );
 
-  $('#menu').setAttribute(
-    'aria-expanded',
-    String(open)
-  );
+  $('#menu')
+    .setAttribute(
+      'aria-expanded',
+      String(open)
+    );
 };
 
+const sidebarToggle =
+  $('#sidebar-toggle');
+
+if (sidebarToggle) {
+  sidebarToggle.onclick =
+    toggleDesktopSidebar;
+}
+
 if (
-  localStorage.getItem(
+  innerWidth > 960
+  && localStorage.getItem(
     'office-sidebar-collapsed'
   ) === '1'
-  && innerWidth > 960
 ) {
-  document.body.classList.add(
-    'sidebar-collapsed'
-  );
-
-  $('#menu').setAttribute(
-    'aria-label',
-    'Menu uitklappen'
-  );
+  setSidebarCollapsed(true);
 }
-$('#nav-overlay').onclick = closeMenu;
+
+$('#nav-overlay').onclick =
+  closeMenu;
 $('#logout').onclick = logout;
 // Legacy local unlock cannot be used for a Supabase session.
 $('#manual-lock').textContent = 'Afmelden'; $('#manual-lock').onclick = logout;
