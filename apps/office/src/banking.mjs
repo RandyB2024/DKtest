@@ -90,6 +90,7 @@ export async function bankingRoute(
       transactions,
       suggestions,
       documentRequests,
+      creditors,
     ] =
       await Promise.all([
         client.rpc(
@@ -158,6 +159,26 @@ export async function bankingRoute(
                 false,
             }
           ),
+
+        client
+          .from('creditors')
+          .select(
+            'id,organization_id,name,iban,archived_at'
+          )
+          .eq(
+            'organization_id',
+            organizationId
+          )
+          .is(
+            'archived_at',
+            null
+          )
+          .order(
+            'name',
+            {
+              ascending: true,
+            }
+          ),
       ]);
 
     if (accounts.error) {
@@ -192,6 +213,14 @@ export async function bankingRoute(
       );
     }
 
+    if (creditors.error) {
+      throw new OfficeError(
+        503,
+        'CREDITORS_UNAVAILABLE',
+        'Crediteuren kunnen niet worden geladen.'
+      );
+    }
+
     return {
       status: 200,
       data: {
@@ -208,6 +237,9 @@ export async function bankingRoute(
 
         documentRequests:
           documentRequests.data ?? [],
+
+        creditors:
+          creditors.data ?? [],
 
         canConfirm:
           writableRoles.has(
@@ -456,6 +488,254 @@ export async function bankingRoute(
         ...requestData,
         email:
           mail,
+      },
+    };
+  }
+
+
+  if (
+    req.method === 'POST'
+    && path === '/api/banking/process-purchase-document'
+  ) {
+    if (
+      !writableRoles.has(
+        user?.roleCode
+      )
+    ) {
+      throw new OfficeError(
+        403,
+        'BANK_WRITE_DENIED',
+        'Uw Office-rol heeft alleen leesrechten.'
+      );
+    }
+
+    const input =
+      await readBody(req);
+
+    const organizationId =
+      input.organizationId;
+
+    const requestId =
+      input.requestId;
+
+    const creditorId =
+      input.creditorId;
+
+    await requireOrganization(
+      client,
+      organizationId
+    );
+
+    if (
+      !uuid.test(requestId ?? '')
+      || !uuid.test(creditorId ?? '')
+    ) {
+      throw new OfficeError(
+        400,
+        'INVALID_PURCHASE_DOCUMENT',
+        'Ongeldig factuurverzoek of crediteur.'
+      );
+    }
+
+    const invoiceNumber =
+      typeof input.invoiceNumber === 'string'
+        ? input.invoiceNumber.trim()
+        : '';
+
+    const invoiceDate =
+      input.invoiceDate;
+
+    const dueDate =
+      input.dueDate;
+
+    const subtotalCents =
+      Number(input.subtotalCents);
+
+    const vatCents =
+      Number(input.vatCents);
+
+    const description =
+      typeof input.description === 'string'
+        ? input.description.trim()
+        : '';
+
+    if (
+      !invoiceNumber
+      || !/^\d{4}-\d{2}-\d{2}$/.test(
+        invoiceDate ?? ''
+      )
+      || !/^\d{4}-\d{2}-\d{2}$/.test(
+        dueDate ?? ''
+      )
+      || !Number.isInteger(subtotalCents)
+      || subtotalCents < 0
+      || !Number.isInteger(vatCents)
+      || vatCents < 0
+    ) {
+      throw new OfficeError(
+        400,
+        'INVALID_PURCHASE_DOCUMENT',
+        'Controleer factuurnummer, datums en bedragen.'
+      );
+    }
+
+    const {
+      data:
+        invoice,
+      error:
+        invoiceError,
+    } =
+      await client.rpc(
+        'office_create_purchase_invoice_from_bank_document',
+        {
+          p_organization_id:
+            organizationId,
+
+          p_request_id:
+            requestId,
+
+          p_creditor_id:
+            creditorId,
+
+          p_invoice_number:
+            invoiceNumber,
+
+          p_invoice_date:
+            invoiceDate,
+
+          p_due_date:
+            dueDate,
+
+          p_subtotal_cents:
+            subtotalCents,
+
+          p_vat_cents:
+            vatCents,
+
+          p_description:
+            description || null,
+        }
+      );
+
+    if (invoiceError) {
+      if (
+        invoiceError.code === '23505'
+      ) {
+        throw new OfficeError(
+          409,
+          'PURCHASE_INVOICE_EXISTS',
+          'Deze inkoopfactuur bestaat al.'
+        );
+      }
+
+      if (
+        invoiceError.code === '42501'
+      ) {
+        throw new OfficeError(
+          403,
+          'PURCHASE_INVOICE_DENIED',
+          'U bent niet bevoegd om deze inkoopfactuur te verwerken.'
+        );
+      }
+
+      if (
+        invoiceError.code === '22023'
+        || invoiceError.code === 'P0002'
+      ) {
+        throw new OfficeError(
+          400,
+          'PURCHASE_INVOICE_INVALID',
+          invoiceError.message
+          || 'De inkoopfactuur kan niet worden verwerkt.'
+        );
+      }
+
+      throw new OfficeError(
+        503,
+        'PURCHASE_INVOICE_FAILED',
+        'De inkoopfactuur kon niet worden aangemaakt.'
+      );
+    }
+
+    const transaction =
+      checkQuery(
+        await client
+          .from(
+            'bank_transactions'
+          )
+          .select(
+            'id,amount_cents,reconciliation_status,payment_id'
+          )
+          .eq(
+            'id',
+            invoice.transactionId
+          )
+          .eq(
+            'organization_id',
+            organizationId
+          )
+          .maybeSingle()
+      );
+
+    let matched = false;
+    let matchResult = null;
+
+    if (
+      transaction
+      && transaction.reconciliation_status !==
+        'matched'
+      && !transaction.payment_id
+      && Math.abs(
+        Number(
+          transaction.amount_cents
+        )
+      ) ===
+        Number(
+          invoice.totalCents
+        )
+    ) {
+      const confirmed =
+        await client.rpc(
+          'confirm_bank_match',
+          {
+            p_organization_id:
+              organizationId,
+
+            p_transaction_id:
+              invoice.transactionId,
+
+            p_invoice_id:
+              invoice.invoiceId,
+
+            p_invoice_type:
+              'purchase',
+          }
+        );
+
+      if (!confirmed.error) {
+        matched = true;
+        matchResult =
+          confirmed.data;
+      }
+    }
+
+    if (!matched) {
+      await client.rpc(
+        'auto_match_bank_transactions',
+        {
+          p_organization_id:
+            organizationId,
+        }
+      );
+    }
+
+    return {
+      status: 200,
+      data: {
+        invoice,
+        matched,
+        match:
+          matchResult,
       },
     };
   }

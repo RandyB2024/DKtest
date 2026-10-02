@@ -740,12 +740,21 @@ export function mountOfficeBanking(
                               data-open-document="${escapeHtml(
                                 request?.document_id || ''
                               )}"
-                              class="primary"
                               ${request?.document_id
                                 ? ''
                                 : 'disabled'}
                             >
                               Document bekijken
+                            </button>
+
+                            <button
+                              type="button"
+                              data-process-purchase="${escapeHtml(
+                                transaction.id
+                              )}"
+                              class="primary"
+                            >
+                              Verwerken als inkoopfactuur
                             </button>
                           `
                         : state ===
@@ -874,6 +883,288 @@ export function mountOfficeBanking(
                   suggestion,
                   button
                 );
+              }
+            };
+        }
+      );
+
+    list
+      .querySelectorAll(
+        '[data-process-purchase]'
+      )
+      .forEach(
+        button => {
+          button.onclick =
+            async () => {
+              const transactionId =
+                button.dataset
+                  .processPurchase;
+
+              const transaction =
+                byId.get(
+                  transactionId
+                );
+
+              const request =
+                requestMap.get(
+                  transactionId
+                );
+
+              if (
+                !transaction
+                || !request
+              ) {
+                return;
+              }
+
+              const creditors =
+                current?.creditors ??
+                [];
+
+              if (!creditors.length) {
+                status.textContent =
+                  'Maak eerst een crediteur aan voor deze leverancier.';
+                return;
+              }
+
+              const creditorOptions =
+                creditors
+                  .map(
+                    (creditor, index) =>
+                      `${index + 1}. ${creditor.name}`
+                  )
+                  .join('\n');
+
+              const creditorChoice =
+                window.prompt(
+                  `Kies de crediteur:\n\n${creditorOptions}\n\nVul het nummer in:`,
+                  '1'
+                );
+
+              if (
+                creditorChoice ===
+                null
+              ) {
+                return;
+              }
+
+              const creditorIndex =
+                Number(
+                  creditorChoice
+                ) - 1;
+
+              const creditor =
+                creditors[
+                  creditorIndex
+                ];
+
+              if (!creditor) {
+                status.textContent =
+                  'Ongeldige crediteur gekozen.';
+                return;
+              }
+
+              const invoiceNumber =
+                window.prompt(
+                  'Factuurnummer:',
+                  transaction.reference
+                  || ''
+                );
+
+              if (!invoiceNumber) {
+                return;
+              }
+
+              const bookedDate =
+                String(
+                  transaction.bookedAt
+                  || ''
+                ).slice(
+                  0,
+                  10
+                );
+
+              const invoiceDate =
+                window.prompt(
+                  'Factuurdatum (YYYY-MM-DD):',
+                  bookedDate
+                );
+
+              if (!invoiceDate) {
+                return;
+              }
+
+              const dueDefault =
+                new Date(
+                  `${invoiceDate}T12:00:00`
+                );
+
+              dueDefault.setDate(
+                dueDefault.getDate()
+                + 30
+              );
+
+              const dueDate =
+                window.prompt(
+                  'Vervaldatum (YYYY-MM-DD):',
+                  dueDefault
+                    .toISOString()
+                    .slice(
+                      0,
+                      10
+                    )
+                );
+
+              if (!dueDate) {
+                return;
+              }
+
+              const total =
+                Math.abs(
+                  Number(
+                    transaction.amountCents
+                  )
+                ) / 100;
+
+              const vatDefault =
+                Number(
+                  (
+                    total -
+                    total / 1.21
+                  ).toFixed(
+                    2
+                  )
+                );
+
+              const vatInput =
+                window.prompt(
+                  'BTW-bedrag in euro:',
+                  vatDefault
+                    .toFixed(
+                      2
+                    )
+                );
+
+              if (
+                vatInput === null
+              ) {
+                return;
+              }
+
+              const vat =
+                Number(
+                  vatInput
+                    .replace(
+                      ',',
+                      '.'
+                    )
+                );
+
+              if (
+                !Number.isFinite(vat)
+                || vat < 0
+                || vat > total
+              ) {
+                status.textContent =
+                  'Ongeldig BTW-bedrag.';
+                return;
+              }
+
+              const subtotal =
+                total - vat;
+
+              const description =
+                window.prompt(
+                  'Omschrijving:',
+                  transaction.description
+                  || transaction.counterpartyName
+                  || ''
+                );
+
+              if (
+                description ===
+                null
+              ) {
+                return;
+              }
+
+              const approved =
+                window.confirm(
+                  `Inkoopfactuur verwerken?\n\n`
+                  + `Crediteur: ${creditor.name}\n`
+                  + `Factuurnummer: ${invoiceNumber}\n`
+                  + `Totaal: ${money(
+                      Math.round(
+                        total * 100
+                      )
+                    )}\n`
+                  + `BTW: ${money(
+                      Math.round(
+                        vat * 100
+                      )
+                    )}\n\n`
+                  + `Bij exact hetzelfde bedrag wordt de bankmutatie daarna automatisch gekoppeld.`
+                );
+
+              if (!approved) {
+                return;
+              }
+
+              button.disabled =
+                true;
+
+              status.textContent =
+                'Inkoopfactuur verwerken...';
+
+              try {
+                const result =
+                  await api(
+                    '/api/banking/process-purchase-document',
+                    {
+                      organizationId:
+                        organizationSelect.value,
+
+                      requestId:
+                        request.id,
+
+                      creditorId:
+                        creditor.id,
+
+                      invoiceNumber:
+                        invoiceNumber.trim(),
+
+                      invoiceDate,
+
+                      dueDate,
+
+                      subtotalCents:
+                        Math.round(
+                          subtotal * 100
+                        ),
+
+                      vatCents:
+                        Math.round(
+                          vat * 100
+                        ),
+
+                      description:
+                        description.trim(),
+                    }
+                  );
+
+                status.textContent =
+                  result.matched
+                    ? 'Inkoopfactuur aangemaakt en bankmutatie automatisch gekoppeld.'
+                    : 'Inkoopfactuur aangemaakt. Bankmutatie blijft ter controle open.';
+
+                await load();
+              } catch (error) {
+                status.textContent =
+                  error.message
+                  || 'De inkoopfactuur kon niet worden verwerkt.';
+
+                button.disabled =
+                  false;
               }
             };
         }
