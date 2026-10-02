@@ -1092,3 +1092,175 @@ body{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD PORTAL COLLAPSIBLE SIDEBAR V1
+   ========================================================== */
+
+@media(min-width:701px){
+
+  .shell{
+    transition:
+      grid-template-columns .2s ease;
+  }
+
+  .shell.portal-sidebar-collapsed{
+    grid-template-columns:
+      82px 1fr;
+  }
+
+  .sidebar{
+    transition:
+      padding .2s ease;
+  }
+
+  .bestemd-portal-brand{
+    position:relative;
+  }
+
+  .portal-brand-assets{
+    display:flex;
+    align-items:center;
+  }
+
+  .portal-brand-icon{
+    display:none;
+
+    width:38px;
+    height:38px;
+
+    object-fit:contain;
+  }
+
+  /* subtiele chevron */
+  .portal-sidebar-toggle{
+    position:absolute;
+
+    top:3px;
+    right:-8px;
+
+    width:22px;
+    height:28px;
+
+    display:grid;
+    place-items:center;
+
+    padding:0;
+
+    border:0;
+
+    background:transparent;
+
+    color:#78909f;
+
+    opacity:.48;
+
+    cursor:pointer;
+
+    transition:
+      opacity .15s ease,
+      color .15s ease;
+  }
+
+  .portal-sidebar-toggle:hover{
+    color:#31536b;
+    opacity:1;
+  }
+
+  .portal-sidebar-toggle svg{
+    width:16px;
+    height:16px;
+
+    stroke-width:1.7;
+  }
+
+  /* ======================================================
+     COLLAPSED
+     ====================================================== */
+
+  .portal-sidebar-collapsed
+  .sidebar{
+    padding:
+      22px 10px;
+  }
+
+  .portal-sidebar-collapsed
+  .bestemd-portal-brand{
+    margin:
+      0 auto 27px;
+
+    display:flex;
+    justify-content:center;
+
+    width:100%;
+  }
+
+  .portal-sidebar-collapsed
+  .portal-brand-logo{
+    display:none;
+  }
+
+  .portal-sidebar-collapsed
+  .portal-brand-icon{
+    display:block;
+  }
+
+  .portal-sidebar-collapsed
+  .portal-brand-user{
+    display:none;
+  }
+
+  .portal-sidebar-collapsed
+  .portal-sidebar-toggle{
+    top:5px;
+    right:-5px;
+  }
+
+  .portal-sidebar-collapsed
+  .nav button{
+    justify-content:center;
+
+    width:48px;
+    min-height:46px;
+
+    margin:
+      0 auto;
+
+    padding:0;
+  }
+
+  .portal-sidebar-collapsed
+  .nav button span{
+    display:none;
+  }
+
+  .portal-sidebar-collapsed
+  .nav button svg{
+    width:20px;
+    height:20px;
+
+    margin:0;
+  }
+
+  .portal-sidebar-collapsed
+  .nav button.active::before{
+    left:-7px;
+  }
+
+  .portal-sidebar-collapsed
+  .sidebar-foot{
+    display:none;
+  }
+
+}
+
+
+/* Mobiel blijft bewust ongewijzigd */
+@media(max-width:700px){
+
+  .portal-sidebar-toggle{
+    display:none!important;
+  }
+
+}

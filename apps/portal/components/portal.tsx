@@ -18,6 +18,8 @@ import {
   LayoutDashboard,
   MessagesSquare,
   MoreHorizontal,
+  ChevronLeft,
+  ChevronRight,
   Settings,
   Umbrella,
   WalletCards,
@@ -70,6 +72,37 @@ export default function Portal({
     mobileMoreOpen,
     setMobileMoreOpen,
   ] = useState(false);
+
+  const [
+    sidebarCollapsed,
+    setSidebarCollapsed,
+  ] = useState(false);
+
+  useEffect(() => {
+    const stored =
+      window.localStorage.getItem(
+        "bestemd-portal-sidebar-collapsed",
+      );
+
+    setSidebarCollapsed(
+      stored === "1",
+    );
+  }, []);
+
+  function toggleSidebar() {
+    setSidebarCollapsed(
+      (current) => {
+        const next = !current;
+
+        window.localStorage.setItem(
+          "bestemd-portal-sidebar-collapsed",
+          next ? "1" : "0",
+        );
+
+        return next;
+      },
+    );
+  }
 
   useEffect(() => {
     const url =
@@ -662,14 +695,29 @@ if (view === "Documenten") {
       .toUpperCase();
 
   return (
-    <div className="shell">
+    <div
+      className={
+        sidebarCollapsed
+          ? "shell portal-sidebar-collapsed"
+          : "shell"
+      }
+    >
       <aside className="sidebar">
         <div className="brand bestemd-portal-brand">
-          <img
-            src="/logo.png"
-            alt="Bestemd"
-            className="portal-brand-logo"
-          />
+          <div className="portal-brand-assets">
+            <img
+              src="/logo.png"
+              alt="Bestemd"
+              className="portal-brand-logo"
+            />
+
+            <img
+              src="/icon.png"
+              alt=""
+              aria-hidden="true"
+              className="portal-brand-icon"
+            />
+          </div>
 
           <div className="portal-brand-user">
             <small>
@@ -683,6 +731,26 @@ if (view === "Documenten") {
               }
             </span>
           </div>
+
+          <button
+            type="button"
+            className="portal-sidebar-toggle"
+            onClick={toggleSidebar}
+            aria-label={
+              sidebarCollapsed
+                ? "Menu uitklappen"
+                : "Menu inklappen"
+            }
+            title={
+              sidebarCollapsed
+                ? "Menu uitklappen"
+                : "Menu inklappen"
+            }
+          >
+            {sidebarCollapsed
+              ? <ChevronRight />
+              : <ChevronLeft />}
+          </button>
         </div>
 
         <nav
