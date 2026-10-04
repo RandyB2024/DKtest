@@ -4604,3 +4604,168 @@ h3{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD MOBILE BANK CLEANUP V2
+   Fijntuning mobiele dashboard-kaarten
+   ========================================================== */
+
+@media (max-width: 700px) {
+
+  /* Algemeen iets rustiger */
+  .customer-dashboard-card{
+    padding:14px !important;
+    border-radius:18px !important;
+  }
+
+  .customer-card-heading{
+    margin-bottom:12px !important;
+  }
+
+  .customer-card-heading h2{
+    font-size:1rem !important;
+    line-height:1.2 !important;
+  }
+
+  /* =========================
+     BANKMUTATIES MOBIEL
+     ========================= */
+
+  .customer-bank-list{
+    display:flex;
+    flex-direction:column;
+    gap:0 !important;
+  }
+
+  .customer-bank-row{
+    display:grid !important;
+    grid-template-columns:56px minmax(0,1fr) !important;
+    grid-template-areas:
+      "icon copy"
+      "icon amount"
+      "icon status";
+    align-items:start !important;
+    column-gap:14px !important;
+    row-gap:6px !important;
+    padding:14px 0 !important;
+  }
+
+  /* Icoonblok */
+  .customer-bank-row .customer-bank-icon,
+  .customer-bank-row > .customer-bank-icon,
+  .customer-bank-row > :first-child{
+    grid-area:icon;
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+    min-height:44px !important;
+    border-radius:14px !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+
+  /* Naam + datum */
+  .customer-bank-copy{
+    grid-area:copy;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    justify-content:flex-start;
+    text-align:left !important;
+  }
+
+  .customer-bank-copy strong,
+  .customer-bank-copy b{
+    display:block;
+    width:100%;
+    margin:0 !important;
+    font-size:0.97rem !important;
+    line-height:1.25 !important;
+    white-space:normal !important;
+    word-break:break-word;
+    overflow-wrap:anywhere;
+    text-align:left !important;
+  }
+
+  .customer-bank-copy small,
+  .customer-bank-copy span{
+    display:block;
+    margin-top:2px !important;
+    font-size:0.82rem !important;
+    color:#7b8b9a !important;
+    text-align:left !important;
+  }
+
+  /* Bedrag */
+  .customer-bank-amount{
+    grid-area:amount;
+    display:block !important;
+    margin:2px 0 0 0 !important;
+    font-size:1rem !important;
+    font-weight:800 !important;
+    line-height:1.2 !important;
+    text-align:left !important;
+    white-space:nowrap;
+  }
+
+  /* Status */
+  .customer-bank-status,
+  .customer-bank-row .status-chip,
+  .customer-bank-row .customer-status{
+    grid-area:status;
+    justify-self:start;
+    margin:0 !important;
+    font-size:0.84rem !important;
+    line-height:1.2 !important;
+    text-align:left !important;
+  }
+
+  /* Link onderaan kaart */
+  .customer-dashboard-card a[href*="bank"],
+  .customer-dashboard-card .customer-card-link{
+    display:inline-flex !important;
+    align-items:center !important;
+    gap:8px !important;
+    margin-top:10px !important;
+    font-size:0.95rem !important;
+    font-weight:700 !important;
+  }
+
+  /* Bovenste overzichtsrijen ook iets compacter */
+  .customer-action-row{
+    padding:12px 0 !important;
+    gap:10px !important;
+    align-items:center !important;
+  }
+
+  .customer-action-row b,
+  .customer-action-row strong{
+    font-size:0.98rem !important;
+    line-height:1.2 !important;
+  }
+
+  .customer-action-row small,
+  .customer-action-row span{
+    font-size:0.82rem !important;
+    line-height:1.35 !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .customer-bank-row{
+    grid-template-columns:50px minmax(0,1fr) !important;
+    column-gap:12px !important;
+  }
+
+  .customer-bank-copy strong,
+  .customer-bank-copy b{
+    font-size:0.92rem !important;
+  }
+
+  .customer-bank-amount{
+    font-size:0.96rem !important;
+  }
+}
