@@ -229,7 +229,7 @@ export default function Login() {
           >
             {busy
               ? "Bezig met inloggen…"
-              : "Veilig inloggen"}
+              : "Inloggen"}
           </button>
 
           <div className="bestemd-auth-security">
