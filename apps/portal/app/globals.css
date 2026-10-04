@@ -2699,3 +2699,54 @@ and (min-width:901px){
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD LOGIN NO SCROLL V1
+   Login volledig zonder interne scrollbar.
+   ========================================================== */
+
+@media(min-width:901px){
+
+  .bestemd-auth-panel{
+    overflow:hidden;
+  }
+
+  .bestemd-auth-card{
+    width:min(100%,540px);
+
+    max-width:540px;
+
+    max-height:none!important;
+
+    overflow:visible!important;
+    overflow-x:hidden!important;
+    overflow-y:hidden!important;
+  }
+
+  /* alle inhoud binnen de kaart houden */
+  .bestemd-auth-card,
+  .bestemd-auth-card *{
+    max-width:100%;
+  }
+
+  .bestemd-auth-security,
+  .bestemd-auth-help{
+    width:100%;
+  }
+
+  .bestemd-auth-field input{
+    width:100%;
+  }
+
+  .bestemd-auth-footer{
+    width:100%;
+  }
+
+}
+
+/* login zelf nooit horizontaal scrollen */
+.bestemd-auth-page{
+  overflow-x:hidden!important;
+}
+
