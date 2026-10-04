@@ -88,7 +88,7 @@ export default function Login() {
           <div className="bestemd-auth-brand-copy">
 
             <h1>
-              Alles voor uw onderneming,
+              Alles voor jouw onderneming,
               op één veilige plek.
             </h1>
 
@@ -119,7 +119,7 @@ export default function Login() {
                 </strong>
 
                 <small>
-                  Alleen toegankelijk voor u
+                  Alleen toegankelijk voor jou
                 </small>
               </span>
             </div>
@@ -152,7 +152,7 @@ export default function Login() {
 
             <p>
               Log in met het e-mailadres
-              dat aan uw klantaccount is
+              dat aan jouw klantaccount is
               gekoppeld.
             </p>
 
@@ -257,7 +257,7 @@ export default function Login() {
 
               <p>
                 Neem contact op met Bestemd.
-                Wij helpen u graag verder.
+                We helpen je graag verder.
               </p>
             </div>
 

@@ -187,8 +187,8 @@ export default function Mfa({
             </h1>
 
             <p>
-              Bevestig uw identiteit
-              voordat uw persoonlijke
+              Bevestig je identiteit
+              voordat jouw persoonlijke
               klantportaal wordt geopend.
             </p>
 
@@ -205,7 +205,7 @@ export default function Mfa({
                 </strong>
 
                 <small>
-                  Extra bescherming van uw gegevens
+                  Extra bescherming van jouw gegevens
                 </small>
               </span>
             </div>
@@ -243,7 +243,7 @@ export default function Mfa({
 
             <p>
               Gebruik de actuele
-              zescijferige code uit uw
+              zescijferige code uit je
               authenticator-app.
             </p>
 
@@ -264,7 +264,7 @@ export default function Mfa({
                 <p>
                   Er is nog geen
                   authenticator gekoppeld
-                  aan uw account.
+                  aan jouw account.
                 </p>
 
                 <button
@@ -303,7 +303,7 @@ export default function Mfa({
                           setup.qrCode,
                         )}`
                   }
-                  alt="QR-code voor uw authenticator"
+                  alt="QR-code voor je authenticator"
                 />
               </div>
 

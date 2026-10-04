@@ -21,13 +21,13 @@ import "./mobile-fixes.css";
 import ServiceWorker from "@/components/service-worker";
 
 export const metadata: Metadata = {
-  title: "Mijn Destination Known",
+  title: "Mijn Bestemming",
   description:
-    "Administratie en contact met uw administratiekantoor op één plek.",
+    "Jouw administratie en contact met Bestemd op één plek.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
     apple: "/icon-192.png",
   },
 };
