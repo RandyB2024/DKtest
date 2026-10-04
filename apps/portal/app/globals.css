@@ -3927,3 +3927,680 @@ h3{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD MOBILE DASHBOARD PAPERDORK V1
+   Alleen mobiele styling - geen functiewijzigingen
+   ========================================================== */
+
+@media(max-width:700px){
+
+  /* Algemene mobiele portalbreedte */
+  html,
+  body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+  }
+
+  .shell,
+  .main,
+  .content{
+    width:100%;
+    max-width:100%;
+    min-width:0;
+  }
+
+  .content{
+    margin:0!important;
+
+    padding:
+      14px 12px
+      calc(
+        88px +
+        env(safe-area-inset-bottom)
+      )!important;
+
+    background:#f6f8f9;
+  }
+
+
+  /* ======================================================
+     DASHBOARD ALGEMEEN
+     ====================================================== */
+
+  .customer-dashboard-v2{
+    width:100%;
+    max-width:100%;
+
+    display:grid;
+
+    gap:14px;
+
+    margin:0 auto;
+  }
+
+
+  /* ======================================================
+     HEADER
+     ====================================================== */
+
+  .customer-dashboard-header{
+    display:block;
+
+    padding:
+      4px 2px 2px;
+
+    margin:0;
+  }
+
+  .customer-dashboard-eyebrow{
+    font-size:.68rem;
+
+    letter-spacing:.09em;
+
+    color:#758793;
+  }
+
+  .customer-dashboard-header h1{
+    margin:
+      5px 0 6px;
+
+    font-size:
+      clamp(
+        1.7rem,
+        8vw,
+        2.15rem
+      );
+
+    line-height:1.08;
+
+    letter-spacing:-.035em;
+  }
+
+  .customer-dashboard-header p{
+    margin:0;
+
+    font-size:.83rem;
+
+    line-height:1.5;
+
+    color:#6e7f8a;
+  }
+
+  .customer-dashboard-meta{
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:7px;
+
+    margin-top:11px;
+  }
+
+  .customer-dashboard-meta > span{
+    min-width:0;
+
+    padding:
+      7px 9px;
+
+    border:
+      1px solid #e4eaed;
+
+    border-radius:9px;
+
+    background:#fff;
+
+    font-size:.68rem;
+
+    color:#60737f;
+  }
+
+  .customer-dashboard-meta svg{
+    width:14px;
+    height:14px;
+  }
+
+
+  /* ======================================================
+     KPI'S
+     ====================================================== */
+
+  .customer-kpi-grid{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      )!important;
+
+    gap:9px!important;
+  }
+
+  .customer-kpi{
+    min-width:0;
+
+    min-height:118px!important;
+
+    padding:
+      13px!important;
+
+    border:
+      1px solid #e5eaed!important;
+
+    border-radius:15px!important;
+
+    background:#fff!important;
+
+    box-shadow:
+      0 5px 16px
+      rgba(8,47,73,.045)!important;
+  }
+
+  .customer-kpi-top{
+    gap:8px;
+  }
+
+  .customer-kpi-top span,
+  .customer-kpi-top strong{
+    min-width:0;
+  }
+
+  .customer-kpi-icon{
+    width:34px!important;
+    height:34px!important;
+
+    flex:
+      0 0 34px;
+
+    border-radius:10px!important;
+  }
+
+  .customer-kpi-icon svg{
+    width:16px;
+    height:16px;
+  }
+
+  .customer-kpi h3,
+  .customer-kpi label{
+    font-size:.72rem!important;
+  }
+
+  .customer-kpi strong{
+    font-size:
+      clamp(
+        1.18rem,
+        5vw,
+        1.55rem
+      )!important;
+
+    line-height:1.08!important;
+  }
+
+  .customer-kpi-bottom{
+    margin-top:8px;
+
+    font-size:.65rem!important;
+
+    line-height:1.35;
+  }
+
+
+  /* ======================================================
+     GRAFIEK
+     ====================================================== */
+
+  .customer-chart-panel{
+    width:100%;
+
+    padding:
+      15px 13px!important;
+
+    overflow:hidden;
+
+    border:
+      1px solid #e5eaed!important;
+
+    border-radius:16px!important;
+
+    background:#fff!important;
+
+    box-shadow:
+      0 5px 18px
+      rgba(8,47,73,.045)!important;
+  }
+
+  .customer-chart-heading{
+    display:block!important;
+
+    margin-bottom:12px;
+  }
+
+  .customer-chart-heading h2{
+    margin:
+      3px 0 4px;
+
+    font-size:1.03rem!important;
+  }
+
+  .customer-chart-heading p{
+    margin:0;
+
+    font-size:.72rem;
+
+    line-height:1.45;
+  }
+
+  .customer-section-label{
+    font-size:.64rem!important;
+
+    letter-spacing:.08em;
+  }
+
+  .customer-chart-controls{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      );
+
+    gap:8px!important;
+
+    margin-top:12px;
+  }
+
+  .customer-chart-controls label{
+    min-width:0;
+
+    font-size:.65rem!important;
+  }
+
+  .customer-chart-controls select{
+    width:100%;
+
+    min-width:0;
+
+    min-height:38px!important;
+
+    padding:
+      6px 28px 6px 8px!important;
+
+    font-size:.72rem!important;
+  }
+
+  .customer-chart-panel canvas,
+  .customer-chart-panel svg{
+    max-width:100%!important;
+  }
+
+  .customer-chart-empty{
+    min-height:170px!important;
+
+    padding:
+      20px 10px!important;
+  }
+
+
+  /* ======================================================
+     MIDDENKAARTEN
+     ====================================================== */
+
+  .customer-dashboard-middle{
+    display:grid!important;
+
+    grid-template-columns:1fr!important;
+
+    gap:10px!important;
+  }
+
+  .customer-dashboard-card{
+    width:100%;
+
+    min-width:0;
+
+    padding:
+      14px!important;
+
+    border:
+      1px solid #e5eaed!important;
+
+    border-radius:16px!important;
+
+    background:#fff!important;
+
+    box-shadow:
+      0 5px 16px
+      rgba(8,47,73,.04)!important;
+  }
+
+  .customer-card-heading{
+    margin-bottom:10px!important;
+  }
+
+  .customer-card-heading h2{
+    margin:
+      2px 0 0;
+
+    font-size:.95rem!important;
+  }
+
+  .customer-card-heading svg{
+    width:18px;
+    height:18px;
+  }
+
+
+  /* ======================================================
+     ACTIERIJEN
+     ====================================================== */
+
+  .customer-action-row{
+    width:100%;
+
+    min-width:0;
+
+    padding:
+      11px 0!important;
+
+    gap:10px!important;
+  }
+
+  .customer-action-row > strong{
+    font-size:1.18rem!important;
+  }
+
+  .customer-action-row span{
+    min-width:0;
+  }
+
+  .customer-action-row b{
+    font-size:.76rem;
+  }
+
+  .customer-action-row small{
+    font-size:.66rem;
+
+    line-height:1.35;
+  }
+
+  .customer-action-row svg{
+    width:17px;
+    height:17px;
+  }
+
+
+  /* ======================================================
+     OPENSTAANDE POSTEN
+     ====================================================== */
+
+  .customer-outstanding-grid{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      )!important;
+
+    gap:8px!important;
+  }
+
+  .customer-outstanding-grid > *{
+    min-width:0;
+  }
+
+
+  /* ======================================================
+     BTW
+     ====================================================== */
+
+  .customer-vat-main{
+    padding:
+      10px 0!important;
+  }
+
+  .customer-vat-main strong{
+    font-size:
+      clamp(
+        1.45rem,
+        7vw,
+        1.9rem
+      )!important;
+  }
+
+  .customer-vat-list{
+    gap:7px!important;
+  }
+
+
+  /* ======================================================
+     BANK
+     ====================================================== */
+
+  .customer-bank-list{
+    gap:0!important;
+  }
+
+  .customer-bank-row{
+    grid-template-columns:
+      minmax(0,1fr)
+      auto!important;
+
+    gap:10px!important;
+
+    padding:
+      10px 0!important;
+  }
+
+  .customer-bank-copy{
+    min-width:0;
+  }
+
+  .customer-bank-copy strong{
+    display:block;
+
+    overflow:hidden;
+
+    font-size:.75rem;
+
+    text-overflow:ellipsis;
+
+    white-space:nowrap;
+  }
+
+  .customer-bank-copy small{
+    font-size:.65rem;
+  }
+
+  .customer-bank-amount{
+    font-size:.74rem!important;
+
+    white-space:nowrap;
+  }
+
+
+  /* ======================================================
+     SNELACTIES
+     ====================================================== */
+
+  .customer-quick-grid{
+    display:grid!important;
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      )!important;
+
+    gap:8px!important;
+  }
+
+  .customer-quick-grid button{
+    min-width:0;
+
+    min-height:72px!important;
+
+    padding:
+      10px!important;
+
+    border-radius:12px!important;
+
+    font-size:.7rem!important;
+  }
+
+  .customer-quick-grid svg{
+    width:18px;
+    height:18px;
+  }
+
+
+  /* ======================================================
+     ONDERSTE DASHBOARDSECTIES
+     ====================================================== */
+
+  .customer-dashboard-bottom{
+    display:grid!important;
+
+    grid-template-columns:1fr!important;
+
+    gap:10px!important;
+  }
+
+  .customer-dashboard-footer{
+    padding:
+      4px 2px 0!important;
+
+    font-size:.65rem!important;
+
+    line-height:1.4;
+  }
+
+
+  /* ======================================================
+     TOPBAR
+     ====================================================== */
+
+  .topbar{
+    height:56px!important;
+
+    padding:
+      0 11px!important;
+  }
+
+  .topbar-left{
+    min-width:0;
+  }
+
+  .topbar-left select{
+    max-width:
+      min(
+        48vw,
+        180px
+      );
+
+    min-height:36px!important;
+
+    font-size:.72rem!important;
+  }
+
+  .topbar-actions{
+    gap:6px!important;
+  }
+
+  .profile{
+    gap:6px!important;
+  }
+
+  .avatar{
+    width:32px!important;
+    height:32px!important;
+
+    font-size:.72rem;
+  }
+
+
+  /* ======================================================
+     MOBIELE NAVIGATIE BEHOUDEN
+     ====================================================== */
+
+  .mobile-nav{
+    grid-template-columns:
+      repeat(
+        5,
+        minmax(0,1fr)
+      )!important;
+
+    padding:
+      6px 4px
+      max(
+        7px,
+        env(safe-area-inset-bottom)
+      )!important;
+  }
+
+  .mobile-nav button{
+    min-width:0;
+
+    min-height:48px!important;
+
+    padding:
+      3px 1px!important;
+
+    font-size:9.5px!important;
+  }
+
+  .mobile-nav svg{
+    width:18px!important;
+    height:18px!important;
+  }
+
+
+  /* ======================================================
+     GENERIEKE VEILIGHEID TEGEN HORIZONTALE OVERFLOW
+     ====================================================== */
+
+  .customer-dashboard-v2 *,
+  .customer-dashboard-card *,
+  .customer-chart-panel *{
+    max-width:100%;
+  }
+
+}
+
+
+@media(max-width:380px){
+
+  .content{
+    padding-left:9px!important;
+    padding-right:9px!important;
+  }
+
+  .customer-kpi-grid{
+    gap:7px!important;
+  }
+
+  .customer-kpi{
+    min-height:108px!important;
+
+    padding:
+      11px!important;
+  }
+
+  .customer-chart-controls{
+    grid-template-columns:1fr;
+  }
+
+  .customer-dashboard-card{
+    padding:
+      12px!important;
+  }
+
+  .customer-quick-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+
+}
