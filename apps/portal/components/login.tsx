@@ -146,10 +146,6 @@ export default function Login() {
 
           <div className="bestemd-auth-heading">
 
-            <span className="bestemd-auth-kicker">
-              VEILIG INLOGGEN
-            </span>
-
             <h2>
               Welkom terug
             </h2>
