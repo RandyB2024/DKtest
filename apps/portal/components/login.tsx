@@ -307,8 +307,8 @@ export default function Login() {
               ? busy
                 ? "Versturen…"
                 : recoverySent
-                  ? "Herstelmail aangevraagd"
-                  : "Herstelmail versturen"
+                  ? "Wachtwoord herstellen"
+                  : "Wachtwoord herstellen"
               : busy
                 ? "Bezig met inloggen…"
                 : "Inloggen"}
