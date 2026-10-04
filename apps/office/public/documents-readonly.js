@@ -66,6 +66,94 @@ const formatSize = bytes => {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+const monthNames = [
+  'Januari',
+  'Februari',
+  'Maart',
+  'April',
+  'Mei',
+  'Juni',
+  'Juli',
+  'Augustus',
+  'September',
+  'Oktober',
+  'November',
+  'December',
+];
+
+const archiveFolderLabel = document =>
+  document.archive_folder_name
+  || typeLabel(document.document_type);
+
+const businessDossierFolders =
+  new Set([
+    'Contracten & overeenkomsten',
+    'Contracten',
+    'KvK & bedrijfsgegevens',
+    'Verzekeringen',
+    'Financieringen & leningen',
+    'Lease & voertuigen',
+    'Personeel',
+    'Correspondentie',
+  ]);
+
+const annualFolders =
+  new Set([
+    'Jaarrekening & rapportages',
+    'Aangiften',
+    'Investeringen & activa',
+  ]);
+
+const archiveSection = folder => {
+  if (
+    businessDossierFolders.has(
+      folder
+    )
+  ) {
+    return 'business';
+  }
+
+  if (
+    annualFolders.has(
+      folder
+    )
+  ) {
+    return 'annual';
+  }
+
+  return 'monthly';
+};
+
+
+const archiveDateParts = document => {
+  const fallback =
+    new Date(
+      document.processed_at
+      || document.archived_at
+      || document.created_at
+    );
+
+  const fallbackYear =
+    Number.isNaN(fallback.getTime())
+      ? new Date().getFullYear()
+      : fallback.getFullYear();
+
+  const fallbackMonth =
+    Number.isNaN(fallback.getTime())
+      ? 1
+      : fallback.getMonth() + 1;
+
+  return {
+    year:
+      Number(document.book_year)
+      || fallbackYear,
+
+    month:
+      Number(document.book_month)
+      || fallbackMonth,
+  };
+};
+
 export function mountOfficeDocumentsReadonly(
   root,
   api,
@@ -176,6 +264,20 @@ export function mountOfficeDocumentsReadonly(
 
       <div id="documents-list"></div>
     </section>
+
+    <section class="panel office-documents-archive">
+      <div class="office-documents-header">
+        <div>
+          <p class="eyebrow">Documentarchief</p>
+          <h2>Archief</h2>
+          <p class="small-copy">
+            Bekijk verwerkte documenten per jaar, maand en map.
+          </p>
+        </div>
+      </div>
+
+      <div id="documents-archive"></div>
+    </section>
   `;
 
   const select =
@@ -186,6 +288,9 @@ export function mountOfficeDocumentsReadonly(
 
   const list =
     root.querySelector('#documents-list');
+
+  const archive =
+    root.querySelector('#documents-archive');
 
   const inbox =
     root.querySelector('#documents-inbox');
@@ -203,6 +308,15 @@ export function mountOfficeDocumentsReadonly(
     root.querySelector('#documents-upload-status');
 
   let requestVersion = 0;
+
+  let archiveDocuments = [];
+
+  let archiveState = {
+    section: null,
+    year: null,
+    month: null,
+    folder: null,
+  };
 
   function uploadDialog() {
     if (!organizations.length) {
@@ -914,6 +1028,807 @@ export function mountOfficeDocumentsReadonly(
       });
   }
 
+
+  function resetArchiveNavigation() {
+    archiveState = {
+      section: null,
+      year: null,
+      month: null,
+      folder: null,
+    };
+  }
+
+  function renderArchive() {
+    if (!archive) return;
+
+    if (!archiveDocuments.length) {
+      archive.innerHTML = `
+        <div class="office-documents-empty">
+          <strong>Nog geen gearchiveerde documenten</strong>
+          <span>
+            Verwerkte documenten verschijnen hier automatisch.
+          </span>
+        </div>
+      `;
+
+      return;
+    }
+
+    const years =
+      new Map();
+
+    const visibleDocuments =
+      archiveState.section
+        ? archiveDocuments.filter(
+            document =>
+              archiveSection(
+                archiveFolderLabel(
+                  document
+                )
+              ) ===
+              archiveState.section
+          )
+        : archiveDocuments;
+
+    for (const document of visibleDocuments) {
+      const {
+        year,
+        month,
+      } =
+        archiveDateParts(
+          document
+        );
+
+      const folder =
+        archiveFolderLabel(
+          document
+        );
+
+      if (!years.has(year)) {
+        years.set(
+          year,
+          new Map()
+        );
+      }
+
+      const months =
+        years.get(year);
+
+      if (!months.has(month)) {
+        months.set(
+          month,
+          new Map()
+        );
+      }
+
+      const folders =
+        months.get(month);
+
+      if (!folders.has(folder)) {
+        folders.set(
+          folder,
+          []
+        );
+      }
+
+      folders
+        .get(folder)
+        .push(document);
+    }
+
+    const sortedYears =
+      [...years.keys()]
+        .sort(
+          (a, b) =>
+            b - a
+        );
+
+    const breadcrumb = `
+      <nav class="office-archive-breadcrumb">
+        <button
+          type="button"
+          data-archive-root
+        >
+          Archief
+        </button>
+
+        ${
+          archiveState.year
+            ? `
+              <span>/</span>
+              <button
+                type="button"
+                data-archive-year-root
+              >
+                ${escapeHtml(archiveState.year)}
+              </button>
+            `
+            : ''
+        }
+
+        ${
+          archiveState.month
+            ? `
+              <span>/</span>
+              <button
+                type="button"
+                data-archive-month-root
+              >
+                ${escapeHtml(
+                  monthNames[
+                    archiveState.month - 1
+                  ]
+                )}
+              </button>
+            `
+            : ''
+        }
+
+        ${
+          archiveState.folder
+            ? `
+              <span>/</span>
+              <strong>
+                ${escapeHtml(
+                  archiveState.folder
+                )}
+              </strong>
+            `
+            : ''
+        }
+      </nav>
+    `;
+
+    if (!archiveState.section) {
+      archive.innerHTML = `
+        ${breadcrumb}
+
+        <div class="office-archive-grid office-archive-section-grid">
+
+          <button
+            type="button"
+            class="office-archive-card office-archive-section-card"
+            data-archive-section="monthly"
+          >
+            <span class="office-archive-card-icon">▣</span>
+            <span>
+              <strong>Archief</strong>
+              <small>
+                Facturen, bank en maanddocumenten
+              </small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="office-archive-card office-archive-section-card"
+            data-archive-section="business"
+          >
+            <span class="office-archive-card-icon">▱</span>
+            <span>
+              <strong>Bedrijfsdossier</strong>
+              <small>
+                Vaste ondernemingsdocumenten
+              </small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="office-archive-card office-archive-section-card"
+            data-archive-section="annual"
+          >
+            <span class="office-archive-card-icon">◫</span>
+            <span>
+              <strong>Jaarstukken</strong>
+              <small>
+                Jaarrekening, aangiften en rapportages
+              </small>
+            </span>
+          </button>
+
+        </div>
+      `;
+    }
+
+    else if (!archiveState.year) {
+      archive.innerHTML = `
+        ${breadcrumb}
+
+        <button
+          type="button"
+          class="office-archive-back"
+          data-archive-back-sections
+        >
+          ← Terug naar documenten
+        </button>
+
+        <div class="office-archive-title">
+          <span>Documenten</span>
+
+          <h3>
+            ${
+              archiveState.section === 'monthly'
+                ? 'Archief'
+                : archiveState.section === 'business'
+                  ? 'Bedrijfsdossier'
+                  : 'Jaarstukken'
+            }
+          </h3>
+        </div>
+
+        <div class="office-archive-grid">
+          ${
+            sortedYears.map(
+              year => {
+                const months =
+                  years.get(year);
+
+                let count = 0;
+
+                months.forEach(
+                  folders =>
+                    folders.forEach(
+                      documents =>
+                        count +=
+                          documents.length
+                    )
+                );
+
+                return `
+                  <button
+                    type="button"
+                    class="office-archive-card"
+                    data-archive-year="${escapeHtml(year)}"
+                  >
+                    <span class="office-archive-card-icon">
+                      ▣
+                    </span>
+
+                    <span>
+                      <strong>
+                        ${escapeHtml(year)}
+                      </strong>
+
+                      <small>
+                        ${count}
+                        ${count === 1
+                          ? 'document'
+                          : 'documenten'}
+                      </small>
+                    </span>
+                  </button>
+                `;
+              }
+            ).join('')
+          }
+        </div>
+      `;
+    }
+
+    else if (!archiveState.month) {
+      const months =
+        years.get(
+          archiveState.year
+        );
+
+      const sortedMonths =
+        [...months.keys()]
+          .sort(
+            (a, b) =>
+              b - a
+          );
+
+      archive.innerHTML = `
+        ${breadcrumb}
+
+        <button
+          type="button"
+          class="office-archive-back"
+          data-archive-back-years
+        >
+          ← Terug naar jaren
+        </button>
+
+        <div class="office-archive-title">
+          <span>Boekjaar</span>
+          <h3>
+            ${escapeHtml(
+              archiveState.year
+            )}
+          </h3>
+        </div>
+
+        <div class="office-archive-grid">
+          ${
+            sortedMonths.map(
+              month => {
+                const folders =
+                  months.get(month);
+
+                let count = 0;
+
+                folders.forEach(
+                  documents =>
+                    count +=
+                      documents.length
+                );
+
+                return `
+                  <button
+                    type="button"
+                    class="office-archive-card"
+                    data-archive-month="${escapeHtml(month)}"
+                  >
+                    <span class="office-archive-card-icon">
+                      ◫
+                    </span>
+
+                    <span>
+                      <strong>
+                        ${escapeHtml(
+                          monthNames[
+                            month - 1
+                          ]
+                        )}
+                      </strong>
+
+                      <small>
+                        ${count}
+                        ${count === 1
+                          ? 'document'
+                          : 'documenten'}
+                      </small>
+                    </span>
+                  </button>
+                `;
+              }
+            ).join('')
+          }
+        </div>
+      `;
+    }
+
+    else if (!archiveState.folder) {
+      const folders =
+        years
+          .get(
+            archiveState.year
+          )
+          .get(
+            archiveState.month
+          );
+
+      const sortedFolders =
+        [...folders.keys()]
+          .sort(
+            (a, b) =>
+              String(a)
+                .localeCompare(
+                  String(b),
+                  'nl'
+                )
+          );
+
+      archive.innerHTML = `
+        ${breadcrumb}
+
+        <button
+          type="button"
+          class="office-archive-back"
+          data-archive-back-months
+        >
+          ← Terug naar maanden
+        </button>
+
+        <div class="office-archive-title">
+          <span>
+            ${escapeHtml(
+              archiveState.year
+            )}
+          </span>
+
+          <h3>
+            ${escapeHtml(
+              monthNames[
+                archiveState.month - 1
+              ]
+            )}
+          </h3>
+        </div>
+
+        <div class="office-archive-grid">
+          ${
+            sortedFolders.map(
+              folder => {
+                const documents =
+                  folders.get(folder);
+
+                return `
+                  <button
+                    type="button"
+                    class="office-archive-card"
+                    data-archive-folder="${escapeHtml(folder)}"
+                  >
+                    <span class="office-archive-card-icon">
+                      ▱
+                    </span>
+
+                    <span>
+                      <strong>
+                        ${escapeHtml(folder)}
+                      </strong>
+
+                      <small>
+                        ${documents.length}
+                        ${documents.length === 1
+                          ? 'document'
+                          : 'documenten'}
+                      </small>
+                    </span>
+                  </button>
+                `;
+              }
+            ).join('')
+          }
+        </div>
+      `;
+    }
+
+    else {
+      const documents =
+        years
+          .get(
+            archiveState.year
+          )
+          .get(
+            archiveState.month
+          )
+          .get(
+            archiveState.folder
+          ) ?? [];
+
+      archive.innerHTML = `
+        ${breadcrumb}
+
+        <button
+          type="button"
+          class="office-archive-back"
+          data-archive-back-folders
+        >
+          ← Terug naar mappen
+        </button>
+
+        <div class="office-archive-title">
+          <span>
+            ${
+              escapeHtml(
+                monthNames[
+                  archiveState.month - 1
+                ]
+              )
+            }
+            ${escapeHtml(
+              archiveState.year
+            )}
+          </span>
+
+          <h3>
+            ${escapeHtml(
+              archiveState.folder
+            )}
+          </h3>
+        </div>
+
+        <div class="office-documents-table office-archive-documents">
+
+          <div class="office-documents-row office-documents-row--head">
+            <span>Document</span>
+            <span>Type</span>
+            <span>Status</span>
+            <span>Datum</span>
+            <span></span>
+          </div>
+
+          ${
+            documents.map(
+              document => `
+                <div class="office-documents-row">
+                  <div>
+                    <strong>
+                      ${escapeHtml(
+                        document.filename
+                      )}
+                    </strong>
+
+                    <small>
+                      ${escapeHtml(
+                        formatSize(
+                          document.size_bytes
+                        )
+                      )}
+                      ·
+                      ${escapeHtml(
+                        sourceLabel(
+                          document.source
+                        )
+                      )}
+                    </small>
+                  </div>
+
+                  <span>
+                    ${escapeHtml(
+                      typeLabel(
+                        document.document_type
+                      )
+                    )}
+                  </span>
+
+                  <span>
+                    <em>
+                      ${escapeHtml(
+                        statusLabel(
+                          document.status
+                        )
+                      )}
+                    </em>
+                  </span>
+
+                  <span>
+                    ${escapeHtml(
+                      formatDate(
+                        document.processed_at
+                        || document.archived_at
+                        || document.created_at
+                      )
+                    )}
+                  </span>
+
+                  <div class="documents-row-actions">
+                    <button
+                      type="button"
+                      data-archive-open="${escapeHtml(document.id)}"
+                    >
+                      Open
+                    </button>
+                  </div>
+                </div>
+              `
+            ).join('')
+          }
+
+        </div>
+      `;
+
+      const byId =
+        new Map(
+          documents.map(
+            document => [
+              document.id,
+              document,
+            ]
+          )
+        );
+
+      archive
+        .querySelectorAll(
+          '[data-archive-open]'
+        )
+        .forEach(
+          button => {
+            button.onclick =
+              async () => {
+                button.disabled =
+                  true;
+
+                try {
+                  await openDocument(
+                    byId.get(
+                      button.dataset.archiveOpen
+                    )
+                  );
+                } catch (
+                  openError
+                ) {
+                  status.textContent =
+                    openError.message
+                    || 'Document kon niet worden geopend.';
+                } finally {
+                  button.disabled =
+                    false;
+                }
+              };
+          }
+        );
+    }
+
+    const rootButton =
+      archive.querySelector(
+        '[data-archive-root]'
+      );
+
+    if (rootButton) {
+      rootButton.onclick =
+        () => {
+          resetArchiveNavigation();
+          renderArchive();
+        };
+    }
+
+    const yearRoot =
+      archive.querySelector(
+        '[data-archive-year-root]'
+      );
+
+    if (yearRoot) {
+      yearRoot.onclick =
+        () => {
+          archiveState.month =
+            null;
+
+          archiveState.folder =
+            null;
+
+          renderArchive();
+        };
+    }
+
+    const monthRoot =
+      archive.querySelector(
+        '[data-archive-month-root]'
+      );
+
+    if (monthRoot) {
+      monthRoot.onclick =
+        () => {
+          archiveState.folder =
+            null;
+
+          renderArchive();
+        };
+    }
+
+    archive
+      .querySelectorAll(
+        '[data-archive-section]'
+      )
+      .forEach(
+        button => {
+          button.onclick =
+            () => {
+              archiveState.section =
+                button.dataset.archiveSection;
+
+              archiveState.year = null;
+              archiveState.month = null;
+              archiveState.folder = null;
+
+              renderArchive();
+            };
+        }
+      );
+
+    const backSections =
+      archive.querySelector(
+        '[data-archive-back-sections]'
+      );
+
+    if (backSections) {
+      backSections.onclick =
+        () => {
+          resetArchiveNavigation();
+          renderArchive();
+        };
+    }
+
+    archive
+      .querySelectorAll(
+        '[data-archive-year]'
+      )
+      .forEach(
+        button => {
+          button.onclick =
+            () => {
+              archiveState.year =
+                Number(
+                  button.dataset.archiveYear
+                );
+
+              archiveState.month =
+                null;
+
+              archiveState.folder =
+                null;
+
+              renderArchive();
+            };
+        }
+      );
+
+    archive
+      .querySelectorAll(
+        '[data-archive-month]'
+      )
+      .forEach(
+        button => {
+          button.onclick =
+            () => {
+              archiveState.month =
+                Number(
+                  button.dataset.archiveMonth
+                );
+
+              archiveState.folder =
+                null;
+
+              renderArchive();
+            };
+        }
+      );
+
+    archive
+      .querySelectorAll(
+        '[data-archive-folder]'
+      )
+      .forEach(
+        button => {
+          button.onclick =
+            () => {
+              archiveState.folder =
+                button.dataset.archiveFolder;
+
+              renderArchive();
+            };
+        }
+      );
+
+    const backYears =
+      archive.querySelector(
+        '[data-archive-back-years]'
+      );
+
+    if (backYears) {
+      backYears.onclick =
+        () => {
+          resetArchiveNavigation();
+          renderArchive();
+        };
+    }
+
+    const backMonths =
+      archive.querySelector(
+        '[data-archive-back-months]'
+      );
+
+    if (backMonths) {
+      backMonths.onclick =
+        () => {
+          archiveState.month =
+            null;
+
+          archiveState.folder =
+            null;
+
+          renderArchive();
+        };
+    }
+
+    const backFolders =
+      archive.querySelector(
+        '[data-archive-back-folders]'
+      );
+
+    if (backFolders) {
+      backFolders.onclick =
+        () => {
+          archiveState.folder =
+            null;
+
+          renderArchive();
+        };
+    }
+  }
+
   async function loadInbox() {
     inbox.innerHTML = `
       <div class="office-documents-empty">
@@ -965,6 +1880,13 @@ export function mountOfficeDocumentsReadonly(
 
       list.replaceChildren();
 
+      archiveDocuments = [];
+      resetArchiveNavigation();
+
+      if (archive) {
+        archive.replaceChildren();
+      }
+
       return;
     }
 
@@ -983,6 +1905,22 @@ export function mountOfficeDocumentsReadonly(
           ? result.documents
           : [];
 
+      const activeDocuments =
+        documents.filter(
+          document =>
+            document.status !== 'archived'
+        );
+
+      archiveDocuments =
+        documents.filter(
+          document =>
+            document.status === 'archived'
+            || Boolean(document.archived_at)
+            || Boolean(document.processed_at)
+        );
+
+      resetArchiveNavigation();
+
       status.textContent =
         `${documents.length} ${
           documents.length === 1
@@ -992,9 +1930,11 @@ export function mountOfficeDocumentsReadonly(
 
       renderRows(
         list,
-        documents,
+        activeDocuments,
         false
       );
+
+      renderArchive();
     } catch (error) {
       if (version !== requestVersion) return;
 
@@ -1003,6 +1943,13 @@ export function mountOfficeDocumentsReadonly(
         'Documenten konden niet worden opgehaald.';
 
       list.replaceChildren();
+
+      archiveDocuments = [];
+      resetArchiveNavigation();
+
+      if (archive) {
+        archive.replaceChildren();
+      }
     }
   }
 

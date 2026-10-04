@@ -212,6 +212,52 @@ function sourceLabel(
   }
 }
 
+const businessDossierFolders =
+  new Set([
+    "Contracten & overeenkomsten",
+    "Contracten",
+    "KvK & bedrijfsgegevens",
+    "Verzekeringen",
+    "Financieringen & leningen",
+    "Lease & voertuigen",
+    "Personeel",
+    "Correspondentie",
+  ]);
+
+const annualFolders =
+  new Set([
+    "Jaarrekening & rapportages",
+    "Aangiften",
+    "Investeringen & activa",
+  ]);
+
+type ArchiveSection =
+  | "monthly"
+  | "business"
+  | "annual";
+
+function archiveSection(
+  folder: string,
+): ArchiveSection {
+  if (
+    businessDossierFolders.has(
+      folder,
+    )
+  ) {
+    return "business";
+  }
+
+  if (
+    annualFolders.has(
+      folder,
+    )
+  ) {
+    return "annual";
+  }
+
+  return "monthly";
+}
+
 function typeLabel(
   type: DocumentItem["document_type"],
 ) {
@@ -314,6 +360,14 @@ export default function DocumentsView({
     setSelectedId,
   ] =
     useState<string | null>(
+      null,
+    );
+
+  const [
+    selectedArchiveSection,
+    setSelectedArchiveSection,
+  ] =
+    useState<ArchiveSection | null>(
       null,
     );
 
@@ -488,6 +542,24 @@ export default function DocumentsView({
       filteredItems,
     ]);
 
+  const visibleArchiveGroups =
+    useMemo(() => {
+      if (!selectedArchiveSection) {
+        return archiveGroups;
+      }
+
+      return archiveGroups.filter(
+        (group) =>
+          archiveSection(
+            group.folder,
+          ) ===
+          selectedArchiveSection,
+      );
+    }, [
+      archiveGroups,
+      selectedArchiveSection,
+    ]);
+
   const archiveYears =
     useMemo(() => {
       const years =
@@ -497,7 +569,7 @@ export default function DocumentsView({
         >();
 
       for (
-        const group of archiveGroups
+        const group of visibleArchiveGroups
       ) {
         years.set(
           group.year,
@@ -522,7 +594,7 @@ export default function DocumentsView({
             b.year - a.year,
         );
     }, [
-      archiveGroups,
+      visibleArchiveGroups,
     ]);
 
   const archiveMonths =
@@ -541,7 +613,7 @@ export default function DocumentsView({
         >();
 
       for (
-        const group of archiveGroups
+        const group of visibleArchiveGroups
       ) {
         if (
           group.year !==
@@ -573,7 +645,7 @@ export default function DocumentsView({
             b.month - a.month,
         );
     }, [
-      archiveGroups,
+      visibleArchiveGroups,
       selectedArchiveYear,
     ]);
 
@@ -588,7 +660,7 @@ export default function DocumentsView({
         return [];
       }
 
-      return archiveGroups
+      return visibleArchiveGroups
         .filter(
           (group) =>
             group.year ===
@@ -612,7 +684,7 @@ export default function DocumentsView({
             ),
         );
     }, [
-      archiveGroups,
+      visibleArchiveGroups,
       selectedArchiveYear,
       selectedArchiveMonth,
     ]);
@@ -630,7 +702,7 @@ export default function DocumentsView({
       }
 
       return (
-        archiveGroups.find(
+        visibleArchiveGroups.find(
           (group) =>
             group.year ===
               selectedArchiveYear &&
@@ -641,7 +713,7 @@ export default function DocumentsView({
         )?.items ?? []
       );
     }, [
-      archiveGroups,
+      visibleArchiveGroups,
       selectedArchiveYear,
       selectedArchiveMonth,
       selectedArchiveFolder,
@@ -1251,6 +1323,10 @@ export default function DocumentsView({
     setScope(next);
     setSearch("");
     setSelectedId(
+      null,
+    );
+
+    setSelectedArchiveSection(
       null,
     );
 
@@ -2007,6 +2083,9 @@ export default function DocumentsView({
                     <button
                       type="button"
                       onClick={() => {
+                        setSelectedArchiveSection(
+                          null,
+                        );
                         setSelectedArchiveYear(
                           null,
                         );
@@ -2083,8 +2162,125 @@ export default function DocumentsView({
                     )}
                   </nav>
 
-                  {selectedArchiveYear ===
+                  {!selectedArchiveSection ? (
+                    <div className="documents-folder-grid documents-section-grid">
+
+                      <button
+                        type="button"
+                        className="documents-folder-card documents-section-card"
+                        onClick={() =>
+                          setSelectedArchiveSection(
+                            "monthly",
+                          )
+                        }
+                      >
+                        <span className="documents-folder-icon">
+                          <Archive />
+                        </span>
+
+                        <span className="documents-folder-copy">
+                          <strong>
+                            Archief
+                          </strong>
+
+                          <small>
+                            Facturen, bank, belasting en maanddocumenten
+                          </small>
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="documents-folder-card documents-section-card"
+                        onClick={() =>
+                          setSelectedArchiveSection(
+                            "business",
+                          )
+                        }
+                      >
+                        <span className="documents-folder-icon">
+                          <FolderOpen />
+                        </span>
+
+                        <span className="documents-folder-copy">
+                          <strong>
+                            Bedrijfsdossier
+                          </strong>
+
+                          <small>
+                            Vaste documenten van jouw onderneming
+                          </small>
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="documents-folder-card documents-section-card"
+                        onClick={() =>
+                          setSelectedArchiveSection(
+                            "annual",
+                          )
+                        }
+                      >
+                        <span className="documents-folder-icon">
+                          <FileText />
+                        </span>
+
+                        <span className="documents-folder-copy">
+                          <strong>
+                            Jaarstukken
+                          </strong>
+
+                          <small>
+                            Jaarrekening, aangiften en rapportages
+                          </small>
+                        </span>
+                      </button>
+
+                    </div>
+
+                  ) : selectedArchiveYear ===
                   null ? (
+                    <>
+
+                    <button
+                      type="button"
+                      className="documents-archive-back"
+                      onClick={() => {
+                        setSelectedArchiveSection(
+                          null,
+                        );
+                        setSelectedArchiveYear(
+                          null,
+                        );
+                        setSelectedArchiveMonth(
+                          null,
+                        );
+                        setSelectedArchiveFolder(
+                          null,
+                        );
+                      }}
+                    >
+                      <ArrowLeft />
+                      Terug naar documenten
+                    </button>
+
+                    <div className="documents-archive-heading">
+                      <span className="documents-section-label">
+                        Documenten
+                      </span>
+
+                      <h3>
+                        {selectedArchiveSection ===
+                        "monthly"
+                          ? "Archief"
+                          : selectedArchiveSection ===
+                              "business"
+                            ? "Bedrijfsdossier"
+                            : "Jaarstukken"}
+                      </h3>
+                    </div>
+
                     <div className="documents-folder-grid">
 
                       {archiveYears.map(
@@ -2129,6 +2325,7 @@ export default function DocumentsView({
                       )}
 
                     </div>
+                    </>
                   ) : selectedArchiveMonth ===
                     null ? (
                     <>

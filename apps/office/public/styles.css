@@ -2168,3 +2168,353 @@ body.sidebar-collapsed #logout::after{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD OFFICE DOCUMENT ARCHIVE 4A-3
+   Jaar -> maand -> map -> documenten
+   ========================================================== */
+
+.office-documents-archive{
+  margin-top:18px;
+}
+
+#documents-archive{
+  min-width:0;
+
+  display:grid;
+
+  gap:17px;
+
+  margin-top:18px;
+}
+
+.office-archive-breadcrumb{
+  min-height:38px;
+
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+
+  gap:7px;
+
+  padding:
+    8px 11px;
+
+  border:
+    1px solid #dde7ec;
+
+  border-radius:10px;
+
+  background:#f7fafc;
+
+  color:#7d909d;
+
+  font-size:.72rem;
+}
+
+.office-archive-breadcrumb button{
+  padding:0;
+
+  border:0;
+
+  background:transparent!important;
+
+  color:#087e9e!important;
+
+  font:inherit;
+
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.office-archive-breadcrumb button:hover{
+  text-decoration:underline;
+}
+
+.office-archive-breadcrumb strong{
+  color:#173b52;
+}
+
+.office-archive-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0,1fr)
+    );
+
+  gap:13px;
+}
+
+.office-archive-card{
+  min-width:0;
+
+  min-height:96px;
+
+  display:flex;
+  align-items:center;
+
+  gap:14px;
+
+  padding:
+    17px;
+
+  border:
+    1px solid #dfe8ed!important;
+
+  border-radius:14px!important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #fff,
+      #f8fbfc
+    )!important;
+
+  color:#173b52!important;
+
+  text-align:left;
+
+  box-shadow:
+    0 5px 16px
+    rgba(8,47,73,.035);
+
+  cursor:pointer;
+
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease;
+}
+
+.office-archive-card:hover{
+  transform:
+    translateY(-1px);
+
+  border-color:
+    #bee3e8!important;
+
+  box-shadow:
+    0 9px 22px
+    rgba(8,47,73,.06);
+}
+
+.office-archive-card-icon{
+  width:46px;
+  height:46px;
+
+  flex:
+    0 0 46px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:12px;
+
+  background:#e8f7f9;
+
+  color:#087f9e;
+
+  font-size:1.2rem;
+}
+
+.office-archive-card > span:last-child{
+  min-width:0;
+
+  display:grid;
+
+  gap:5px;
+}
+
+.office-archive-card strong{
+  overflow:hidden;
+
+  color:#173b52;
+
+  font-size:.9rem;
+
+  text-overflow:ellipsis;
+
+  white-space:nowrap;
+}
+
+.office-archive-card small{
+  color:#7d8f9c;
+
+  font-size:.7rem;
+}
+
+.office-archive-back{
+  width:max-content;
+
+  display:inline-flex;
+  align-items:center;
+
+  gap:7px;
+
+  padding:
+    7px 10px!important;
+
+  border:
+    1px solid #dce5ea!important;
+
+  border-radius:9px!important;
+
+  background:#fff!important;
+
+  color:#47677b!important;
+
+  font-size:.72rem;
+
+  cursor:pointer;
+}
+
+.office-archive-back:hover{
+  background:#f5f9fa!important;
+}
+
+.office-archive-title{
+  display:grid;
+
+  gap:4px;
+}
+
+.office-archive-title span{
+  color:#7290a1;
+
+  font-size:.68rem;
+
+  font-weight:800;
+
+  letter-spacing:.08em;
+
+  text-transform:uppercase;
+}
+
+.office-archive-title h3{
+  margin:0;
+
+  color:#082f49;
+
+  font-size:1.45rem;
+
+  text-transform:capitalize;
+}
+
+.office-archive-documents{
+  overflow:hidden;
+
+  border:
+    1px solid #e0e8ed;
+
+  border-radius:12px;
+
+  background:#fff;
+}
+
+
+/* tablet */
+@media(max-width:1100px){
+
+  .office-archive-grid{
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      );
+  }
+
+}
+
+
+/* mobiel */
+@media(max-width:700px){
+
+  .office-archive-grid{
+    grid-template-columns:1fr;
+  }
+
+  .office-archive-card{
+    min-height:82px;
+
+    padding:14px;
+  }
+
+  .office-archive-card-icon{
+    width:41px;
+    height:41px;
+
+    flex-basis:41px;
+  }
+
+  .office-archive-documents
+  .office-documents-row--head{
+    display:none;
+  }
+
+  .office-archive-documents
+  .office-documents-row{
+    grid-template-columns:1fr;
+
+    gap:7px;
+
+    padding:
+      13px;
+
+    border-bottom:
+      1px solid #edf1f4;
+  }
+
+  .office-archive-documents
+  .documents-row-actions{
+    justify-content:flex-start;
+  }
+
+}
+
+
+/* ==========================================================
+   BESTEMD OFFICE DOCUMENT SECTIONS 4A-4
+   ========================================================== */
+
+.office-archive-section-grid{
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+}
+
+.office-archive-section-card{
+  min-height:125px;
+
+  align-items:flex-start;
+
+  padding:20px;
+}
+
+.office-archive-section-card
+.office-archive-card-icon{
+  width:50px;
+  height:50px;
+
+  flex-basis:50px;
+}
+
+.office-archive-section-card strong{
+  font-size:1rem;
+}
+
+.office-archive-section-card small{
+  white-space:normal;
+
+  line-height:1.5;
+}
+
+@media(max-width:1100px){
+
+  .office-archive-section-grid{
+    grid-template-columns:1fr;
+  }
+
+}

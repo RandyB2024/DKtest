@@ -1180,3 +1180,70 @@
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD DOCUMENT SECTIONS 4A-4
+   ========================================================== */
+
+.documents-section-grid{
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+}
+
+.documents-section-card{
+  min-height:132px;
+
+  align-items:flex-start;
+
+  padding:21px;
+}
+
+.documents-section-card
+.documents-folder-icon{
+  width:50px;
+  height:50px;
+
+  flex-basis:50px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e4f7f8,
+      #f3fbfc
+    );
+}
+
+.documents-section-card
+.documents-folder-copy strong{
+  font-size:1rem;
+}
+
+.documents-section-card
+.documents-folder-copy small{
+  white-space:normal;
+
+  line-height:1.5;
+}
+
+
+/* tablet */
+@media(max-width:1000px){
+
+  .documents-section-grid{
+    grid-template-columns:1fr;
+  }
+
+}
+
+
+/* mobiel */
+@media(max-width:650px){
+
+  .documents-section-card{
+    min-height:95px;
+
+    padding:15px;
+  }
+
+}
