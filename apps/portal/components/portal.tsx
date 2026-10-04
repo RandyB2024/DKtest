@@ -706,8 +706,8 @@ if (view === "Documenten") {
         <div className="brand bestemd-portal-brand">
           <div className="portal-brand-assets">
             <img
-              src="/logo.png"
-              alt="Bestemd"
+              src="/mijn-bestemming-logo.png"
+              alt="Mijn Bestemming"
               className="portal-brand-logo"
             />
 
@@ -717,19 +717,6 @@ if (view === "Documenten") {
               aria-hidden="true"
               className="portal-brand-icon"
             />
-          </div>
-
-          <div className="portal-brand-user">
-            <small>
-              Mijn Bestemming
-            </small>
-
-            <span>
-              {
-                context.profile
-                  .display_name
-              }
-            </span>
           </div>
 
           <button

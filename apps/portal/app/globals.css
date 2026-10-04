@@ -1852,3 +1852,618 @@ body{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD CUSTOMER AUTH PREMIUM V2
+   ========================================================== */
+
+.bestemd-auth-page{
+  min-height:100vh;
+
+  grid-template-columns:
+    minmax(440px,.88fr)
+    minmax(540px,1.12fr);
+
+  background:#f5f9fb;
+}
+
+
+/* ==========================================================
+   LINKER MERKZIJDE
+   ========================================================== */
+
+.bestemd-auth-brand{
+  align-items:flex-start;
+
+  padding:
+    clamp(55px,6vw,88px)
+    clamp(48px,6vw,88px);
+
+  background:
+    radial-gradient(
+      circle at 4% 4%,
+      rgba(35,201,216,.16),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 92% 88%,
+      rgba(255,255,255,.48),
+      transparent 26%
+    ),
+    linear-gradient(
+      145deg,
+      #e8f2f6 0%,
+      #dceaf0 100%
+    );
+}
+
+.bestemd-auth-brand::before{
+  content:"";
+
+  position:absolute;
+
+  width:360px;
+  height:360px;
+
+  left:-210px;
+  bottom:-205px;
+
+  border:
+    55px solid
+    rgba(8,47,73,.025);
+
+  border-radius:50%;
+}
+
+.bestemd-auth-brand::after{
+  width:500px;
+  height:500px;
+
+  right:-310px;
+  bottom:-310px;
+
+  border:
+    70px solid
+    rgba(255,255,255,.28);
+}
+
+.bestemd-auth-brand-inner{
+  display:flex;
+  flex-direction:column;
+
+  min-height:
+    calc(100vh - 120px);
+
+  width:min(100%,620px);
+}
+
+
+/* Mijn Bestemming-logo groter en rustiger */
+.bestemd-customer-logo{
+  width:
+    min(
+      100%,
+      430px
+    );
+
+  margin:
+    0 0 78px;
+
+  object-fit:contain;
+  object-position:left center;
+}
+
+
+/* kop niet meer absurd groot */
+.bestemd-auth-brand-copy{
+  max-width:540px;
+}
+
+.bestemd-auth-brand-copy h1{
+  max-width:520px;
+
+  font-size:
+    clamp(
+      2.45rem,
+      4vw,
+      3.8rem
+    );
+
+  line-height:1.055;
+
+  letter-spacing:-.055em;
+
+  font-weight:720;
+}
+
+.bestemd-auth-brand-copy p{
+  max-width:490px;
+
+  margin-top:22px;
+
+  font-size:1rem;
+  line-height:1.75;
+}
+
+
+/* kicker */
+.bestemd-auth-brand-copy
+.bestemd-auth-kicker{
+  margin-bottom:15px;
+
+  color:#58768b;
+
+  font-size:.68rem;
+
+  letter-spacing:.19em;
+}
+
+
+/* vertrouwen onderin */
+.bestemd-auth-trust{
+  display:flex;
+  flex-wrap:wrap;
+
+  gap:12px;
+
+  margin-top:auto;
+
+  padding-top:52px;
+}
+
+.bestemd-auth-trust > div{
+  min-width:205px;
+
+  padding:
+    14px 16px;
+
+  border:
+    1px solid
+    rgba(8,82,112,.08);
+
+  border-radius:13px;
+
+  background:
+    rgba(255,255,255,.38);
+
+  backdrop-filter:
+    blur(8px);
+}
+
+.bestemd-auth-trust svg{
+  width:21px;
+  height:21px;
+}
+
+
+/* ==========================================================
+   RECHTER LOGINZIJDE
+   ========================================================== */
+
+.bestemd-auth-panel{
+  padding:
+    clamp(36px,5vw,76px);
+
+  background:
+    radial-gradient(
+      circle at 52% 18%,
+      rgba(32,201,215,.095),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 95% 90%,
+      rgba(8,86,121,.04),
+      transparent 26%
+    ),
+    #f9fbfc;
+}
+
+
+/* card meer premium */
+.bestemd-auth-card{
+  position:relative;
+
+  width:
+    min(
+      100%,
+      540px
+    );
+
+  padding:
+    48px 48px 36px;
+
+  overflow:hidden;
+
+  border:
+    1px solid
+    rgba(207,222,230,.9);
+
+  border-radius:26px;
+
+  background:
+    rgba(255,255,255,.96);
+
+  box-shadow:
+    0 34px 90px
+    rgba(8,47,73,.09),
+    0 4px 14px
+    rgba(8,47,73,.035);
+}
+
+
+/* klein turquoise lichtdetail */
+.bestemd-auth-card::before{
+  content:"";
+
+  position:absolute;
+
+  width:210px;
+  height:210px;
+
+  top:-145px;
+  right:-105px;
+
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(32,201,215,.20),
+      rgba(32,201,215,0) 68%
+    );
+
+  pointer-events:none;
+}
+
+
+/* kleine B boven formulier op desktop */
+.bestemd-auth-card::after{
+  content:"";
+
+  display:block;
+
+  width:42px;
+  height:42px;
+
+  margin:
+    0 auto 25px;
+
+  background:
+    url("/icon.png")
+    center/contain
+    no-repeat;
+}
+
+
+/* card heading */
+.bestemd-auth-heading{
+  margin-bottom:31px;
+}
+
+.bestemd-auth-heading h2{
+  font-size:
+    clamp(
+      2rem,
+      3vw,
+      2.5rem
+    );
+
+  font-weight:760;
+
+  color:#082f49;
+}
+
+.bestemd-auth-heading p{
+  color:#708493;
+
+  font-size:.91rem;
+}
+
+
+/* velden */
+.bestemd-auth-field{
+  margin-top:19px;
+}
+
+.bestemd-auth-field label{
+  color:#163e56;
+}
+
+.bestemd-auth-field input{
+  min-height:53px;
+
+  padding:
+    0 15px;
+
+  background:
+    #f7fafc!important;
+
+  border:
+    1px solid
+    #d7e3e9!important;
+
+  border-radius:
+    11px!important;
+
+  transition:
+    .15s ease;
+}
+
+.bestemd-auth-field input:hover{
+  background:#fff!important;
+
+  border-color:
+    #c6d9e1!important;
+}
+
+.bestemd-auth-field input:focus{
+  background:#fff!important;
+
+  border-color:
+    #4dc6d2!important;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(32,201,215,.105)!important;
+}
+
+
+/* wachtwoord vergeten */
+.bestemd-forgot-password{
+  color:#087f9e;
+
+  transition:
+    color .15s ease;
+}
+
+.bestemd-forgot-password:hover{
+  color:#075b79;
+}
+
+
+/* primaire knop */
+.bestemd-auth-submit{
+  min-height:53px;
+
+  border:0!important;
+
+  border-radius:11px!important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0c8bab 0%,
+      #08789b 48%,
+      #075b7d 100%
+    )!important;
+
+  box-shadow:
+    0 10px 25px
+    rgba(7,107,143,.18);
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease;
+}
+
+.bestemd-auth-submit:hover:not(:disabled){
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 14px 28px
+    rgba(7,107,143,.22);
+}
+
+
+/* beveiligingsblok */
+.bestemd-auth-security{
+  margin-top:27px;
+
+  padding:16px;
+
+  border:
+    1px solid #d7e9ed;
+
+  border-radius:13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #effafb,
+      #f8fcfd
+    );
+}
+
+
+/* hulp minder prominent */
+.bestemd-auth-help{
+  margin-top:10px;
+
+  padding:
+    13px 15px;
+
+  background:#fafcfd;
+}
+
+.bestemd-auth-help svg{
+  color:#78909f;
+}
+
+
+/* footer */
+.bestemd-auth-footer{
+  margin-top:27px;
+
+  padding-top:20px;
+
+  border-top:
+    1px solid #edf1f3;
+}
+
+
+/* ==========================================================
+   MFA
+   ========================================================== */
+
+.bestemd-mfa-icon{
+  width:58px;
+  height:58px;
+
+  margin:
+    0 auto 21px;
+
+  border:
+    1px solid #d7eff1;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e4f9fa,
+      #f6fdfd
+    );
+
+  box-shadow:
+    0 8px 22px
+    rgba(31,171,189,.08);
+}
+
+
+/* MFA heeft al een schild, dus extra B verbergen */
+.bestemd-auth-card:has(.bestemd-mfa-icon)::after{
+  display:none;
+}
+
+
+/* ==========================================================
+   SIDEBAR BRANDING
+   ========================================================== */
+
+.bestemd-portal-brand{
+  margin:
+    2px 5px 30px!important;
+
+  padding:
+    7px 1px;
+}
+
+.portal-brand-assets{
+  width:100%;
+
+  min-height:61px;
+
+  display:flex;
+  align-items:center;
+}
+
+.portal-brand-logo{
+  display:block;
+
+  width:100%!important;
+  max-width:205px!important;
+
+  height:auto;
+
+  object-fit:contain;
+  object-position:left center;
+}
+
+.portal-brand-user{
+  display:none!important;
+}
+
+
+/* ingeklapt alleen B */
+.portal-sidebar-collapsed
+.portal-brand-logo{
+  display:none!important;
+}
+
+.portal-sidebar-collapsed
+.portal-brand-icon{
+  display:block!important;
+
+  width:42px!important;
+  height:42px!important;
+}
+
+
+/* ==========================================================
+   TABLET / MOBILE
+   ========================================================== */
+
+@media(max-width:1000px)
+and (min-width:701px){
+
+  .shell:not(
+    .portal-sidebar-collapsed
+  ){
+    grid-template-columns:
+      230px 1fr;
+  }
+
+}
+
+
+@media(max-width:900px){
+
+  .bestemd-auth-panel{
+    padding:25px 18px;
+  }
+
+  .bestemd-auth-card{
+    width:min(100%,520px);
+
+    padding:
+      34px 27px 29px;
+  }
+
+  .bestemd-auth-card::after{
+    display:none;
+  }
+
+  .bestemd-auth-mobile-logo{
+    display:flex;
+
+    margin-bottom:35px;
+  }
+
+  .bestemd-auth-mobile-logo img{
+    width:
+      min(
+        100%,
+        360px
+      );
+  }
+
+}
+
+
+@media(max-width:520px){
+
+  .bestemd-auth-panel{
+    background:
+      linear-gradient(
+        180deg,
+        #eff7f9,
+        #f8fbfc 38%
+      );
+  }
+
+  .bestemd-auth-card{
+    padding:
+      29px 21px 25px;
+
+    border-radius:20px;
+  }
+
+  .bestemd-auth-mobile-logo img{
+    width:
+      min(
+        100%,
+        315px
+      );
+  }
+
+}
