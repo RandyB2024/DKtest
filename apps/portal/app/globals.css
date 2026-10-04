@@ -1264,3 +1264,591 @@ body{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD CUSTOMER AUTH REDESIGN V1
+   ========================================================== */
+
+.bestemd-auth-page{
+  min-height:100vh;
+
+  display:grid;
+  grid-template-columns:
+    minmax(420px,.92fr)
+    minmax(500px,1.08fr);
+
+  background:#f4f8fa;
+}
+
+.bestemd-auth-brand{
+  position:relative;
+
+  display:flex;
+  align-items:center;
+
+  overflow:hidden;
+
+  padding:
+    clamp(42px,6vw,90px);
+
+  background:
+    radial-gradient(
+      circle at 18% 17%,
+      rgba(32,201,215,.15),
+      transparent 28%
+    ),
+    linear-gradient(
+      145deg,
+      #e8f1f5,
+      #dbe8ef
+    );
+
+  border-right:
+    1px solid #d1dfe7;
+}
+
+.bestemd-auth-brand::after{
+  content:"";
+
+  position:absolute;
+
+  width:440px;
+  height:440px;
+
+  right:-230px;
+  bottom:-230px;
+
+  border:
+    70px solid
+    rgba(255,255,255,.22);
+
+  border-radius:50%;
+}
+
+.bestemd-auth-brand-inner{
+  position:relative;
+  z-index:1;
+
+  width:min(
+    100%,
+    620px
+  );
+}
+
+.bestemd-customer-logo{
+  display:block;
+
+  width:
+    min(
+      100%,
+      430px
+    );
+
+  height:auto;
+
+  margin-bottom:58px;
+}
+
+.bestemd-auth-brand-copy{
+  max-width:570px;
+}
+
+.bestemd-auth-kicker{
+  display:block;
+
+  margin-bottom:12px;
+
+  color:#668297;
+
+  font-size:.7rem;
+  font-weight:800;
+
+  letter-spacing:.18em;
+}
+
+.bestemd-auth-brand-copy h1{
+  margin:0;
+
+  color:#082f49;
+
+  font-size:
+    clamp(
+      2.4rem,
+      4.5vw,
+      4.3rem
+    );
+
+  line-height:1.02;
+
+  letter-spacing:-.055em;
+}
+
+.bestemd-auth-brand-copy p{
+  max-width:520px;
+
+  margin:
+    22px 0 0;
+
+  color:#5e7788;
+
+  font-size:1.05rem;
+  line-height:1.7;
+}
+
+.bestemd-auth-trust{
+  display:grid;
+
+  gap:13px;
+
+  margin-top:42px;
+}
+
+.bestemd-auth-trust > div{
+  display:flex;
+  align-items:center;
+
+  gap:13px;
+
+  color:#30536a;
+}
+
+.bestemd-auth-trust svg{
+  width:20px;
+  height:20px;
+
+  color:#078da5;
+}
+
+.bestemd-auth-trust span,
+.bestemd-auth-trust strong,
+.bestemd-auth-trust small{
+  display:block;
+}
+
+.bestemd-auth-trust strong{
+  font-size:.83rem;
+}
+
+.bestemd-auth-trust small{
+  margin-top:2px;
+
+  color:#728795;
+
+  font-size:.72rem;
+}
+
+
+/* ==========================================================
+   RECHTERZIJDE
+   ========================================================== */
+
+.bestemd-auth-panel{
+  position:relative;
+
+  display:grid;
+  place-items:center;
+
+  padding:
+    45px;
+
+  background:
+    radial-gradient(
+      circle at 55% 16%,
+      rgba(32,201,215,.08),
+      transparent 24%
+    ),
+    #f8fbfc;
+}
+
+.bestemd-auth-card{
+  width:
+    min(
+      100%,
+      520px
+    );
+
+  padding:
+    42px 44px 35px;
+
+  border:
+    1px solid #dce6ec;
+
+  border-radius:23px;
+
+  background:
+    rgba(255,255,255,.97);
+
+  box-shadow:
+    0 28px 80px
+    rgba(8,47,73,.085);
+}
+
+.bestemd-auth-mobile-logo{
+  display:none;
+}
+
+.bestemd-auth-heading{
+  margin-bottom:28px;
+
+  text-align:center;
+}
+
+.bestemd-auth-heading h2{
+  margin:0;
+
+  color:#082f49;
+
+  font-size:
+    clamp(
+      2rem,
+      4vw,
+      2.45rem
+    );
+
+  letter-spacing:-.045em;
+}
+
+.bestemd-auth-heading p{
+  max-width:390px;
+
+  margin:
+    11px auto 0;
+
+  color:#6c8191;
+
+  line-height:1.6;
+}
+
+.bestemd-auth-field{
+  margin-top:17px;
+}
+
+.bestemd-auth-field input{
+  min-height:50px;
+
+  background:#f8fbfc;
+}
+
+.bestemd-password-label{
+  display:flex;
+  align-items:center;
+  justify-content:
+    space-between;
+
+  gap:15px;
+}
+
+.bestemd-forgot-password{
+  padding:0;
+
+  border:0;
+  background:transparent;
+
+  color:#087e9e;
+
+  font-size:.75rem;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.bestemd-forgot-password:hover{
+  text-decoration:underline;
+}
+
+.bestemd-auth-submit{
+  width:100%;
+
+  min-height:50px;
+
+  margin-top:20px;
+
+  border-radius:11px;
+
+  font-weight:760;
+}
+
+.bestemd-auth-error{
+  margin:
+    15px 0 0;
+
+  padding:
+    11px 13px;
+
+  border:
+    1px solid #f1d5d8;
+
+  border-radius:9px;
+
+  background:#fff6f7;
+
+  color:#a14652;
+
+  font-size:.78rem;
+  line-height:1.5;
+}
+
+
+/* ==========================================================
+   SECURITY / HELP
+   ========================================================== */
+
+.bestemd-auth-security,
+.bestemd-auth-help{
+  display:grid;
+
+  grid-template-columns:
+    auto
+    minmax(0,1fr);
+
+  gap:13px;
+
+  margin-top:22px;
+
+  padding:15px;
+
+  border-radius:12px;
+}
+
+.bestemd-auth-security{
+  border:
+    1px solid #d5eaed;
+
+  background:
+    linear-gradient(
+      135deg,
+      #effbfc,
+      #f9fdfd
+    );
+}
+
+.bestemd-auth-help{
+  margin-top:11px;
+
+  border:
+    1px solid #e0e7eb;
+
+  background:#f8fafb;
+}
+
+.bestemd-auth-security svg,
+.bestemd-auth-help svg{
+  width:19px;
+  height:19px;
+
+  margin-top:1px;
+
+  color:#088ba4;
+}
+
+.bestemd-auth-security strong,
+.bestemd-auth-help strong{
+  display:block;
+
+  color:#153d55;
+
+  font-size:.78rem;
+}
+
+.bestemd-auth-security p,
+.bestemd-auth-help p{
+  margin:
+    4px 0 0;
+
+  color:#708493;
+
+  font-size:.72rem;
+  line-height:1.5;
+}
+
+.bestemd-auth-footer{
+  margin-top:25px;
+
+  color:#96a5b0;
+
+  text-align:center;
+
+  font-size:.66rem;
+
+  letter-spacing:.05em;
+}
+
+
+/* ==========================================================
+   MFA
+   ========================================================== */
+
+.bestemd-mfa-icon{
+  width:50px;
+  height:50px;
+
+  display:grid;
+  place-items:center;
+
+  margin:
+    0 auto 18px;
+
+  border-radius:14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #e7fafa,
+      #f3fcfc
+    );
+
+  color:#078da5;
+}
+
+.bestemd-mfa-icon svg{
+  width:25px;
+  height:25px;
+}
+
+.bestemd-auth-status{
+  text-align:center;
+
+  color:#738895;
+}
+
+.bestemd-mfa-setup,
+.bestemd-mfa-enroll{
+  margin-top:18px;
+
+  text-align:center;
+}
+
+.bestemd-mfa-enroll > p,
+.bestemd-mfa-setup > p{
+  color:#687e8e;
+
+  line-height:1.55;
+}
+
+.bestemd-qr-wrap{
+  display:inline-grid;
+  place-items:center;
+
+  margin:
+    14px auto;
+
+  padding:14px;
+
+  border:
+    1px solid #dbe7ec;
+
+  border-radius:15px;
+
+  background:#fff;
+
+  box-shadow:
+    0 8px 28px
+    rgba(8,47,73,.06);
+}
+
+.bestemd-qr-wrap img{
+  display:block;
+}
+
+.bestemd-mfa-secret{
+  margin:
+    10px 0 18px;
+
+  color:#516c7f;
+
+  font-size:.75rem;
+}
+
+.bestemd-mfa-secret code{
+  display:block;
+
+  margin-top:10px;
+
+  overflow-wrap:anywhere;
+
+  padding:10px;
+
+  border-radius:8px;
+
+  background:#f3f7f9;
+}
+
+.bestemd-mfa-form{
+  margin-top:18px;
+}
+
+.bestemd-totp-input{
+  min-height:58px!important;
+
+  text-align:center;
+
+  font-size:1.55rem!important;
+  font-weight:750!important;
+
+  letter-spacing:.35em;
+}
+
+.bestemd-auth-logout{
+  display:flex;
+  justify-content:center;
+
+  margin-top:16px;
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media(max-width:900px){
+
+  .bestemd-auth-page{
+    grid-template-columns:1fr;
+  }
+
+  .bestemd-auth-brand{
+    display:none;
+  }
+
+  .bestemd-auth-panel{
+    min-height:100vh;
+
+    padding:
+      24px 18px;
+  }
+
+  .bestemd-auth-card{
+    padding:
+      32px 26px 28px;
+  }
+
+  .bestemd-auth-mobile-logo{
+    display:flex;
+    justify-content:center;
+
+    margin-bottom:31px;
+  }
+
+  .bestemd-auth-mobile-logo img{
+    width:
+      min(
+        100%,
+        330px
+      );
+
+    height:auto;
+  }
+
+}
+
+@media(max-width:520px){
+
+  .bestemd-auth-card{
+    padding:
+      27px 20px 24px;
+
+    border-radius:18px;
+  }
+
+}
