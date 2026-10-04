@@ -87,20 +87,10 @@ export default function Login() {
 
           <div className="bestemd-auth-brand-copy">
 
-            <span className="bestemd-auth-kicker">
-              UW PERSOONLIJKE KLANTPORTAAL
-            </span>
-
             <h1>
               Alles voor uw onderneming,
               op één veilige plek.
             </h1>
-
-            <p>
-              Inzicht in uw administratie,
-              documenten, facturen en
-              communicatie met Bestemd.
-            </p>
 
           </div>
 
