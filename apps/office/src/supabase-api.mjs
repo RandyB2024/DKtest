@@ -1,4 +1,5 @@
 import { bankingRoute } from './banking.mjs';
+import { communicationRoute } from './communication.mjs';
 import {tasksRoute} from './tasks.mjs';
 import {addressRoute} from './addresses.mjs';
 import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
@@ -696,6 +697,26 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
       user
     );
     if (documents) return sendJson(res, documents.status, documents.data);
+
+    const communication =
+      await communicationRoute(
+        req,
+        url,
+        client,
+        user,
+        body,
+        config,
+        fetchImpl
+      );
+
+    if (communication) {
+      return sendJson(
+        res,
+        communication.status,
+        communication.data
+      );
+    }
+
 
     const tasks=await tasksRoute(req,url,client,user,body);
     if(tasks)return sendJson(res,tasks.status,tasks.data);

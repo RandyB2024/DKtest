@@ -111,6 +111,12 @@ export function loadConfig(env = process.env) {
     supabaseKey:
       env.SUPABASE_PUBLISHABLE_KEY,
 
+    communicationEmailjs:
+      Object.freeze({
+        privateKey:
+          env.EMAILJS_COMM_CUSTOMER_PRIVATE_KEY || '',
+      }),
+
     emailjs:
       Object.freeze({
         serviceId:

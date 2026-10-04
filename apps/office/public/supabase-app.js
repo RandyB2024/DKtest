@@ -217,6 +217,9 @@ async function renderRoute() {
       const data = await api('/api/clients');
       recordData = data;
       html = '<div id="office-documents-readonly"></div>';
+    } else if (path === '/communication') {
+      header('Communicatie');
+      html = '<div id="office-communication"></div>';
     } else if (path === '/settings') {
       header('Instellingen');html='<section class="panel" id="passkey-settings"></section>';
     } else {
@@ -234,6 +237,9 @@ async function renderRoute() {
       }else if(path==='/documents'){
         const {mountOfficeDocumentsReadonly}=await import('/documents-readonly.js');
         if(activeGeneration===generation&&currentUser)mountOfficeDocumentsReadonly($('#office-documents-readonly'),api,recordData);
+      }else if(path==='/communication'){
+        const {mountOfficeCommunication}=await import('/communication.js');
+        if(activeGeneration===generation&&currentUser)await mountOfficeCommunication($('#office-communication'),api,currentUser);
       }else customerControls(path, recordData);
       if(path==='/dashboard'){const {mountTasks}=await import('/tasks.js');if(activeGeneration===generation&&currentUser)await Promise.all([mountTasks($('#tasks-today'),api,{bucket:'today'}),mountTasks($('#tasks-overdue'),api,{bucket:'overdue'})]);}
       if(recordData?.relationship || recordData?.organization){
@@ -349,11 +355,6 @@ function setSidebarCollapsed(collapsed) {
     collapsed
   );
 
-  localStorage.setItem(
-    'office-sidebar-collapsed',
-    collapsed ? '1' : '0'
-  );
-
   const toggle =
     $('#sidebar-toggle');
 
@@ -450,15 +451,6 @@ const sidebarToggle =
 if (sidebarToggle) {
   sidebarToggle.onclick =
     toggleDesktopSidebar;
-}
-
-if (
-  innerWidth > 960
-  && localStorage.getItem(
-    'office-sidebar-collapsed'
-  ) === '1'
-) {
-  setSidebarCollapsed(true);
 }
 
 $('#nav-overlay').onclick =

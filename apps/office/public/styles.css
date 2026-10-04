@@ -2518,3 +2518,459 @@ body.sidebar-collapsed #logout::after{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD OFFICE COMMUNICATION 5A-3
+   ========================================================== */
+
+.office-communication{
+  display:grid;
+  gap:18px;
+}
+
+.office-communication-intro{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.office-communication-intro h2{
+  margin:0;
+  color:var(--blue-dark);
+  font-size:1.55rem;
+}
+
+.office-communication-intro p:last-child{
+  margin:7px 0 0;
+  color:var(--muted);
+}
+
+.office-communication-tabs{
+  display:flex;
+  width:max-content;
+  gap:4px;
+  padding:4px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:#fff;
+}
+
+.office-communication-tabs button{
+  padding:9px 18px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--muted);
+  font-weight:750;
+  cursor:pointer;
+}
+
+.office-communication-tabs button.active{
+  background:var(--blue);
+  color:#fff;
+}
+
+.office-communication-error{
+  min-height:0;
+  margin:0;
+  color:var(--red);
+  font-size:.84rem;
+}
+
+.office-communication-error:empty{
+  display:none;
+}
+
+.office-communication-shell{
+  min-height:650px;
+  display:grid;
+  grid-template-columns:360px minmax(0,1fr);
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  box-shadow:var(--shadow);
+}
+
+.office-communication-list{
+  border-right:1px solid var(--line);
+  background:#fbfcfd;
+}
+
+.office-communication-list-head{
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 17px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+}
+
+.office-communication-list-head strong{
+  color:var(--blue-dark);
+}
+
+.office-communication-list-head span{
+  min-width:28px;
+  min-height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:var(--blue-soft);
+  color:var(--blue);
+  font-size:.75rem;
+  font-weight:800;
+}
+
+.office-thread{
+  width:100%;
+  display:block;
+  padding:16px 17px;
+  border:0;
+  border-bottom:1px solid var(--line);
+  background:transparent;
+  color:var(--ink);
+  text-align:left;
+  cursor:pointer;
+}
+
+.office-thread:hover,
+.office-thread.active{
+  background:#edf3f7;
+}
+
+.office-thread.active{
+  box-shadow:inset 3px 0 0 var(--blue);
+}
+
+.office-thread-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.office-thread-top strong{
+  min-width:0;
+  overflow:hidden;
+  color:var(--blue-dark);
+  font-size:.9rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.office-thread-top time{
+  flex:none;
+  color:var(--muted);
+  font-size:.68rem;
+}
+
+.office-thread-company{
+  display:block;
+  margin-top:4px;
+  color:var(--blue);
+  font-size:.72rem;
+  font-weight:750;
+}
+
+.office-thread p{
+  margin:7px 0 0;
+  overflow:hidden;
+  color:var(--muted);
+  font-size:.78rem;
+  line-height:1.4;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.office-communication-chat{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  background:#f5f7f8;
+}
+
+.office-communication-empty{
+  min-height:180px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  padding:30px;
+  color:var(--muted);
+  text-align:center;
+}
+
+.office-chat-head{
+  min-height:65px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:10px 17px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+}
+
+.office-chat-head > div:nth-child(2){
+  min-width:0;
+  flex:1;
+}
+
+.office-chat-head h3{
+  margin:0;
+  overflow:hidden;
+  color:var(--blue-dark);
+  font-size:1rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.office-chat-head p{
+  margin:3px 0 0;
+  color:var(--muted);
+  font-size:.74rem;
+}
+
+.office-chat-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.office-chat-actions button,
+.office-chat-back{
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#fff;
+  color:var(--blue);
+  cursor:pointer;
+}
+
+.office-chat-back{
+  display:none;
+}
+
+.office-chat-messages{
+  flex:1;
+  min-height:470px;
+  max-height:650px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:11px;
+  padding:22px;
+}
+
+.office-chat-message{
+  width:min(74%,650px);
+  padding:12px 14px;
+  border-radius:15px;
+  box-shadow:0 2px 8px rgba(23,50,77,.04);
+}
+
+.office-chat-message.customer{
+  align-self:flex-start;
+  border:1px solid var(--line);
+  border-bottom-left-radius:5px;
+  background:#fff;
+}
+
+.office-chat-message.office{
+  align-self:flex-end;
+  border:1px solid #c9ddec;
+  border-bottom-right-radius:5px;
+  background:#e6eff6;
+}
+
+.office-chat-message > div{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:5px;
+}
+
+.office-chat-message strong{
+  color:var(--blue-dark);
+  font-size:.72rem;
+}
+
+.office-chat-message time{
+  color:var(--muted);
+  font-size:.65rem;
+}
+
+.office-chat-message p{
+  margin:0;
+  color:var(--ink);
+  font-size:.88rem;
+  line-height:1.5;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.office-chat-composer{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:10px;
+  padding:14px;
+  border-top:1px solid var(--line);
+  background:#fff;
+}
+
+.office-chat-composer textarea{
+  width:100%;
+  min-height:50px;
+  max-height:150px;
+  resize:vertical;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fbfcfd;
+  color:var(--ink);
+  font:inherit;
+}
+
+.office-chat-archived{
+  display:grid;
+  gap:4px;
+  padding:14px 17px;
+  border-top:1px solid var(--line);
+  background:#eef2f4;
+  color:var(--muted);
+}
+
+.office-chat-archived strong{
+  color:var(--blue-dark);
+}
+
+.office-chat-archived span,
+.office-chat-archived small{
+  font-size:.76rem;
+}
+
+.office-communication-dialog{
+  width:min(92vw,620px);
+  padding:0;
+  border:0;
+  border-radius:16px;
+  box-shadow:0 24px 70px rgba(23,50,77,.22);
+}
+
+.office-communication-dialog::backdrop{
+  background:rgba(13,31,46,.45);
+}
+
+.office-communication-dialog form{
+  display:grid;
+  gap:15px;
+  padding:24px;
+}
+
+.office-communication-dialog h2{
+  margin:0;
+  color:var(--blue-dark);
+}
+
+.office-communication-dialog label{
+  display:grid;
+  gap:6px;
+  color:var(--muted);
+  font-size:.8rem;
+  font-weight:750;
+}
+
+.office-communication-dialog input,
+.office-communication-dialog select,
+.office-communication-dialog textarea{
+  width:100%;
+  min-height:42px;
+  padding:10px 11px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+  color:var(--ink);
+  font:inherit;
+}
+
+.office-communication-dialog textarea{
+  min-height:130px;
+  resize:vertical;
+}
+
+.office-communication-dialog-error{
+  margin:0;
+  color:var(--red);
+}
+
+
+@media(max-width:800px){
+
+  .office-communication-intro{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .office-communication-intro > button{
+    width:100%;
+  }
+
+  .office-communication-tabs{
+    width:100%;
+  }
+
+  .office-communication-tabs button{
+    flex:1;
+  }
+
+  .office-communication-shell{
+    display:block;
+    min-height:600px;
+  }
+
+  .office-communication-list{
+    border-right:0;
+  }
+
+  .office-communication-shell:has(
+    .office-chat-head
+  ) .office-communication-list{
+    display:none;
+  }
+
+  .office-communication-shell:has(
+    .office-chat-head
+  ) .office-communication-chat{
+    display:flex;
+  }
+
+  .office-chat-back{
+    display:block;
+    flex:none;
+  }
+
+  .office-chat-actions{
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+
+  .office-chat-messages{
+    min-height:430px;
+    max-height:calc(100svh - 270px);
+    padding:14px 10px;
+  }
+
+  .office-chat-message{
+    width:min(88%,520px);
+  }
+
+  .office-chat-composer{
+    position:sticky;
+    bottom:0;
+    padding:10px;
+  }
+
+}

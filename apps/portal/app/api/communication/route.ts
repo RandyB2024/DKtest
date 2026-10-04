@@ -10,6 +10,10 @@ import {
   readBody,
 } from "@/lib/portal-api";
 
+import {
+  notifyOfficeOfCustomerMessage,
+} from "@/lib/communication-email";
+
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -62,6 +66,67 @@ function requiredString(
   }
 
   return value.trim();
+}
+
+
+
+async function notifyOfficeBestEffort(
+  client: any,
+  input: {
+    idempotencyKey: string;
+    threadId: string;
+    customerName: string;
+    companyName: string;
+    subject: string;
+    message: string;
+  },
+) {
+  try {
+    const {
+      data: storedMessage,
+      error,
+    } =
+      await client
+        .from("messages")
+        .select("id")
+        .eq(
+          "idempotency_key",
+          input.idempotencyKey,
+        )
+        .maybeSingle();
+
+    if (
+      error ||
+      !storedMessage?.id
+    ) {
+      return;
+    }
+
+    await notifyOfficeOfCustomerMessage({
+      client,
+
+      messageId:
+        storedMessage.id,
+
+      threadId:
+        input.threadId,
+
+      customerName:
+        input.customerName,
+
+      companyName:
+        input.companyName,
+
+      subject:
+        input.subject,
+
+      message:
+        input.message,
+    });
+  } catch {
+    // E-mail is uitsluitend notificatie.
+    // Het chatbericht is al opgeslagen.
+  }
 }
 
 
@@ -574,6 +639,58 @@ export async function POST(
           );
         }
 
+        try {
+          const {
+            data: createdMessage,
+          } =
+            await client
+              .from("messages")
+              .select(
+                "id,conversation_id",
+              )
+              .eq(
+                "idempotency_key",
+                idempotencyKey,
+              )
+              .maybeSingle();
+
+          if (
+            createdMessage?.conversation_id
+          ) {
+            const organization =
+              identity.organizations.find(
+                (item) =>
+                  item.id ===
+                  organizationId,
+              );
+
+            await notifyOfficeBestEffort(
+              client,
+              {
+                idempotencyKey,
+
+                threadId:
+                  createdMessage.conversation_id,
+
+                customerName:
+                  identity.profile.display_name,
+
+                companyName:
+                  organization?.name ??
+                  "Onderneming",
+
+                subject,
+
+                message:
+                  body,
+              },
+            );
+          }
+        } catch {
+          // Bericht bestaat al.
+          // Notificatiefout blokkeert niets.
+        }
+
         return Response.json(
           data,
           {
@@ -618,7 +735,7 @@ export async function POST(
           await client
             .from("conversations")
             .select(
-              "id,organization_id,status",
+              "id,organization_id,status,subject",
             )
             .eq(
               "id",
@@ -645,6 +762,7 @@ export async function POST(
             id: string;
             organization_id: string;
             status: string;
+            subject: string;
           };
 
         requireOrganization(
@@ -686,6 +804,35 @@ export async function POST(
             "Het bericht kon niet worden verzonden. Probeer het opnieuw.",
           );
         }
+
+        const organization =
+          identity.organizations.find(
+            (item) =>
+              item.id ===
+              conversationRow.organization_id,
+          );
+
+        await notifyOfficeBestEffort(
+          client,
+          {
+            idempotencyKey,
+
+            threadId,
+
+            customerName:
+              identity.profile.display_name,
+
+            companyName:
+              organization?.name ??
+              "Onderneming",
+
+            subject:
+              conversationRow.subject,
+
+            message:
+              body,
+          },
+        );
 
         return Response.json(
           data,
