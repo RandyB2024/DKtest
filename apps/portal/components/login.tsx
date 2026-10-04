@@ -22,6 +22,16 @@ export default function Login() {
   const [busy, setBusy] =
     useState(false);
 
+  const [
+    forgotPassword,
+    setForgotPassword,
+  ] = useState(false);
+
+  const [
+    recoverySent,
+    setRecoverySent,
+  ] = useState(false);
+
   async function submit(
     e: React.FormEvent,
   ) {
@@ -67,6 +77,42 @@ export default function Login() {
       setError(
         "Inloggen is tijdelijk niet beschikbaar. Probeer het opnieuw.",
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function recoverPassword(
+    e: React.FormEvent,
+  ) {
+    e.preventDefault();
+
+    setBusy(true);
+    setError("");
+
+    try {
+      await fetch(
+        "/api/auth/forgot-password",
+        {
+          method: "POST",
+          headers: {
+            "content-type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            email,
+          }),
+        },
+      );
+
+      setRecoverySent(true);
+
+    } catch {
+      /*
+       * Zelfde eindmelding houden om
+       * account-enumeratie te voorkomen.
+       */
+      setRecoverySent(true);
     } finally {
       setBusy(false);
     }
@@ -134,7 +180,11 @@ export default function Login() {
 
         <form
           className="bestemd-auth-card"
-          onSubmit={submit}
+          onSubmit={
+            forgotPassword
+              ? recoverPassword
+              : submit
+          }
         >
 
           <div className="bestemd-auth-mobile-logo">
@@ -147,13 +197,15 @@ export default function Login() {
           <div className="bestemd-auth-heading">
 
             <h2>
-              Welkom terug
+              {forgotPassword
+                ? "Wachtwoord herstellen"
+                : "Welkom terug"}
             </h2>
 
             <p>
-              Log in met het e-mailadres
-              dat aan jouw klantaccount is
-              gekoppeld.
+              {forgotPassword
+                ? "Vul je e-mailadres in. Als dit bij ons bekend is, ontvang je een herstelmail."
+                : "Log in met het e-mailadres dat aan jouw klantaccount is gekoppeld."}
             </p>
 
           </div>
@@ -177,6 +229,8 @@ export default function Login() {
             />
           </div>
 
+          {!forgotPassword && (
+            <>
           <div className="field bestemd-auth-field">
             <div className="bestemd-password-label">
               <label htmlFor="password">
@@ -187,9 +241,10 @@ export default function Login() {
                 type="button"
                 className="bestemd-forgot-password"
                 onClick={() => {
-                  setError(
-                    "De functie 'Wachtwoord vergeten' wordt momenteel veilig ingericht. Neem voor nu contact op met Bestemd.",
-                  );
+                  setForgotPassword(true);
+                  setRecoverySent(false);
+                  setError("");
+                  setPassword("");
                 }}
               >
                 Wachtwoord vergeten?
@@ -210,6 +265,27 @@ export default function Login() {
             />
           </div>
 
+            </>
+          )}
+
+          {forgotPassword && recoverySent && (
+            <div className="bestemd-auth-security">
+              <ShieldCheck />
+
+              <div>
+                <strong>
+                  Controleer je inbox
+                </strong>
+
+                <p>
+                  Als dit e-mailadres bij ons bekend is,
+                  ontvang je binnen enkele minuten een
+                  herstelmail.
+                </p>
+              </div>
+            </div>
+          )}
+
           {error && (
             <p
               className="bestemd-auth-error"
@@ -221,12 +297,36 @@ export default function Login() {
 
           <button
             className="btn primary bestemd-auth-submit"
-            disabled={busy}
+            disabled={
+              busy ||
+              (forgotPassword &&
+                recoverySent)
+            }
           >
-            {busy
-              ? "Bezig met inloggen…"
-              : "Inloggen"}
+            {forgotPassword
+              ? busy
+                ? "Versturen…"
+                : recoverySent
+                  ? "Herstelmail aangevraagd"
+                  : "Herstelmail versturen"
+              : busy
+                ? "Bezig met inloggen…"
+                : "Inloggen"}
           </button>
+
+          {forgotPassword && (
+            <button
+              type="button"
+              className="bestemd-auth-back"
+              onClick={() => {
+                setForgotPassword(false);
+                setRecoverySent(false);
+                setError("");
+              }}
+            >
+              Terug naar inloggen
+            </button>
+          )}
 
           <div className="bestemd-auth-security">
 

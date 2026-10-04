@@ -2750,3 +2750,42 @@ and (min-width:901px){
   overflow-x:hidden!important;
 }
 
+
+
+/* ==========================================================
+   BESTEMD PASSWORD RECOVERY V1
+   ========================================================== */
+
+.bestemd-auth-back{
+  display:block;
+
+  margin:
+    15px auto 0;
+
+  padding:5px 8px;
+
+  border:0;
+
+  background:transparent;
+
+  color:#087d9c;
+
+  font-size:.78rem;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.bestemd-auth-back:hover{
+  text-decoration:underline;
+}
+
+.bestemd-auth-link-button{
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  text-decoration:none;
+}
+
