@@ -23,6 +23,8 @@ type CommunicationConversationRow = {
   created_at: string;
   updated_at: string;
   last_message_at: string | null;
+  closed_at: string | null;
+  closed_by: string | null;
 };
 
 type CommunicationMessageRow = {
@@ -114,6 +116,22 @@ export async function GET(
           "threadId",
         );
 
+      const scope =
+        url.searchParams.get(
+          "scope",
+        ) ?? "active";
+
+      if (
+        scope !== "active" &&
+        scope !== "archive" &&
+        scope !== "all"
+      ) {
+        throw new AccessError(
+          400,
+          "Ongeldige communicatie-weergave.",
+        );
+      }
+
 
       // =====================================================
       // ÉÉN GESPREK + BERICHTEN
@@ -141,6 +159,8 @@ export async function GET(
                 "created_at",
                 "updated_at",
                 "last_message_at",
+                "closed_at",
+                "closed_by",
               ].join(","),
             )
             .eq(
@@ -269,12 +289,32 @@ export async function GET(
               "created_at",
               "updated_at",
               "last_message_at",
+              "closed_at",
+              "closed_by",
             ].join(","),
           )
           .is(
             "archived_at",
             null,
           );
+
+      if (
+        scope === "active"
+      ) {
+        query =
+          query.eq(
+            "status",
+            "open",
+          );
+      } else if (
+        scope === "archive"
+      ) {
+        query =
+          query.eq(
+            "status",
+            "closed",
+          );
+      }
 
       if (
         organizationId === "all"

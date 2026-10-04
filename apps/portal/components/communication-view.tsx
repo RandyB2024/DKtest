@@ -30,6 +30,8 @@ type ConversationListItem = {
   created_at: string;
   updated_at: string;
   last_message_at: string | null;
+  closed_at: string | null;
+  closed_by: string | null;
 
   latest_message: {
     body: string;
@@ -50,6 +52,8 @@ type ConversationDetail = {
   created_at: string;
   updated_at: string;
   last_message_at: string | null;
+  closed_at: string | null;
+  closed_by: string | null;
 };
 
 
@@ -108,6 +112,15 @@ export default function CommunicationView({
     useState<
       ConversationListItem[]
     >([]);
+
+  const [
+    scope,
+    setScope,
+  ] =
+    useState<
+      "active" | "archive"
+    >("active");
+
 
   const [
     selectedId,
@@ -262,6 +275,8 @@ export default function CommunicationView({
             await fetch(
               `/api/communication?organizationId=${encodeURIComponent(
                 context.organizationId,
+              )}&scope=${encodeURIComponent(
+                scope,
               )}`,
               {
                 cache:
@@ -305,6 +320,7 @@ export default function CommunicationView({
       },
       [
         context.organizationId,
+        scope,
       ],
     );
 
@@ -864,6 +880,54 @@ export default function CommunicationView({
 
 
       <div
+        className="communication-tabs"
+        role="tablist"
+        aria-label="Communicatie"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={
+            scope === "active"
+          }
+          className={
+            scope === "active"
+              ? "active"
+              : ""
+          }
+          onClick={() => {
+            setScope("active");
+            setSelectedId(null);
+            setDetail(null);
+            setMessages([]);
+          }}
+        >
+          Actief
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={
+            scope === "archive"
+          }
+          className={
+            scope === "archive"
+              ? "active"
+              : ""
+          }
+          onClick={() => {
+            setScope("archive");
+            setSelectedId(null);
+            setDetail(null);
+            setMessages([]);
+          }}
+        >
+          Archief
+        </button>
+      </div>
+
+      <div
         className={
           selectedId
             ? "communication-shell has-thread"
@@ -874,7 +938,9 @@ export default function CommunicationView({
           <div className="communication-list-head">
             <div>
               <span>
-                Gesprekken
+                {scope === "active"
+                  ? "Actieve gesprekken"
+                  : "Archief"}
               </span>
 
               <strong>
@@ -896,13 +962,15 @@ export default function CommunicationView({
                 <MessageCircleMore />
 
                 <strong>
-                  Nog geen gesprekken
+                  {scope === "active"
+                    ? "Nog geen actieve gesprekken"
+                    : "Archief is leeg"}
                 </strong>
 
                 <span>
-                  Start een gesprek als je
-                  een vraag voor Bestemd
-                  hebt.
+                  {scope === "active"
+                    ? "Start een gesprek als je een vraag voor Bestemd hebt."
+                    : "Afgeronde gesprekken verschijnen hier automatisch."}
                 </span>
               </div>
             ) : (
@@ -1127,7 +1195,21 @@ export default function CommunicationView({
                 </form>
               ) : (
                 <div className="communication-closed">
-                  Dit gesprek is gesloten.
+                  <strong>
+                    Gesprek afgerond
+                  </strong>
+
+                  <span>
+                    {detail.closed_at
+                      ? `Afgesloten op ${formatDateTime(
+                          detail.closed_at,
+                        )}.`
+                      : "Dit gesprek is afgesloten."}
+                  </span>
+
+                  <small>
+                    Dit gesprek staat vast in het archief en is alleen-lezen.
+                  </small>
                 </div>
               )}
             </>

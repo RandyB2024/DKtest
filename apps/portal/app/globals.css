@@ -5333,3 +5333,77 @@ h3{
     height:46px;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD COMMUNICATION ARCHIVE 5A-2B
+   ========================================================== */
+
+.communication-tabs{
+  display:inline-flex;
+  width:max-content;
+  gap:4px;
+  padding:4px;
+  border:1px solid #dfe7eb;
+  border-radius:12px;
+  background:#eef3f5;
+}
+
+.communication-tabs button{
+  min-height:38px;
+  padding:7px 16px;
+  border:0;
+  border-radius:9px;
+  background:transparent;
+  color:#667d8a;
+  font-weight:750;
+  cursor:pointer;
+}
+
+.communication-tabs button.active{
+  background:#fff;
+  color:#123f5c;
+  box-shadow:0 2px 8px rgba(15,48,70,.08);
+}
+
+.communication-closed{
+  display:grid;
+  gap:4px;
+  padding:14px 16px;
+  border-top:1px solid #dfe7eb;
+  background:#f3f6f7;
+  color:#687d89;
+  text-align:left;
+}
+
+.communication-closed strong{
+  color:#294d61;
+  font-size:.88rem;
+}
+
+.communication-closed span{
+  font-size:.78rem;
+}
+
+.communication-closed small{
+  color:#83939c;
+  font-size:.72rem;
+}
+
+@media(max-width:700px){
+
+  .communication-tabs{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .communication-tabs button{
+    width:100%;
+  }
+
+  .communication-closed{
+    padding:12px;
+  }
+
+}
