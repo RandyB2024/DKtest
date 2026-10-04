@@ -396,6 +396,28 @@ export default function CustomerDashboard({
       .split(/\s+/)[0] ||
     "daar";
 
+  const greeting =
+    useMemo(() => {
+      const hour =
+        new Date().getHours();
+
+      if (
+        hour >= 5 &&
+        hour < 12
+      ) {
+        return "Goedemorgen";
+      }
+
+      if (
+        hour >= 12 &&
+        hour < 18
+      ) {
+        return "Goedemiddag";
+      }
+
+      return "Goedenavond";
+    }, []);
+
   const companyName =
     organization?.name ??
     (context.organizationId ===
@@ -955,7 +977,7 @@ export default function CustomerDashboard({
           </span>
 
           <h1>
-            Goedemorgen, {firstName}
+            {greeting}, {firstName}
           </h1>
 
           <p>
