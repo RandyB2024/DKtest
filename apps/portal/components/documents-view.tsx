@@ -318,6 +318,30 @@ export default function DocumentsView({
     );
 
   const [
+    selectedArchiveYear,
+    setSelectedArchiveYear,
+  ] =
+    useState<number | null>(
+      null,
+    );
+
+  const [
+    selectedArchiveMonth,
+    setSelectedArchiveMonth,
+  ] =
+    useState<number | null>(
+      null,
+    );
+
+  const [
+    selectedArchiveFolder,
+    setSelectedArchiveFolder,
+  ] =
+    useState<string | null>(
+      null,
+    );
+
+  const [
     dragActive,
     setDragActive,
   ] =
@@ -462,6 +486,165 @@ export default function DocumentsView({
       );
     }, [
       filteredItems,
+    ]);
+
+  const archiveYears =
+    useMemo(() => {
+      const years =
+        new Map<
+          number,
+          number
+        >();
+
+      for (
+        const group of archiveGroups
+      ) {
+        years.set(
+          group.year,
+          (years.get(
+            group.year,
+          ) ?? 0) +
+            group.items.length,
+        );
+      }
+
+      return Array.from(
+        years.entries(),
+      )
+        .map(
+          ([year, count]) => ({
+            year,
+            count,
+          }),
+        )
+        .sort(
+          (a, b) =>
+            b.year - a.year,
+        );
+    }, [
+      archiveGroups,
+    ]);
+
+  const archiveMonths =
+    useMemo(() => {
+      if (
+        selectedArchiveYear ===
+        null
+      ) {
+        return [];
+      }
+
+      const months =
+        new Map<
+          number,
+          number
+        >();
+
+      for (
+        const group of archiveGroups
+      ) {
+        if (
+          group.year !==
+          selectedArchiveYear
+        ) {
+          continue;
+        }
+
+        months.set(
+          group.month,
+          (months.get(
+            group.month,
+          ) ?? 0) +
+            group.items.length,
+        );
+      }
+
+      return Array.from(
+        months.entries(),
+      )
+        .map(
+          ([month, count]) => ({
+            month,
+            count,
+          }),
+        )
+        .sort(
+          (a, b) =>
+            b.month - a.month,
+        );
+    }, [
+      archiveGroups,
+      selectedArchiveYear,
+    ]);
+
+  const archiveFolders =
+    useMemo(() => {
+      if (
+        selectedArchiveYear ===
+          null ||
+        selectedArchiveMonth ===
+          null
+      ) {
+        return [];
+      }
+
+      return archiveGroups
+        .filter(
+          (group) =>
+            group.year ===
+              selectedArchiveYear &&
+            group.month ===
+              selectedArchiveMonth,
+        )
+        .map(
+          (group) => ({
+            folder:
+              group.folder,
+            count:
+              group.items.length,
+          }),
+        )
+        .sort(
+          (a, b) =>
+            a.folder.localeCompare(
+              b.folder,
+              "nl",
+            ),
+        );
+    }, [
+      archiveGroups,
+      selectedArchiveYear,
+      selectedArchiveMonth,
+    ]);
+
+  const selectedArchiveItems =
+    useMemo(() => {
+      if (
+        selectedArchiveYear ===
+          null ||
+        selectedArchiveMonth ===
+          null ||
+        !selectedArchiveFolder
+      ) {
+        return [];
+      }
+
+      return (
+        archiveGroups.find(
+          (group) =>
+            group.year ===
+              selectedArchiveYear &&
+            group.month ===
+              selectedArchiveMonth &&
+            group.folder ===
+              selectedArchiveFolder,
+        )?.items ?? []
+      );
+    }, [
+      archiveGroups,
+      selectedArchiveYear,
+      selectedArchiveMonth,
+      selectedArchiveFolder,
     ]);
 
   const loadDocuments =
@@ -1070,6 +1253,19 @@ export default function DocumentsView({
     setSelectedId(
       null,
     );
+
+    setSelectedArchiveYear(
+      null,
+    );
+
+    setSelectedArchiveMonth(
+      null,
+    );
+
+    setSelectedArchiveFolder(
+      null,
+    );
+
     setError("");
     setSuccess("");
   }
@@ -1785,73 +1981,351 @@ export default function DocumentsView({
               </aside>
             </div>
           ) : (
-            <div className="documents-archive">
+            <div className="documents-archive-browser">
+
               {archiveGroups.length ===
               0 ? (
                 <div className="documents-list-empty archive">
                   <FolderArchive />
 
                   <strong>
-                    Nog geen
-                    gearchiveerde
-                    documenten
+                    Nog geen gearchiveerde documenten
                   </strong>
 
                   <span>
-                    Verwerkte documenten
-                    verschijnen hier per
-                    boekjaar, maand en
-                    map.
+                    Verwerkte documenten verschijnen hier
+                    automatisch per jaar, maand en map.
                   </span>
                 </div>
               ) : (
-                archiveGroups.map(
-                  (group) => (
-                    <section
-                      className="documents-archive-group"
-                      key={`${group.year}-${group.month}-${group.folder}`}
+                <>
+
+                  <nav
+                    className="documents-archive-breadcrumb"
+                    aria-label="Archiefpad"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedArchiveYear(
+                          null,
+                        );
+                        setSelectedArchiveMonth(
+                          null,
+                        );
+                        setSelectedArchiveFolder(
+                          null,
+                        );
+                      }}
                     >
-                      <header>
-                        <div className="documents-archive-folder">
-                          <FolderArchive />
+                      Archief
+                    </button>
 
-                          <div>
-                            <strong>
-                              {
-                                group.folder
-                              }
-                            </strong>
+                    {selectedArchiveYear !==
+                      null && (
+                      <>
+                        <span>/</span>
 
-                            <span>
-                              {monthName.format(
-                                new Date(
-                                  group.year,
-                                  group.month -
-                                    1,
-                                  1,
-                                ),
-                              )}{" "}
-                              {group.year}
-                            </span>
-                          </div>
-                        </div>
-
-                        <b>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedArchiveMonth(
+                              null,
+                            );
+                            setSelectedArchiveFolder(
+                              null,
+                            );
+                          }}
+                        >
                           {
-                            group.items
-                              .length
-                          }{" "}
-                          document
-                          {group.items
-                            .length ===
-                          1
-                            ? ""
-                            : "en"}
-                        </b>
-                      </header>
+                            selectedArchiveYear
+                          }
+                        </button>
+                      </>
+                    )}
 
-                      <div className="documents-archive-files">
-                        {group.items.map(
+                    {selectedArchiveMonth !==
+                      null && (
+                      <>
+                        <span>/</span>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedArchiveFolder(
+                              null,
+                            )
+                          }
+                        >
+                          {monthName.format(
+                            new Date(
+                              selectedArchiveYear ??
+                                new Date().getFullYear(),
+                              selectedArchiveMonth -
+                                1,
+                              1,
+                            ),
+                          )}
+                        </button>
+                      </>
+                    )}
+
+                    {selectedArchiveFolder && (
+                      <>
+                        <span>/</span>
+
+                        <strong>
+                          {
+                            selectedArchiveFolder
+                          }
+                        </strong>
+                      </>
+                    )}
+                  </nav>
+
+                  {selectedArchiveYear ===
+                  null ? (
+                    <div className="documents-folder-grid">
+
+                      {archiveYears.map(
+                        ({
+                          year,
+                          count,
+                        }) => (
+                          <button
+                            type="button"
+                            className="documents-folder-card documents-year-card"
+                            key={
+                              year
+                            }
+                            onClick={() =>
+                              setSelectedArchiveYear(
+                                year,
+                              )
+                            }
+                          >
+                            <span className="documents-folder-icon">
+                              <FolderArchive />
+                            </span>
+
+                            <span className="documents-folder-copy">
+                              <strong>
+                                {
+                                  year
+                                }
+                              </strong>
+
+                              <small>
+                                {count}{" "}
+                                document
+                                {count ===
+                                1
+                                  ? ""
+                                  : "en"}
+                              </small>
+                            </span>
+                          </button>
+                        ),
+                      )}
+
+                    </div>
+                  ) : selectedArchiveMonth ===
+                    null ? (
+                    <>
+                      <button
+                        type="button"
+                        className="documents-archive-back"
+                        onClick={() =>
+                          setSelectedArchiveYear(
+                            null,
+                          )
+                        }
+                      >
+                        <ArrowLeft />
+                        Terug naar jaren
+                      </button>
+
+                      <div className="documents-archive-heading">
+                        <span className="documents-section-label">
+                          Boekjaar
+                        </span>
+
+                        <h3>
+                          {
+                            selectedArchiveYear
+                          }
+                        </h3>
+                      </div>
+
+                      <div className="documents-folder-grid">
+
+                        {archiveMonths.map(
+                          ({
+                            month,
+                            count,
+                          }) => (
+                            <button
+                              type="button"
+                              className="documents-folder-card"
+                              key={
+                                month
+                              }
+                              onClick={() =>
+                                setSelectedArchiveMonth(
+                                  month,
+                                )
+                              }
+                            >
+                              <span className="documents-folder-icon">
+                                <CalendarDays />
+                              </span>
+
+                              <span className="documents-folder-copy">
+                                <strong>
+                                  {monthName.format(
+                                    new Date(
+                                      selectedArchiveYear,
+                                      month -
+                                        1,
+                                      1,
+                                    ),
+                                  )}
+                                </strong>
+
+                                <small>
+                                  {count}{" "}
+                                  document
+                                  {count ===
+                                  1
+                                    ? ""
+                                    : "en"}
+                                </small>
+                              </span>
+                            </button>
+                          ),
+                        )}
+
+                      </div>
+                    </>
+                  ) : !selectedArchiveFolder ? (
+                    <>
+                      <button
+                        type="button"
+                        className="documents-archive-back"
+                        onClick={() =>
+                          setSelectedArchiveMonth(
+                            null,
+                          )
+                        }
+                      >
+                        <ArrowLeft />
+                        Terug naar maanden
+                      </button>
+
+                      <div className="documents-archive-heading">
+                        <span className="documents-section-label">
+                          {
+                            selectedArchiveYear
+                          }
+                        </span>
+
+                        <h3>
+                          {monthName.format(
+                            new Date(
+                              selectedArchiveYear,
+                              selectedArchiveMonth -
+                                1,
+                              1,
+                            ),
+                          )}
+                        </h3>
+                      </div>
+
+                      <div className="documents-folder-grid">
+
+                        {archiveFolders.map(
+                          ({
+                            folder,
+                            count,
+                          }) => (
+                            <button
+                              type="button"
+                              className="documents-folder-card"
+                              key={
+                                folder
+                              }
+                              onClick={() =>
+                                setSelectedArchiveFolder(
+                                  folder,
+                                )
+                              }
+                            >
+                              <span className="documents-folder-icon">
+                                <FolderOpen />
+                              </span>
+
+                              <span className="documents-folder-copy">
+                                <strong>
+                                  {
+                                    folder
+                                  }
+                                </strong>
+
+                                <small>
+                                  {count}{" "}
+                                  document
+                                  {count ===
+                                  1
+                                    ? ""
+                                    : "en"}
+                                </small>
+                              </span>
+                            </button>
+                          ),
+                        )}
+
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="documents-archive-back"
+                        onClick={() =>
+                          setSelectedArchiveFolder(
+                            null,
+                          )
+                        }
+                      >
+                        <ArrowLeft />
+                        Terug naar mappen
+                      </button>
+
+                      <div className="documents-archive-heading">
+                        <span className="documents-section-label">
+                          {monthName.format(
+                            new Date(
+                              selectedArchiveYear,
+                              selectedArchiveMonth -
+                                1,
+                              1,
+                            ),
+                          )}{" "}
+                          {
+                            selectedArchiveYear
+                          }
+                        </span>
+
+                        <h3>
+                          {
+                            selectedArchiveFolder
+                          }
+                        </h3>
+                      </div>
+
+                      <div className="documents-archive-files documents-archive-files-final">
+
+                        {selectedArchiveItems.map(
                           (item) => (
                             <button
                               type="button"
@@ -1911,11 +2385,14 @@ export default function DocumentsView({
                             </button>
                           ),
                         )}
+
                       </div>
-                    </section>
-                  ),
-                )
+                    </>
+                  )}
+
+                </>
               )}
+
             </div>
           )}
         </main>

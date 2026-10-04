@@ -849,3 +849,334 @@
   opacity: 0.6;
   cursor: wait;
 }
+
+
+/* ==========================================================
+   BESTEMD DOCUMENT ARCHIVE 4A-2
+   Jaar -> maand -> map -> documenten
+   ========================================================== */
+
+.documents-archive-browser{
+  min-width:0;
+  display:grid;
+  gap:18px;
+}
+
+.documents-archive-breadcrumb{
+  min-height:38px;
+
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+
+  gap:7px;
+
+  padding:
+    8px 11px;
+
+  border:
+    1px solid #e1e8ed;
+
+  border-radius:10px;
+
+  background:#f8fbfc;
+
+  color:#8393a0;
+
+  font-size:.72rem;
+}
+
+.documents-archive-breadcrumb button{
+  padding:0;
+
+  border:0;
+  background:transparent;
+
+  color:#087e9e;
+
+  font:inherit;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.documents-archive-breadcrumb button:hover{
+  text-decoration:underline;
+}
+
+.documents-archive-breadcrumb strong{
+  color:#173b52;
+
+  font-weight:750;
+}
+
+.documents-archive-back{
+  width:max-content;
+
+  display:inline-flex;
+  align-items:center;
+
+  gap:7px;
+
+  padding:
+    7px 10px;
+
+  border:
+    1px solid #dbe5ea;
+
+  border-radius:9px;
+
+  background:#fff;
+
+  color:#45677b;
+
+  font-size:.72rem;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.documents-archive-back:hover{
+  background:#f5f9fa;
+}
+
+.documents-archive-back svg{
+  width:15px;
+  height:15px;
+}
+
+.documents-archive-heading{
+  display:grid;
+  gap:4px;
+
+  margin-top:-2px;
+}
+
+.documents-archive-heading h3{
+  margin:0;
+
+  color:#082f49;
+
+  font-size:
+    clamp(
+      1.25rem,
+      2.4vw,
+      1.7rem
+    );
+
+  text-transform:capitalize;
+}
+
+.documents-folder-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0,1fr)
+    );
+
+  gap:13px;
+}
+
+.documents-folder-card{
+  min-width:0;
+  min-height:100px;
+
+  display:flex;
+  align-items:center;
+
+  gap:14px;
+
+  padding:
+    17px;
+
+  border:
+    1px solid #dfe8ed;
+
+  border-radius:14px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f8fbfc
+    );
+
+  color:#173b52;
+
+  text-align:left;
+
+  cursor:pointer;
+
+  box-shadow:
+    0 5px 16px
+    rgba(8,47,73,.035);
+
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease,
+    background .15s ease;
+}
+
+.documents-folder-card:hover{
+  transform:
+    translateY(-1px);
+
+  border-color:#bee3e8;
+
+  background:
+    linear-gradient(
+      145deg,
+      #fff,
+      #f0fafb
+    );
+
+  box-shadow:
+    0 9px 22px
+    rgba(8,47,73,.065);
+}
+
+.documents-folder-icon{
+  width:46px;
+  height:46px;
+
+  flex:
+    0 0 46px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:12px;
+
+  background:#e8f7f9;
+
+  color:#087f9e;
+}
+
+.documents-folder-icon svg{
+  width:22px;
+  height:22px;
+}
+
+.documents-year-card
+.documents-folder-icon{
+  background:#eaf1f7;
+
+  color:#315e7a;
+}
+
+.documents-folder-copy{
+  min-width:0;
+
+  display:grid;
+
+  gap:5px;
+}
+
+.documents-folder-copy strong{
+  overflow:hidden;
+
+  color:#173b52;
+
+  font-size:.9rem;
+  font-weight:750;
+
+  text-overflow:ellipsis;
+
+  text-transform:capitalize;
+
+  white-space:nowrap;
+}
+
+.documents-folder-copy small{
+  color:#7b8e9b;
+
+  font-size:.7rem;
+}
+
+.documents-archive-files-final{
+  overflow:hidden;
+
+  border:
+    1px solid #e1e8ed;
+
+  border-radius:12px;
+
+  background:#fff;
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media(max-width:1050px){
+
+  .documents-folder-grid{
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      );
+  }
+
+}
+
+
+/* ==========================================================
+   MOBIEL
+   ========================================================== */
+
+@media(max-width:650px){
+
+  .documents-folder-grid{
+    grid-template-columns:1fr;
+  }
+
+  .documents-folder-card{
+    min-height:82px;
+
+    padding:14px;
+  }
+
+  .documents-folder-icon{
+    width:41px;
+    height:41px;
+
+    flex-basis:41px;
+  }
+
+  .documents-archive-files-final{
+    overflow-x:hidden;
+  }
+
+  .documents-archive-files-final button{
+    min-width:0!important;
+
+    grid-template-columns:
+      minmax(0,1fr)
+      20px;
+
+    gap:9px;
+
+    padding:
+      11px 12px;
+  }
+
+  .documents-archive-files-final
+  button > span:nth-child(2),
+  .documents-archive-files-final
+  button > span:nth-child(3){
+    display:none;
+  }
+
+  .documents-archive-files-final
+  .documents-file-name strong{
+    white-space:normal;
+
+    overflow-wrap:anywhere;
+  }
+
+}
