@@ -4769,3 +4769,567 @@ h3{
     font-size:0.96rem !important;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD COMMUNICATION 5A-2
+   Mijn Bestemming chat
+   ========================================================== */
+
+.communication-page{
+  display:grid;
+  gap:20px;
+  min-width:0;
+}
+
+.communication-heading{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.communication-heading h1{
+  margin:4px 0 7px;
+  color:#102f47;
+  font-size:clamp(1.8rem,3vw,2.4rem);
+  line-height:1.08;
+}
+
+.communication-heading > div > p:last-child{
+  margin:0;
+  color:#6b7e8a;
+}
+
+.communication-new-button{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  white-space:nowrap;
+}
+
+.communication-new-button svg{
+  width:18px;
+  height:18px;
+}
+
+.communication-error{
+  margin:0;
+}
+
+.communication-new-card{
+  display:grid;
+  gap:16px;
+  padding:22px;
+  border:1px solid #dfe7eb;
+  border-radius:18px;
+  background:#fff;
+  box-shadow:0 8px 28px rgba(15,48,70,.05);
+}
+
+.communication-new-card h2{
+  margin:4px 0 0;
+  color:#12334c;
+}
+
+.communication-new-card label{
+  display:grid;
+  gap:7px;
+  color:#314e61;
+  font-size:.9rem;
+  font-weight:700;
+}
+
+.communication-new-card input,
+.communication-new-card select,
+.communication-new-card textarea{
+  width:100%;
+  border:1px solid #cedae1;
+  border-radius:11px;
+  background:#fff;
+  padding:11px 12px;
+  color:#17374d;
+  font:inherit;
+  font-weight:400;
+}
+
+.communication-new-card textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.communication-selected-company{
+  padding:11px 12px;
+  border:1px solid #e0e8ec;
+  border-radius:11px;
+  background:#f6f9fa;
+  color:#395a6d;
+  font-weight:700;
+}
+
+.communication-new-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:9px;
+}
+
+.communication-shell{
+  min-height:610px;
+  display:grid;
+  grid-template-columns:minmax(280px,360px) minmax(0,1fr);
+  overflow:hidden;
+  border:1px solid #dfe7eb;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 10px 34px rgba(15,48,70,.05);
+}
+
+.communication-list-panel{
+  min-width:0;
+  border-right:1px solid #e4eaee;
+  background:#fbfcfd;
+}
+
+.communication-list-head{
+  height:66px;
+  display:flex;
+  align-items:center;
+  padding:0 18px;
+  border-bottom:1px solid #e4eaee;
+  background:#fff;
+}
+
+.communication-list-head > div{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.communication-list-head span{
+  color:#203e52;
+  font-weight:800;
+}
+
+.communication-list-head strong{
+  min-width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  padding:0 7px;
+  border-radius:999px;
+  background:#e9f4f5;
+  color:#167985;
+  font-size:.78rem;
+}
+
+.communication-thread-list{
+  max-height:680px;
+  overflow:auto;
+}
+
+.communication-thread{
+  width:100%;
+  display:block;
+  padding:16px 18px;
+  border:0;
+  border-bottom:1px solid #e7edf0;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+.communication-thread:hover,
+.communication-thread.active{
+  background:#edf7f7;
+}
+
+.communication-thread.active{
+  box-shadow:inset 3px 0 0 #198b92;
+}
+
+.communication-thread-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.communication-thread-top strong{
+  min-width:0;
+  overflow:hidden;
+  color:#17374d;
+  font-size:.92rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.communication-thread-top time{
+  flex:none;
+  color:#80919b;
+  font-size:.7rem;
+}
+
+.communication-thread-company{
+  display:block;
+  margin-top:4px;
+  color:#19808a;
+  font-size:.72rem;
+  font-weight:700;
+}
+
+.communication-thread p{
+  margin:7px 0 0;
+  overflow:hidden;
+  color:#6c7e88;
+  font-size:.78rem;
+  line-height:1.4;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.communication-empty{
+  min-height:210px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:8px;
+  padding:28px;
+  color:#748792;
+  text-align:center;
+}
+
+.communication-empty svg{
+  width:32px;
+  height:32px;
+  color:#6ca5aa;
+}
+
+.communication-empty strong{
+  color:#24485d;
+}
+
+.communication-chat-panel{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  background:#f6f8f9;
+}
+
+.communication-chat-empty{
+  flex:1;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:8px;
+  padding:30px;
+  color:#70838e;
+  text-align:center;
+}
+
+.communication-chat-empty svg{
+  width:42px;
+  height:42px;
+  color:#79aeb1;
+}
+
+.communication-chat-empty h2{
+  margin:4px 0 0;
+  color:#24465a;
+}
+
+.communication-chat-empty p{
+  max-width:390px;
+  margin:0;
+  line-height:1.55;
+}
+
+.communication-chat-head{
+  min-height:66px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:11px 18px;
+  border-bottom:1px solid #dfe7eb;
+  background:#fff;
+}
+
+.communication-chat-head > div{
+  min-width:0;
+  flex:1;
+}
+
+.communication-chat-head h2{
+  margin:0;
+  overflow:hidden;
+  color:#17374d;
+  font-size:1rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.communication-chat-head p{
+  margin:3px 0 0;
+  color:#738793;
+  font-size:.75rem;
+}
+
+.communication-status{
+  padding:5px 9px;
+  border-radius:999px;
+  background:#e8f4ef;
+  color:#237259;
+  font-size:.72rem;
+  font-weight:800;
+}
+
+.communication-mobile-back{
+  display:none;
+  width:36px;
+  height:36px;
+  place-items:center;
+  padding:0;
+  border:1px solid #dce5e9;
+  border-radius:10px;
+  background:#fff;
+  color:#35576a;
+}
+
+.communication-mobile-back svg{
+  width:18px;
+  height:18px;
+}
+
+.communication-messages{
+  flex:1;
+  min-height:430px;
+  max-height:610px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:22px;
+}
+
+.communication-message{
+  width:min(76%,620px);
+  padding:12px 14px;
+  border-radius:15px;
+  box-shadow:0 2px 7px rgba(15,48,70,.04);
+}
+
+.communication-message.office{
+  align-self:flex-start;
+  border:1px solid #dfe7eb;
+  border-bottom-left-radius:5px;
+  background:#fff;
+}
+
+.communication-message.customer{
+  align-self:flex-end;
+  border:1px solid #bfe5e5;
+  border-bottom-right-radius:5px;
+  background:#def3f2;
+}
+
+.communication-message-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:5px;
+}
+
+.communication-message-meta strong{
+  color:#275269;
+  font-size:.72rem;
+}
+
+.communication-message-meta time{
+  color:#78909c;
+  font-size:.65rem;
+}
+
+.communication-message p{
+  margin:0;
+  color:#233f50;
+  font-size:.9rem;
+  line-height:1.5;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.communication-composer{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:10px;
+  padding:13px 15px;
+  border-top:1px solid #dfe7eb;
+  background:#fff;
+}
+
+.communication-composer textarea{
+  width:100%;
+  min-height:48px;
+  max-height:150px;
+  resize:vertical;
+  border:1px solid #ccd9df;
+  border-radius:13px;
+  padding:12px 13px;
+  background:#f9fbfb;
+  color:#17374d;
+  font:inherit;
+  font-size:16px;
+}
+
+.communication-send{
+  width:48px;
+  height:48px;
+  display:grid;
+  place-items:center;
+  border:0;
+  border-radius:13px;
+  background:#123f5c;
+  color:#fff;
+  cursor:pointer;
+}
+
+.communication-send:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+
+.communication-send svg{
+  width:19px;
+  height:19px;
+}
+
+.communication-closed{
+  padding:16px;
+  border-top:1px solid #dfe7eb;
+  background:#fff;
+  color:#71838e;
+  text-align:center;
+  font-size:.85rem;
+}
+
+
+@media(max-width:700px){
+
+  .communication-page{
+    gap:14px;
+  }
+
+  .communication-heading{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .communication-heading h1{
+    margin-top:2px;
+    font-size:1.75rem;
+  }
+
+  .communication-heading > div > p:last-child{
+    font-size:.82rem;
+    line-height:1.45;
+  }
+
+  .communication-new-button{
+    width:100%;
+    justify-content:center;
+  }
+
+  .communication-new-card{
+    gap:13px;
+    padding:15px;
+    border-radius:16px;
+  }
+
+  .communication-new-card h2{
+    font-size:1rem;
+  }
+
+  .communication-new-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+
+  .communication-shell{
+    min-height:calc(100svh - 220px);
+    display:block;
+    border-radius:16px;
+  }
+
+  .communication-shell.has-thread .communication-list-panel{
+    display:none;
+  }
+
+  .communication-shell:not(.has-thread) .communication-chat-panel{
+    display:none;
+  }
+
+  .communication-list-panel{
+    border-right:0;
+  }
+
+  .communication-thread-list{
+    max-height:none;
+  }
+
+  .communication-thread{
+    padding:14px;
+  }
+
+  .communication-chat-panel{
+    min-height:calc(100svh - 220px);
+  }
+
+  .communication-chat-head{
+    min-height:58px;
+    padding:9px 11px;
+  }
+
+  .communication-mobile-back{
+    display:grid;
+    flex:none;
+  }
+
+  .communication-messages{
+    min-height:calc(100svh - 365px);
+    max-height:calc(100svh - 300px);
+    gap:9px;
+    padding:14px 10px;
+  }
+
+  .communication-message{
+    width:min(88%,520px);
+    padding:10px 11px;
+    border-radius:14px;
+  }
+
+  .communication-message p{
+    font-size:.84rem;
+  }
+
+  .communication-composer{
+    position:sticky;
+    bottom:0;
+    gap:8px;
+    padding:9px;
+  }
+
+  .communication-composer textarea{
+    min-height:46px;
+    padding:11px;
+  }
+
+  .communication-send{
+    width:46px;
+    height:46px;
+  }
+}

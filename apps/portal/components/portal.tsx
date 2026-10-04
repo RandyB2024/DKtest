@@ -36,6 +36,7 @@ import PasskeySettings from "./passkey-settings";
 import PayablesView from "./payables-view";
 import ReceivablesView from "./receivables-view";
 import DocumentsView from "./documents-view";
+import CommunicationView from "./communication-view";
 
 const nav = [
   ["Dashboard", LayoutDashboard],
@@ -109,6 +110,16 @@ export default function Portal({
       new URL(
         window.location.href,
       );
+
+    if (
+      url.searchParams.get(
+        "view",
+      ) === "communication"
+    ) {
+      setView(
+        "Communicatie",
+      );
+    }
 
     if (
       url.searchParams.get(
@@ -295,6 +306,14 @@ if (view === "Documenten") {
     />
   );
 }
+
+    if (view === "Communicatie") {
+      return (
+        <CommunicationView
+          context={context}
+        />
+      );
+    }
     if (
       view === "Factuurdetail"
     ) {
