@@ -6060,3 +6060,323 @@ h3{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD INVOICE PROFILE 6A-4
+   ========================================================== */
+
+.invoice-profile-manager{
+  margin-top:20px;
+}
+
+.invoice-profile-head{
+  align-items:center;
+}
+
+.invoice-profile-form{
+  display:grid;
+  grid-template-columns:
+    220px minmax(0,1fr);
+  gap:22px;
+  margin-top:18px;
+}
+
+.invoice-logo-box{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.invoice-logo-placeholder{
+  min-height:170px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:8px;
+  padding:18px;
+  border:1px dashed #cddbe3;
+  border-radius:14px;
+  background:#f8fbfc;
+  color:var(--muted);
+  text-align:center;
+}
+
+.invoice-logo-placeholder svg{
+  width:34px;
+  height:34px;
+  color:var(--blue);
+}
+
+.invoice-logo-placeholder strong{
+  color:var(--blue-dark);
+}
+
+.invoice-logo-box small{
+  color:var(--muted);
+  font-size:.7rem;
+}
+
+.invoice-profile-fields{
+  display:grid;
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+
+.invoice-profile-fields label{
+  display:grid;
+  gap:6px;
+  color:var(--muted);
+  font-size:.79rem;
+  font-weight:700;
+}
+
+.invoice-profile-fields input,
+.invoice-profile-fields select,
+.invoice-profile-fields textarea{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  padding:9px 11px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:#fff;
+  color:var(--ink);
+  font:inherit;
+}
+
+.invoice-profile-fields textarea{
+  min-height:95px;
+  resize:vertical;
+}
+
+.invoice-profile-wide{
+  grid-column:1/-1;
+}
+
+.invoice-profile-actions{
+  grid-column:1/-1;
+  display:flex;
+  justify-content:flex-end;
+  padding-top:4px;
+}
+
+
+@media(max-width:760px){
+
+  .invoice-profile-form{
+    grid-template-columns:1fr;
+  }
+
+  .invoice-profile-fields{
+    grid-template-columns:1fr;
+  }
+
+  .invoice-profile-wide{
+    grid-column:auto;
+  }
+
+  .invoice-profile-actions{
+    grid-column:auto;
+  }
+
+  .invoice-profile-actions .primary{
+    width:100%;
+  }
+
+}
+
+
+/* ==========================================================
+   BESTEMD INVOICE PDF ACTIONS 6A-4B
+   ========================================================== */
+
+.invoice-draft-actions{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:7px!important;
+}
+
+.invoice-draft-actions .btn{
+  white-space:nowrap;
+}
+
+@media(max-width:700px){
+
+  .invoice-draft-actions{
+    display:grid!important;
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+    width:100%;
+  }
+
+  .invoice-draft-actions .btn{
+    width:100%;
+  }
+
+}
+
+
+/* ==========================================================
+   BESTEMD INVOICE ARCHIVE 6A-5B
+   ========================================================== */
+
+.invoice-archive{
+  margin-top:20px;
+}
+
+.invoice-archive-search{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:14px 0;
+  padding:0 12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+}
+
+.invoice-archive-search input{
+  width:100%;
+  min-height:42px;
+  border:0;
+  outline:0;
+  background:transparent;
+  font:inherit;
+}
+
+.invoice-archive-list{
+  display:grid;
+  gap:9px;
+}
+
+.invoice-archive-row{
+  display:grid;
+  grid-template-columns:
+    minmax(190px,1.5fr)
+    minmax(120px,.6fr)
+    auto
+    auto;
+  align-items:center;
+  gap:16px;
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+}
+
+.invoice-archive-main,
+.invoice-archive-amount{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+
+.invoice-archive-main small,
+.invoice-archive-amount small{
+  color:var(--blue);
+  font-size:.68rem;
+  font-weight:800;
+  letter-spacing:.07em;
+}
+
+.invoice-archive-main strong,
+.invoice-archive-amount strong{
+  color:var(--blue-dark);
+}
+
+.invoice-archive-main span,
+.invoice-archive-amount span{
+  color:var(--muted);
+  font-size:.76rem;
+}
+
+.invoice-archive-actions{
+  display:flex;
+  gap:7px;
+}
+
+.invoice-archive-empty{
+  min-height:140px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:7px;
+  color:var(--muted);
+  text-align:center;
+}
+
+.invoice-archive-empty svg{
+  color:var(--blue);
+}
+
+.debtor-dossier{
+  margin-top:18px;
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#f8fbfc;
+}
+
+.debtor-dossier-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.debtor-dossier-head small{
+  color:var(--blue);
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+.debtor-dossier-head h3{
+  margin:4px 0 0;
+}
+
+.debtor-dossier .invoice-archive{
+  margin-top:14px;
+}
+
+
+@media(max-width:800px){
+
+  .invoice-archive-row{
+    grid-template-columns:
+      1fr auto;
+  }
+
+  .invoice-archive-actions{
+    grid-column:1/-1;
+  }
+
+}
+
+
+@media(max-width:600px){
+
+  .invoice-archive-row{
+    grid-template-columns:1fr;
+  }
+
+  .invoice-archive-actions{
+    grid-column:auto;
+    display:grid;
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+  .invoice-archive-actions .btn{
+    width:100%;
+  }
+
+  .debtor-dossier-head{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+}

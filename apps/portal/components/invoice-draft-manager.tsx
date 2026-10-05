@@ -7,6 +7,9 @@ import {
 } from "react";
 
 import {
+  CheckCircle2,
+  Download,
+  Eye,
   FilePlus2,
   Pencil,
   Plus,
@@ -84,6 +87,15 @@ type ApiResponse = {
   drafts?: Draft[];
   debtors?: Debtor[];
   invoiceId?: string;
+
+  invoice?: {
+    invoiceId: string;
+    invoiceNumber: string;
+    documentStatus: string;
+    paymentStatus: string;
+    finalizedAt: string;
+    totalCents: number;
+  };
 };
 
 
@@ -647,6 +659,130 @@ export default function InvoiceDraftManager({
   }
 
 
+  function pdfUrl(
+    draft: Draft,
+    download = false,
+  ) {
+    const params =
+      new URLSearchParams({
+        organizationId:
+          context.organizationId,
+      });
+
+    if (download) {
+      params.set(
+        "download",
+        "1",
+      );
+    }
+
+    return `/api/invoicing/invoices/${encodeURIComponent(
+      draft.id,
+    )}/pdf?${params.toString()}`;
+  }
+
+
+  function previewPdf(
+    draft: Draft,
+  ) {
+    window.open(
+      pdfUrl(
+        draft,
+      ),
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
+
+  function downloadPdf(
+    draft: Draft,
+  ) {
+    window.location.href =
+      pdfUrl(
+        draft,
+        true,
+      );
+  }
+
+
+  async function finalizeDraft(
+    draft: Draft,
+  ) {
+    if (
+      context.organizationId ===
+      "all"
+    ) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        "Factuur definitief maken?\n\n" +
+        "Na definitief maken krijgt de factuur een factuurnummer en kan de inhoud niet meer worden gewijzigd of verwijderd."
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+
+    try {
+      const response =
+        await fetch(
+          `/api/invoicing/invoices/${encodeURIComponent(
+            draft.id,
+          )}/finalize`,
+          {
+            method: "POST",
+
+            headers: {
+              "content-type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                organizationId:
+                  context.organizationId,
+              }),
+          },
+        );
+
+      const result =
+        (await response.json()) as ApiResponse;
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          "De factuur kon niet definitief worden gemaakt.",
+        );
+      }
+
+      const number =
+        result.invoice?.invoiceNumber;
+
+      window.alert(
+        number
+          ? `Factuur ${number} is definitief gemaakt.`
+          : "De factuur is definitief gemaakt.",
+      );
+
+      await load();
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "De factuur kon niet definitief worden gemaakt.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+
   async function deleteDraft(
     draft: Draft,
   ) {
@@ -835,6 +971,48 @@ export default function InvoiceDraftManager({
 
 
                 <div className="invoice-draft-actions">
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={busy}
+                    onClick={() =>
+                      previewPdf(
+                        draft,
+                      )
+                    }
+                  >
+                    <Eye size={14} />
+                    Bekijk PDF
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={busy}
+                    onClick={() =>
+                      downloadPdf(
+                        draft,
+                      )
+                    }
+                  >
+                    <Download size={14} />
+                    Download PDF
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn primary"
+                    disabled={busy}
+                    onClick={() =>
+                      finalizeDraft(
+                        draft,
+                      )
+                    }
+                  >
+                    <CheckCircle2 size={14} />
+                    Definitief maken
+                  </button>
+
                   <button
                     type="button"
                     className="btn"

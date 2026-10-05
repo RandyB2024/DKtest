@@ -19,6 +19,8 @@ import type {
   PortalContext,
 } from "@/lib/portal-access";
 
+import InvoiceArchive from "./invoice-archive";
+
 
 type Debtor = {
   id: string;
@@ -88,6 +90,18 @@ export default function DebtorManager({
     useState("");
 
   const [query, setQuery] =
+    useState("");
+
+  const [
+    dossierDebtorId,
+    setDossierDebtorId,
+  ] =
+    useState<string | null>(null);
+
+  const [
+    dossierDebtorName,
+    setDossierDebtorName,
+  ] =
     useState("");
 
   const [formOpen, setFormOpen] =
@@ -578,6 +592,23 @@ export default function DebtorManager({
                     type="button"
                     className="btn"
                     disabled={busy}
+                    onClick={() => {
+                      setDossierDebtorId(
+                        debtor.id,
+                      );
+
+                      setDossierDebtorName(
+                        debtor.name,
+                      );
+                    }}
+                  >
+                    Facturen
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    disabled={busy}
                     onClick={() =>
                       openEdit(
                         debtor,
@@ -605,6 +636,51 @@ export default function DebtorManager({
               </article>
             ),
           )}
+        </div>
+      )}
+
+
+      {dossierDebtorId && (
+        <div className="debtor-dossier">
+
+          <div className="debtor-dossier-head">
+            <div>
+              <small>
+                DEBITEURENDOSSIER
+              </small>
+
+              <h3>
+                {dossierDebtorName}
+              </h3>
+            </div>
+
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setDossierDebtorId(
+                  null,
+                );
+
+                setDossierDebtorName(
+                  "",
+                );
+              }}
+            >
+              Sluiten
+            </button>
+          </div>
+
+          <InvoiceArchive
+            context={context}
+            debtorId={
+              dossierDebtorId
+            }
+            title="Factuurhistorie"
+            description={`Alle definitieve facturen van ${dossierDebtorName}.`}
+            compact
+          />
+
         </div>
       )}
 

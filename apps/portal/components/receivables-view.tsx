@@ -24,6 +24,8 @@ import type {
 
 import DebtorManager from "./debtor-manager";
 import InvoiceDraftManager from "./invoice-draft-manager";
+import InvoiceArchive from "./invoice-archive";
+import InvoiceProfileManager from "./invoice-profile-manager";
 
 type ReceivableItem = {
   id: string;
@@ -517,8 +519,18 @@ export default function ReceivablesView({
             )}
           </section>
 
+          <InvoiceProfileManager
+            context={context}
+          />
+
           <InvoiceDraftManager
             context={context}
+          />
+
+          <InvoiceArchive
+            context={context}
+            title="Factuurarchief"
+            description="Alle definitieve verkoopfacturen en creditfacturen."
           />
 
           <DebtorManager
