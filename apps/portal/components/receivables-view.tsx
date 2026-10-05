@@ -22,6 +22,9 @@ import type {
   PortalOrganization,
 } from "@/lib/portal-access";
 
+import DebtorManager from "./debtor-manager";
+import InvoiceDraftManager from "./invoice-draft-manager";
+
 type ReceivableItem = {
   id: string;
 
@@ -513,6 +516,14 @@ export default function ReceivablesView({
               </div>
             )}
           </section>
+
+          <InvoiceDraftManager
+            context={context}
+          />
+
+          <DebtorManager
+            context={context}
+          />
 
           <section className="grid">
             <article className="card">
