@@ -97,6 +97,9 @@ export function createWorker(fetchImpl = fetch) { return {
 
             failed:
               result.failed,
+
+            unconfirmed:
+              result.unconfirmed,
           }
         );
       })();

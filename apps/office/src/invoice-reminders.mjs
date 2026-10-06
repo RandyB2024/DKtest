@@ -160,10 +160,9 @@ function adminClient(config) {
 }
 
 
-async function sendReminderEmail({
+async function prepareReminderEmail({
   client,
   config,
-  fetchImpl,
   item,
 }) {
   const settings =
@@ -220,11 +219,18 @@ async function sendReminderEmail({
   const seller =
     snapshot.seller;
 
-  const invoice =
-    snapshot.invoice;
-
   const debtor =
     snapshot.debtor;
+
+
+  if (
+    !seller
+    || !debtor
+  ) {
+    throw new Error(
+      'Factuursnapshot is onvolledig.'
+    );
+  }
 
 
   const recipientEmail =
@@ -301,11 +307,29 @@ async function sendReminderEmail({
   }
 
 
+  return {
+    settings,
+    seller,
+    debtor,
+    recipientEmail,
+    customerCopyEmail,
+    filename,
+    signedUrl:
+      signed.signedUrl,
+  };
+}
+
+
+async function sendPreparedReminder({
+  fetchImpl,
+  prepared,
+  validated,
+}) {
   const content =
     reminderContent(
-      item.deliveryType,
-      item.invoiceNumber,
-      seller.companyName
+      validated.deliveryType,
+      validated.invoiceNumber,
+      prepared.seller.companyName
     );
 
 
@@ -324,49 +348,49 @@ async function sendReminderEmail({
         body:
           JSON.stringify({
             service_id:
-              settings.serviceId,
+              prepared.settings.serviceId,
 
             template_id:
-              settings.templateId,
+              prepared.settings.templateId,
 
             user_id:
-              settings.publicKey,
+              prepared.settings.publicKey,
 
             accessToken:
-              settings.privateKey,
+              prepared.settings.privateKey,
 
             template_params: {
               to_email:
-                recipientEmail,
+                validated.recipientEmail,
 
               to_klant_email:
-                customerCopyEmail,
+                prepared.customerCopyEmail,
 
               reply_to:
-                customerCopyEmail,
+                prepared.customerCopyEmail,
 
               debtor_name:
-                debtor.name,
+                prepared.debtor.name,
 
               company_name:
-                seller.companyName,
+                prepared.seller.companyName,
 
               invoice_number:
-                item.invoiceNumber,
+                validated.invoiceNumber,
 
               invoice_date:
                 dateNl(
-                  item.invoiceDate
+                  validated.invoiceDate
                 ),
 
               due_date:
                 dateNl(
-                  item.dueDate
+                  validated.dueDate
                 ),
 
               outstanding_amount:
                 euro(
-                  item.outstandingCents
+                  validated.outstandingCents
                 ),
 
               reminder_title:
@@ -379,13 +403,13 @@ async function sendReminderEmail({
                 content.subject,
 
               invoice_download_url:
-                signed.signedUrl,
+                prepared.signedUrl,
 
               invoice_filename:
-                filename,
+                prepared.filename,
 
               delivery_type:
-                item.deliveryType,
+                validated.deliveryType,
             },
           }),
       }
@@ -400,17 +424,48 @@ async function sendReminderEmail({
           () => ''
         );
 
-    throw new Error(
-      `EmailJS HTTP ${response.status}${
-        details
-          ? `: ${details.slice(
-              0,
-              200
-            )}`
-          : ''
-      }`
-    );
+    const error =
+      new Error(
+        `EmailJS HTTP ${response.status}${
+          details
+            ? `: ${details.slice(
+                0,
+                200
+              )}`
+            : ''
+        }`
+      );
+
+    error.providerRejected =
+      true;
+
+    throw error;
   }
+}
+
+
+async function markFailed(
+  client,
+  item,
+  deliveryId,
+  message,
+) {
+  await client.rpc(
+    'system_finish_invoice_reminder',
+    {
+      p_organization_id:
+        item.organizationId,
+
+      p_delivery_id:
+        deliveryId,
+
+      p_status:
+        'failed',
+
+      p_error:
+        message,
+    }
+  );
 }
 
 
@@ -459,6 +514,9 @@ export async function runScheduledInvoiceReminders({
 
     failed:
       0,
+
+    unconfirmed:
+      0,
   };
 
 
@@ -500,72 +558,194 @@ export async function runScheduledInvoiceReminders({
     if (
       claimError
       || !claim?.deliveryId
+      || claim.claimed !== true
     ) {
       result.skipped += 1;
+      continue;
+    }
+
+
+    let prepared;
+
+
+    /*
+     * Alles wat vóór de provider-call fout gaat,
+     * kan veilig als failed worden gemarkeerd:
+     * er is dan absoluut geen e-mail verzonden.
+     */
+    try {
+      prepared =
+        await prepareReminderEmail({
+          client,
+          config,
+          item,
+        });
+
+    } catch(error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Voorbereiding herinnering mislukt.';
+
+      await markFailed(
+        client,
+        item,
+        claim.deliveryId,
+        message
+      );
+
+      result.failed += 1;
+      continue;
+    }
+
+
+    /*
+     * CRUCIAAL:
+     * dit is de laatste databasecontrole NA het
+     * maken van snapshot/downloadlink en DIRECT
+     * vóór de EmailJS-call.
+     */
+    const {
+      data: validated,
+      error: validationError,
+    } =
+      await client.rpc(
+        'system_validate_invoice_reminder_delivery',
+        {
+          p_organization_id:
+            item.organizationId,
+
+          p_delivery_id:
+            claim.deliveryId,
+        }
+      );
+
+
+    if (
+      validationError
+      || !validated
+    ) {
+      /*
+       * Er is nog niets naar EmailJS gestuurd.
+       * Technische validatiefout is dus veilig
+       * als failed te registreren.
+       */
+      await markFailed(
+        client,
+        item,
+        claim.deliveryId,
+        'Laatste factuurcontrole kon niet worden uitgevoerd.'
+      );
+
+      result.failed += 1;
       continue;
     }
 
 
     if (
-      claim.claimed !== true
+      validated.eligible !== true
     ) {
+      await client.rpc(
+        'system_cancel_invoice_reminder',
+        {
+          p_organization_id:
+            item.organizationId,
+
+          p_delivery_id:
+            claim.deliveryId,
+
+          p_reason:
+            String(
+              validated.reason
+              || 'Niet meer verzenden.'
+            ),
+        }
+      );
+
       result.skipped += 1;
       continue;
     }
 
 
+    /*
+     * Vanaf dit moment bestaat een externe side-effect.
+     *
+     * Wanneer de provider mogelijk heeft verzonden,
+     * schrijven we NOOIT automatisch "failed" terug.
+     * Anders kan een volgende cron dezelfde mail dubbel
+     * versturen.
+     */
     try {
-
-      /*
-       * De database heeft direct vóór dit punt opnieuw
-       * gecontroleerd dat de factuur nog openstaat.
-       */
-      await sendReminderEmail({
-        client,
-        config,
+      await sendPreparedReminder({
         fetchImpl,
-        item,
+        prepared,
+        validated,
       });
 
-
-      const {
-        error: finishError,
-      } =
-        await client.rpc(
-          'system_finish_invoice_reminder',
-          {
-            p_organization_id:
-              item.organizationId,
-
-            p_delivery_id:
-              claim.deliveryId,
-
-            p_status:
-              'sent',
-
-            p_error:
-              null,
-          }
-        );
-
-
-      if (finishError) {
-        throw new Error(
-          'Herinnering is verzonden maar kon niet worden geregistreerd.'
-        );
-      }
-
-
-      result.sent += 1;
-
-    } catch (error) {
-
+    } catch(error) {
       const message =
         error instanceof Error
           ? error.message
-          : 'Onbekende verzendfout.';
+          : 'Onbekende EmailJS-fout.';
 
 
+      if (
+        error?.providerRejected ===
+        true
+      ) {
+        /*
+         * EmailJS heeft expliciet een niet-2xx antwoord
+         * gegeven. Deze poging is als mislukt bevestigd.
+         */
+        await markFailed(
+          client,
+          item,
+          claim.deliveryId,
+          message
+        );
+
+        result.failed += 1;
+
+      } else {
+        /*
+         * Netwerk/timeout = verzendresultaat onbekend.
+         * Pending laten staan voorkomt automatisch
+         * dubbel verzenden.
+         */
+        console.error(
+          'invoice reminder provider result uncertain',
+          {
+            organizationId:
+              item.organizationId,
+
+            invoiceId:
+              item.invoiceId,
+
+            deliveryId:
+              claim.deliveryId,
+
+            error:
+              message,
+          }
+        );
+
+        result.unconfirmed += 1;
+      }
+
+      continue;
+    }
+
+
+    /*
+     * EmailJS gaf succes terug.
+     *
+     * Als registratie hierna faalt:
+     * NIET omzetten naar failed.
+     * De pending delivery blokkeert een tweede verzending.
+     */
+    const {
+      error: finishError,
+    } =
       await client.rpc(
         'system_finish_invoice_reminder',
         {
@@ -576,16 +756,35 @@ export async function runScheduledInvoiceReminders({
             claim.deliveryId,
 
           p_status:
-            'failed',
+            'sent',
 
           p_error:
-            message,
+            null,
         }
       );
 
 
-      result.failed += 1;
+    if (finishError) {
+      console.error(
+        'invoice reminder sent but registration failed',
+        {
+          organizationId:
+            item.organizationId,
+
+          invoiceId:
+            item.invoiceId,
+
+          deliveryId:
+            claim.deliveryId,
+        }
+      );
+
+      result.unconfirmed += 1;
+      continue;
     }
+
+
+    result.sent += 1;
   }
 
 
