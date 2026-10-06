@@ -7218,3 +7218,120 @@ h3{
 
 }
 
+
+
+/* ==========================================================
+   BESTEMD INVOICE EDITOR READABILITY V1
+   ========================================================== */
+
+/* Basis tekst in factuur-editor */
+.invoice-draft-manager,
+.invoice-draft-manager * {
+  opacity: 1;
+}
+
+
+/* Koppen en labels */
+.invoice-draft-manager h1,
+.invoice-draft-manager h2,
+.invoice-draft-manager h3,
+.invoice-draft-manager h4,
+.invoice-draft-manager strong,
+.invoice-draft-manager label {
+  color: #12364f !important;
+  -webkit-text-fill-color: #12364f !important;
+}
+
+
+/* Secundaire tekst */
+.invoice-draft-manager p,
+.invoice-draft-manager small,
+.invoice-draft-manager span {
+  color: #536f82;
+  -webkit-text-fill-color: #536f82;
+}
+
+
+/* Formuliervelden */
+.invoice-draft-manager input,
+.invoice-draft-manager select,
+.invoice-draft-manager textarea {
+  color: #173b53 !important;
+  -webkit-text-fill-color: #173b53 !important;
+  background: #ffffff !important;
+  border-color: #d7e2e9 !important;
+  opacity: 1 !important;
+}
+
+
+/* Placeholders */
+.invoice-draft-manager input::placeholder,
+.invoice-draft-manager textarea::placeholder {
+  color: #718798 !important;
+  -webkit-text-fill-color: #718798 !important;
+  opacity: 1 !important;
+}
+
+
+/* Factuurregels */
+.invoice-draft-manager .invoice-line,
+.invoice-draft-manager .invoice-line-row,
+.invoice-draft-manager .invoice-draft-line {
+  color: #173b53 !important;
+}
+
+
+/* Totalenblok */
+.invoice-draft-manager .invoice-total,
+.invoice-draft-manager .invoice-totals,
+.invoice-draft-manager .invoice-summary {
+  color: #173b53 !important;
+}
+
+.invoice-draft-manager .invoice-total span,
+.invoice-draft-manager .invoice-totals span,
+.invoice-draft-manager .invoice-summary span {
+  color: #4f6b7e !important;
+  -webkit-text-fill-color: #4f6b7e !important;
+}
+
+.invoice-draft-manager .invoice-total strong,
+.invoice-draft-manager .invoice-totals strong,
+.invoice-draft-manager .invoice-summary strong {
+  color: #12364f !important;
+  -webkit-text-fill-color: #12364f !important;
+}
+
+
+/* Disabled/read-only blijft leesbaar */
+.invoice-draft-manager input:disabled,
+.invoice-draft-manager select:disabled,
+.invoice-draft-manager textarea:disabled,
+.invoice-draft-manager input[readonly],
+.invoice-draft-manager textarea[readonly] {
+  color: #38566b !important;
+  -webkit-text-fill-color: #38566b !important;
+  opacity: 1 !important;
+  background: #f7fafc !important;
+}
+
+
+/* Specifiek lichte helper-/hinttekst */
+.invoice-draft-manager .help,
+.invoice-draft-manager .hint,
+.invoice-draft-manager .muted,
+.invoice-draft-manager .caption,
+.invoice-draft-manager .field-help {
+  color: #607789 !important;
+  -webkit-text-fill-color: #607789 !important;
+  opacity: 1 !important;
+}
+
+
+/* Totaalrij iets sterker */
+.invoice-draft-manager .total-row,
+.invoice-draft-manager .grand-total {
+  color: #12364f !important;
+  font-weight: 700;
+}
+
