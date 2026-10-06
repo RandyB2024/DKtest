@@ -805,6 +805,10 @@ export default function InvoiceProfileManager({
                   30 dagen
                 </option>
 
+                <option value="45">
+                  45 dagen
+                </option>
+
                 <option value="60">
                   60 dagen
                 </option>

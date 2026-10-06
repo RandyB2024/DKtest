@@ -4,6 +4,7 @@ import {
   Download,
   Eye,
   FileText,
+  Mail,
   Search,
 } from "lucide-react";
 
@@ -80,6 +81,71 @@ const date =
       year: "numeric",
     },
   );
+
+
+function daysBetween(
+  from: Date,
+  to: Date,
+) {
+  const ms =
+    Date.UTC(
+      to.getFullYear(),
+      to.getMonth(),
+      to.getDate(),
+    ) -
+    Date.UTC(
+      from.getFullYear(),
+      from.getMonth(),
+      from.getDate(),
+    );
+
+  return Math.floor(
+    ms / 86400000,
+  );
+}
+
+
+function dueInfo(
+  item: InvoiceArchiveItem,
+) {
+  const today =
+    new Date();
+
+  const due =
+    new Date(
+      `${item.dueDate}T12:00:00`,
+    );
+
+  const diff =
+    daysBetween(
+      today,
+      due,
+    );
+
+  if (
+    item.paymentStatus ===
+    "paid"
+  ) {
+    return "Betaald";
+  }
+
+  if (diff > 0) {
+    return `Nog ${diff} dag${
+      diff === 1 ? "" : "en"
+    }`;
+  }
+
+  if (diff === 0) {
+    return "Vervalt vandaag";
+  }
+
+  const overdue =
+    Math.abs(diff);
+
+  return `${overdue} dag${
+    overdue === 1 ? "" : "en"
+  } vervallen`;
+}
 
 
 function paymentLabel(
@@ -166,6 +232,26 @@ export default function InvoiceArchive({
   ] =
     useState("");
 
+  const [
+    sendingId,
+    setSendingId,
+  ] =
+    useState<string | null>(
+      null,
+    );
+
+  const [
+    success,
+    setSuccess,
+  ] =
+    useState("");
+
+  const [
+    reloadToken,
+    setReloadToken,
+  ] =
+    useState(0);
+
 
   useEffect(() => {
     let cancelled =
@@ -247,6 +333,7 @@ export default function InvoiceArchive({
   }, [
     context.organizationId,
     debtorId,
+    reloadToken,
   ]);
 
 
@@ -281,6 +368,105 @@ export default function InvoiceArchive({
         query,
       ],
     );
+
+
+  async function sendInvoice(
+    item: InvoiceArchiveItem,
+  ) {
+    if (
+      context.organizationId ===
+      "all"
+    ) {
+      return;
+    }
+
+    const resend =
+      Boolean(
+        item.sentAt,
+      );
+
+    const confirmed =
+      window.confirm(
+        resend
+          ? `Factuur ${item.invoiceNumber} opnieuw versturen naar ${item.debtor.email}?`
+          : `Factuur ${item.invoiceNumber} versturen naar ${item.debtor.email}?`,
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setSendingId(
+      item.id,
+    );
+
+    setError("");
+    setSuccess("");
+
+    try {
+      const response =
+        await fetch(
+          `/api/invoicing/invoices/${encodeURIComponent(
+            item.id,
+          )}/send`,
+          {
+            method:
+              "POST",
+
+            headers: {
+              "content-type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                organizationId:
+                  context.organizationId,
+
+                idempotencyKey:
+                  crypto.randomUUID(),
+              }),
+          },
+        );
+
+      const result =
+        (await response.json()) as {
+          sent?: boolean;
+          alreadySent?: boolean;
+          error?: string;
+        };
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ||
+          "De factuur kon niet worden verzonden.",
+        );
+      }
+
+      setSuccess(
+        result.alreadySent
+          ? `Factuur ${item.invoiceNumber} was al verzonden.`
+          : `Factuur ${item.invoiceNumber} is verzonden naar ${item.debtor.email}.`,
+      );
+
+      setReloadToken(
+        (current) =>
+          current + 1,
+      );
+
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "De factuur kon niet worden verzonden.",
+      );
+
+    } finally {
+      setSendingId(
+        null,
+      );
+    }
+  }
 
 
   function pdfUrl(
@@ -369,6 +555,15 @@ export default function InvoiceArchive({
         </div>
       )}
 
+      {success && (
+        <div
+          className="notice good"
+          role="status"
+        >
+          {success}
+        </div>
+      )}
+
 
       {!compact && (
         <label className="invoice-archive-search">
@@ -438,10 +633,24 @@ export default function InvoiceArchive({
                         .name
                     }
                     {" · "}
+                    Factuurdatum{" "}
                     {date.format(
                       new Date(
                         `${item.invoiceDate}T12:00:00`,
                       ),
+                    )}
+                  </span>
+
+                  <span>
+                    Vervalt{" "}
+                    {date.format(
+                      new Date(
+                        `${item.dueDate}T12:00:00`,
+                      ),
+                    )}
+                    {" · "}
+                    {dueInfo(
+                      item,
                     )}
                   </span>
                 </div>
@@ -472,18 +681,58 @@ export default function InvoiceArchive({
                 </div>
 
 
-                <span
-                  className={`status ${paymentClass(
-                    item,
-                  )}`}
-                >
-                  {paymentLabel(
-                    item,
+                <div className="invoice-archive-status">
+                  <span
+                    className={`status ${paymentClass(
+                      item,
+                    )}`}
+                  >
+                    {paymentLabel(
+                      item,
+                    )}
+                  </span>
+
+                  {item.sentAt && (
+                    <small>
+                      Verzonden{" "}
+                      {date.format(
+                        new Date(
+                          item.sentAt,
+                        ),
+                      )}
+                    </small>
                   )}
-                </span>
+                </div>
 
 
                 <div className="invoice-archive-actions">
+
+                  {item.invoiceKind ===
+                    "invoice" && (
+                    <button
+                      type="button"
+                      className="btn primary"
+                      disabled={
+                        sendingId ===
+                        item.id
+                      }
+                      onClick={() =>
+                        void sendInvoice(
+                          item,
+                        )
+                      }
+                    >
+                      <Mail size={14} />
+
+                      {sendingId ===
+                      item.id
+                        ? "Versturen..."
+                        : item.sentAt
+                          ? "Opnieuw versturen"
+                          : "Verstuur factuur"}
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     className="btn"

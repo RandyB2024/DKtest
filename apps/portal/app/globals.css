@@ -6380,3 +6380,552 @@ h3{
   }
 
 }
+
+
+/* ==========================================================
+   BESTEMD INVOICE SEND 6A-6
+   ========================================================== */
+
+.invoice-archive-status{
+  display:grid;
+  gap:5px;
+  justify-items:start;
+}
+
+.invoice-archive-status small{
+  color:var(--muted);
+  font-size:.72rem;
+}
+
+.invoice-archive-actions{
+  flex-wrap:wrap;
+}
+
+.invoice-archive-actions .btn.primary{
+  white-space:nowrap;
+}
+
+@media(max-width:800px){
+
+  .invoice-archive-actions{
+    grid-column:1/-1;
+    display:grid;
+    grid-template-columns:
+      repeat(3,minmax(0,1fr));
+  }
+
+}
+
+@media(max-width:600px){
+
+  .invoice-archive-actions{
+    grid-template-columns:1fr;
+  }
+
+}
+
+
+/* ==========================================================
+   BESTEMD FACTURATIE READABILITY V2
+   Betere leesbaarheid Facturen / Debiteuren / Archief
+   ========================================================== */
+
+/*
+ * Alleen de financiële/facturatiecomponenten aanpassen.
+ * Hierdoor blijven sidebar, primaire knoppen en andere
+ * donkere componenten ongemoeid.
+ */
+
+/* ----------------------------------------------------------
+   ALGEMENE TEKST IN FACTURATIEKAARTEN
+   ---------------------------------------------------------- */
+
+.invoice-profile-manager,
+.invoice-draft-manager,
+.invoice-archive,
+.debtor-manager,
+.debtor-dossier {
+  color:#29465c;
+}
+
+.invoice-profile-manager h1,
+.invoice-profile-manager h2,
+.invoice-profile-manager h3,
+.invoice-draft-manager h1,
+.invoice-draft-manager h2,
+.invoice-draft-manager h3,
+.invoice-archive h1,
+.invoice-archive h2,
+.invoice-archive h3,
+.debtor-manager h1,
+.debtor-manager h2,
+.debtor-manager h3,
+.debtor-dossier h1,
+.debtor-dossier h2,
+.debtor-dossier h3 {
+  color:#12364f !important;
+}
+
+
+/* ----------------------------------------------------------
+   BESCHRIJVINGEN
+   ---------------------------------------------------------- */
+
+.invoice-profile-manager .section-heading p,
+.invoice-draft-manager .section-heading p,
+.invoice-archive .section-heading p,
+.debtor-manager .section-heading p,
+.debtor-dossier .section-heading p {
+  color:#587083 !important;
+  opacity:1 !important;
+}
+
+
+/* ----------------------------------------------------------
+   FACTUURINSTELLINGEN
+   ---------------------------------------------------------- */
+
+.invoice-profile-fields label {
+  color:#24465e !important;
+  opacity:1 !important;
+  font-weight:650;
+}
+
+.invoice-profile-fields input,
+.invoice-profile-fields select,
+.invoice-profile-fields textarea {
+  color:#183b53 !important;
+
+  background:#ffffff !important;
+
+  border-color:#cedce5 !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#183b53 !important;
+}
+
+.invoice-profile-fields input:hover,
+.invoice-profile-fields select:hover,
+.invoice-profile-fields textarea:hover {
+  border-color:#aac2d0 !important;
+}
+
+.invoice-profile-fields input:focus,
+.invoice-profile-fields select:focus,
+.invoice-profile-fields textarea:focus {
+  color:#102f45 !important;
+
+  background:#ffffff !important;
+
+  border-color:#1895ae !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#102f45 !important;
+}
+
+
+/* placeholders duidelijk zichtbaar, maar niet te donker */
+.invoice-profile-fields input::placeholder,
+.invoice-profile-fields textarea::placeholder {
+  color:#728797 !important;
+  opacity:1 !important;
+}
+
+
+/* opties in select */
+.invoice-profile-fields select option {
+  color:#183b53 !important;
+  background:#ffffff !important;
+}
+
+
+/* ----------------------------------------------------------
+   LOGOBLOK
+   ---------------------------------------------------------- */
+
+.invoice-logo-placeholder {
+  color:#415f74 !important;
+  opacity:1 !important;
+}
+
+.invoice-logo-placeholder strong {
+  color:#294b62 !important;
+  opacity:1 !important;
+}
+
+.invoice-logo-placeholder span {
+  color:#697f90 !important;
+  opacity:1 !important;
+}
+
+.invoice-logo-box > small {
+  color:#6b8191 !important;
+  opacity:1 !important;
+}
+
+
+/* ----------------------------------------------------------
+   READONLY / DISABLED
+   Disabled blijft herkenbaar als disabled maar WEL leesbaar.
+   ---------------------------------------------------------- */
+
+.invoice-profile-manager input[readonly],
+.invoice-profile-manager textarea[readonly],
+.invoice-profile-manager select[readonly] {
+  color:#29485e !important;
+
+  background:#f4f8fa !important;
+
+  border-color:#d2dfe7 !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#29485e !important;
+}
+
+
+.invoice-profile-manager input:disabled,
+.invoice-profile-manager textarea:disabled,
+.invoice-profile-manager select:disabled,
+.invoice-draft-manager input:disabled,
+.invoice-draft-manager textarea:disabled,
+.invoice-draft-manager select:disabled,
+.debtor-manager input:disabled,
+.debtor-manager textarea:disabled,
+.debtor-manager select:disabled {
+  color:#536d7e !important;
+
+  background:#f3f7f9 !important;
+
+  border-color:#d6e1e7 !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#536d7e !important;
+}
+
+
+/* ----------------------------------------------------------
+   FACTUUR MAKEN / CONCEPTEN
+   ---------------------------------------------------------- */
+
+.invoice-draft-manager label,
+.invoice-draft-manager .field-label {
+  color:#24465e !important;
+  opacity:1 !important;
+  font-weight:650;
+}
+
+.invoice-draft-manager input,
+.invoice-draft-manager select,
+.invoice-draft-manager textarea {
+  color:#183b53 !important;
+
+  background:#ffffff !important;
+
+  border-color:#cedce5 !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#183b53 !important;
+}
+
+.invoice-draft-manager input::placeholder,
+.invoice-draft-manager textarea::placeholder {
+  color:#728797 !important;
+  opacity:1 !important;
+}
+
+
+/* lege toestand conceptfacturen */
+.invoice-draft-manager .empty-state,
+.invoice-draft-manager .invoice-empty,
+.invoice-draft-manager p,
+.invoice-draft-manager span {
+  opacity:1;
+}
+
+
+/* ----------------------------------------------------------
+   FACTUURARCHIEF
+   ---------------------------------------------------------- */
+
+.invoice-archive-search {
+  border-color:#d0dde5 !important;
+}
+
+.invoice-archive-search input {
+  color:#183b53 !important;
+
+  background:#ffffff !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#183b53 !important;
+}
+
+.invoice-archive-search input::placeholder {
+  color:#6e8495 !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-main small {
+  color:#2a718e !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-main strong {
+  color:#12364f !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-main span {
+  color:#607789 !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-amount small {
+  color:#607789 !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-amount strong {
+  color:#12364f !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-amount span {
+  color:#607789 !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-status small {
+  color:#607789 !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-empty {
+  color:#657d8e !important;
+  opacity:1 !important;
+}
+
+.invoice-archive-empty strong {
+  color:#29485e !important;
+}
+
+.invoice-archive-empty span {
+  color:#6a8191 !important;
+}
+
+
+/* ----------------------------------------------------------
+   DEBITEURENBEHEER
+   ---------------------------------------------------------- */
+
+.debtor-search {
+  color:#536f82 !important;
+}
+
+.debtor-search input {
+  color:#183b53 !important;
+
+  background:#ffffff !important;
+
+  border-color:#cedce5 !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#183b53 !important;
+}
+
+.debtor-search input::placeholder {
+  color:#718797 !important;
+  opacity:1 !important;
+}
+
+
+.debtor-row {
+  color:#29465c !important;
+}
+
+.debtor-row strong {
+  color:#163a52 !important;
+  opacity:1 !important;
+}
+
+.debtor-row span {
+  color:#62798a !important;
+  opacity:1 !important;
+}
+
+.debtor-row small {
+  color:#607789 !important;
+  opacity:1 !important;
+}
+
+
+/* Debiteur modal */
+.debtor-form label {
+  color:#24465e !important;
+  opacity:1 !important;
+  font-weight:650;
+}
+
+.debtor-form input,
+.debtor-form select,
+.debtor-form textarea {
+  color:#183b53 !important;
+
+  background:#ffffff !important;
+
+  border-color:#cedce5 !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#183b53 !important;
+}
+
+.debtor-form input::placeholder,
+.debtor-form textarea::placeholder {
+  color:#718797 !important;
+  opacity:1 !important;
+}
+
+
+/* ----------------------------------------------------------
+   OPENSTAANDE FACTUREN
+   ---------------------------------------------------------- */
+
+.invoice-filters label {
+  color:#536f82 !important;
+}
+
+.invoice-filters input,
+.invoice-filters select {
+  color:#183b53 !important;
+
+  background:#ffffff !important;
+
+  border-color:#cedce5 !important;
+
+  opacity:1 !important;
+
+  -webkit-text-fill-color:#183b53 !important;
+}
+
+.invoice-filters input::placeholder {
+  color:#718797 !important;
+  opacity:1 !important;
+}
+
+
+.invoice-card {
+  color:#29465c;
+}
+
+.invoice-card h2,
+.invoice-card strong {
+  color:#153950 !important;
+}
+
+.invoice-card small,
+.invoice-card span {
+  opacity:1;
+}
+
+
+/* ----------------------------------------------------------
+   METRICS / BETAALSTATUS
+   ---------------------------------------------------------- */
+
+.metrics .metric label {
+  color:#597286 !important;
+  opacity:1 !important;
+}
+
+.metrics .metric strong {
+  color:#12364f !important;
+  opacity:1 !important;
+}
+
+.metrics .metric span {
+  color:#667d8e !important;
+  opacity:1 !important;
+}
+
+
+/* kaarten met gewone paragrafen onderaan */
+.card > p {
+  color:#526b7c;
+}
+
+.card > p strong {
+  color:#163a52;
+}
+
+
+/* ----------------------------------------------------------
+   NOTICE / LEGE STATUS
+   ---------------------------------------------------------- */
+
+.invoice-profile-manager .notice,
+.invoice-draft-manager .notice,
+.invoice-archive .notice,
+.debtor-manager .notice {
+  opacity:1 !important;
+}
+
+
+/* ----------------------------------------------------------
+   KNOPPEN
+   ---------------------------------------------------------- */
+
+/*
+ * Primaire knoppen blijven wit op blauw/turquoise.
+ * Globale strong/label regels mogen deze dus niet aantasten.
+ */
+
+.invoice-profile-manager .btn.primary,
+.invoice-draft-manager .btn.primary,
+.invoice-archive .btn.primary,
+.debtor-manager .btn.primary {
+  color:#ffffff !important;
+  -webkit-text-fill-color:#ffffff !important;
+}
+
+.invoice-profile-manager .btn,
+.invoice-draft-manager .btn,
+.invoice-archive .btn,
+.debtor-manager .btn {
+  opacity:1;
+}
+
+
+/* ----------------------------------------------------------
+   MOBIEL
+   ---------------------------------------------------------- */
+
+@media(max-width:700px) {
+
+  .invoice-profile-fields label,
+  .debtor-form label,
+  .invoice-draft-manager label {
+    color:#203f55 !important;
+  }
+
+  .invoice-profile-fields input,
+  .invoice-profile-fields select,
+  .invoice-profile-fields textarea,
+  .debtor-form input,
+  .debtor-form select,
+  .debtor-form textarea,
+  .invoice-draft-manager input,
+  .invoice-draft-manager select,
+  .invoice-draft-manager textarea {
+    font-size:16px;
+  }
+
+}
+

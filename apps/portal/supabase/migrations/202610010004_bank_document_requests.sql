@@ -75,6 +75,9 @@ alter table public.bank_document_requests
 enable row level security;
 
 
+drop policy if exists bank_document_requests_office_read
+on public.bank_document_requests;
+
 create policy bank_document_requests_office_read
 on public.bank_document_requests
 for select
@@ -84,6 +87,9 @@ using (
   and public.has_aal2()
 );
 
+
+drop policy if exists bank_document_requests_customer_read
+on public.bank_document_requests;
 
 create policy bank_document_requests_customer_read
 on public.bank_document_requests

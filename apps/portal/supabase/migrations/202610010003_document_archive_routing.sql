@@ -589,7 +589,7 @@ drop function if exists
   );
 
 
-create function public.office_register_document_upload(
+create or replace function public.office_register_document_upload(
   p_document_id uuid,
   p_organization_id uuid,
   p_storage_path text,
