@@ -62,6 +62,15 @@ function euro(cents: number) {
     cents / 100,
   );
 }
+function moneyColumn(
+  value: string,
+) {
+  return value.padStart(
+    9,
+    " ",
+  );
+}
+
 
 
 function dateNl(value: string) {
@@ -1060,7 +1069,7 @@ export async function GET(
             },
           );
 
-          descriptionY -= 13;
+          descriptionY -= 14;
         }
 
 
@@ -1076,7 +1085,8 @@ export async function GET(
 
 
         draw(
-          euro(
+    moneyColumn(
+      euro(
             Number(
               line.unit_price_cents,
             ),
@@ -1101,7 +1111,8 @@ export async function GET(
 
 
         draw(
-          euro(
+    moneyColumn(
+      euro(
             Number(
               line.total_incl_vat_cents,
             ),
@@ -1121,7 +1132,7 @@ export async function GET(
             x:
               margin,
             y:
-              y + 6,
+          y + 0,
           },
 
           end: {
@@ -1129,7 +1140,7 @@ export async function GET(
               pageWidth -
               margin,
             y:
-              y + 6,
+          y + 0,
           },
 
           thickness:

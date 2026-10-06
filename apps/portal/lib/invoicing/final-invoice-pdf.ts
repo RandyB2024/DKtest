@@ -122,6 +122,15 @@ function euro(
     cents / 100,
   );
 }
+function moneyColumn(
+  value: string,
+) {
+  return value.padStart(
+    9,
+    " ",
+  );
+}
+
 
 
 function dateNl(
@@ -763,7 +772,7 @@ async function renderPdf(
         },
       );
 
-      descriptionY -= 13;
+      descriptionY -= 14;
     }
 
     text(
@@ -777,8 +786,10 @@ async function renderPdf(
     );
 
     text(
-      euro(
-        line.unitPriceCents,
+      moneyColumn(
+        euro(
+          line.unitPriceCents,
+        ),
       ),
       cols.price,
       8.2,
@@ -794,8 +805,10 @@ async function renderPdf(
     );
 
     text(
-      euro(
-        line.totalInclVatCents,
+      moneyColumn(
+        euro(
+          line.totalInclVatCents,
+        ),
       ),
       cols.total,
       8.2,
@@ -810,7 +823,7 @@ async function renderPdf(
           margin,
 
         y:
-          y + 2,
+          y + 0,
       },
 
       end: {
@@ -819,7 +832,7 @@ async function renderPdf(
           margin,
 
         y:
-          y + 2,
+          y + 0,
       },
 
       thickness:
@@ -851,9 +864,10 @@ async function renderPdf(
   );
 
   text(
-    euro(
-      snapshot.invoice
-        .subtotalCents,
+    moneyColumn(
+      euro(
+        snapshot.invoice
+          .subtotalCents,
     ),
     500,
     9,
@@ -870,9 +884,10 @@ async function renderPdf(
   );
 
   text(
-    euro(
-      snapshot.invoice
-        .vatCents,
+    moneyColumn(
+      euro(
+        snapshot.invoice
+          .vatCents,
     ),
     500,
     9,
@@ -919,9 +934,13 @@ async function renderPdf(
   );
 
   text(
-    euro(
-      snapshot.invoice
-        .totalCents,
+    moneyColumn(
+      euro(
+        snapshot.invoice
+          .totalCents,
+    ),
+    ),
+    ),
     ),
     490,
     11,
