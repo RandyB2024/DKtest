@@ -1,4 +1,5 @@
 import { bankingRoute } from './banking.mjs';
+import { paymentMonitoringRoute } from './payment-monitoring.mjs';
 import { communicationRoute } from './communication.mjs';
 import {tasksRoute} from './tasks.mjs';
 import {addressRoute} from './addresses.mjs';
@@ -678,6 +679,22 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+
+    const paymentMonitoring =
+      await paymentMonitoringRoute(
+        req,
+        url,
+        client
+      );
+
+    if (paymentMonitoring) {
+      return sendJson(
+        res,
+        paymentMonitoring.status,
+        paymentMonitoring.data
+      );
+    }
+
 
     const banking = await bankingRoute(
       req,

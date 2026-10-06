@@ -776,6 +776,145 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
   dialog.showModal();
  }
 
+
+ /*
+  * BESTEMD CUSTOMER PAYMENT MONITORING V1
+  */
+ async function renderPaymentMonitoringSummary(parent){
+  const box=
+    el(
+      'section',
+      undefined,
+      'profile-field-group customer-payment-monitoring'
+    );
+
+  box.append(
+    el(
+      'h4',
+      'Betalingsbewaking'
+    )
+  );
+
+  const loading=
+    el(
+      'p',
+      'Betalingsbewaking laden…',
+      'profile-empty'
+    );
+
+  box.append(
+    loading
+  );
+
+  parent.append(
+    box
+  );
+
+  try{
+    const result=
+      await api(
+        '/api/payment-monitoring?organizationId='
+        +encodeURIComponent(selected)
+        +'&limit=50'
+      );
+
+    loading.remove();
+
+    const summary=
+      result.summary??{};
+
+    const grid=
+      el(
+        'div',
+        undefined,
+        'profile-grid'
+      );
+
+    pair(
+      grid,
+      'Openstaand',
+      new Intl.NumberFormat(
+        'nl-NL',
+        {
+          style:'currency',
+          currency:'EUR'
+        }
+      ).format(
+        Number(
+          summary.openCents??0
+        )/100
+      )
+    );
+
+    pair(
+      grid,
+      'Vervallen facturen',
+      summary.overdueCount??0
+    );
+
+    pair(
+      grid,
+      'Herinnering 1',
+      summary.reminder1Count??0
+    );
+
+    pair(
+      grid,
+      'Herinnering 2',
+      summary.reminder2Count??0
+    );
+
+    pair(
+      grid,
+      'Laatste herinnering',
+      summary.finalNoticeCount??0
+    );
+
+    pair(
+      grid,
+      'Mislukte verzendingen',
+      summary.failedCount??0
+    );
+
+    box.append(
+      grid
+    );
+
+    const open=
+      button(
+        'Volledige betalingsbewaking',
+        ()=>{
+          history.pushState(
+            {},
+            '',
+            '/payment-monitoring'
+          );
+
+          dispatchEvent(
+            new PopStateEvent(
+              'popstate'
+            )
+          );
+        },
+        'quiet'
+      );
+
+    box.append(
+      open
+    );
+
+  }catch(e){
+    loading.remove();
+
+    box.append(
+      errorBox(
+        e.message
+        ||'Betalingsbewaking kon niet worden geladen.'
+      )
+    );
+  }
+ }
+
  async function render(message=''){
   root.replaceChildren();const hero=el('section',undefined,'panel profile-hero');
   const org=data.organization,rel=data.relationship,company=data.sections.company??{};
@@ -802,6 +941,8 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
    if(section==='administration'){
      await renderInvoiceSettings(panel);
    }
+
+   if(section==='administration'){await renderPaymentMonitoringSummary(panel);}
 
    if(!allowed(section)){
      if(section==='administration'){

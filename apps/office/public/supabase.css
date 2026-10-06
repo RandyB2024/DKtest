@@ -544,3 +544,204 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ==========================================================
+   BESTEMD PAYMENT MONITORING V1
+   ========================================================== */
+
+.payment-monitoring{
+  display:grid;
+  gap:22px;
+}
+
+.payment-monitoring-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+}
+
+.payment-monitoring-toolbar{
+  display:grid;
+  grid-template-columns:
+    minmax(220px,1fr)
+    minmax(190px,.7fr)
+    minmax(240px,1fr);
+  gap:14px;
+}
+
+.payment-monitoring-toolbar label{
+  display:grid;
+  gap:7px;
+  color:#586d7f;
+  font-size:12px;
+  font-weight:700;
+}
+
+.payment-monitoring-toolbar select,
+.payment-monitoring-toolbar input{
+  width:100%;
+  min-height:44px;
+}
+
+.payment-monitoring-summary{
+  display:grid;
+  grid-template-columns:
+    repeat(6,minmax(0,1fr));
+  gap:10px;
+}
+
+.payment-monitoring-summary article{
+  display:grid;
+  gap:5px;
+  min-width:0;
+  padding:15px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--paper);
+}
+
+.payment-monitoring-summary span,
+.payment-monitoring-summary small{
+  color:#607388;
+  font-size:11px;
+}
+
+.payment-monitoring-summary strong{
+  color:var(--blue-dark);
+  font-size:20px;
+}
+
+.payment-monitoring-table{
+  display:grid;
+}
+
+.payment-monitoring-row{
+  display:grid;
+  grid-template-columns:
+    minmax(190px,1.4fr)
+    minmax(115px,.75fr)
+    minmax(115px,.75fr)
+    minmax(120px,.75fr)
+    minmax(140px,.9fr)
+    110px;
+  gap:14px;
+  align-items:center;
+  padding:15px 8px;
+  border-bottom:1px solid var(--line);
+}
+
+.payment-monitoring-row--head{
+  padding:10px 8px;
+  background:var(--blue-soft);
+  color:var(--blue-dark);
+  border-radius:8px;
+  border-bottom:0;
+  font-size:11px;
+  font-weight:750;
+  text-transform:uppercase;
+}
+
+.payment-monitoring-state{
+  display:inline-flex;
+  padding:6px 9px;
+  border-radius:999px;
+  background:#edf2f6;
+  color:#53697d;
+  font-size:11px;
+  font-weight:750;
+}
+
+.payment-monitoring-state.paid{
+  background:#e8f5ec;
+  color:#2f724f;
+}
+
+.payment-monitoring-state.overdue,
+.payment-monitoring-state.reminder_1{
+  background:#fff5dc;
+  color:#7d6425;
+}
+
+.payment-monitoring-state.reminder_2{
+  background:#fff0df;
+  color:#995a24;
+}
+
+.payment-monitoring-state.final_notice,
+.payment-monitoring-state.failed{
+  background:#fff0ed;
+  color:#a84639;
+}
+
+.payment-monitoring-history{
+  grid-column:1/-1;
+  padding-top:10px;
+}
+
+.payment-monitoring-history-list{
+  display:grid;
+  gap:7px;
+  margin-top:10px;
+}
+
+.payment-monitoring-history-list>div{
+  display:grid;
+  grid-template-columns:
+    minmax(150px,1fr)
+    100px
+    minmax(150px,auto);
+  gap:12px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:#f8fafc;
+}
+
+.customer-payment-monitoring{
+  border-top:2px solid var(--blue);
+  margin-top:22px;
+  padding-top:18px;
+}
+
+@media(max-width:1200px){
+  .payment-monitoring-summary{
+    grid-template-columns:
+      repeat(3,minmax(0,1fr));
+  }
+}
+
+@media(max-width:760px){
+  .payment-monitoring-head{
+    flex-direction:column;
+  }
+
+  .payment-monitoring-toolbar,
+  .payment-monitoring-summary{
+    grid-template-columns:1fr;
+  }
+
+  .payment-monitoring-row--head{
+    display:none;
+  }
+
+  .payment-monitoring-row{
+    grid-template-columns:
+      1fr 1fr;
+    border:1px solid var(--line);
+    border-radius:10px;
+    margin-bottom:10px;
+    padding:14px;
+  }
+
+  .payment-monitoring-row>div:first-child,
+  .payment-monitoring-history{
+    grid-column:1/-1;
+  }
+
+  .payment-monitoring-history-list>div{
+    grid-template-columns:1fr;
+  }
+}
+

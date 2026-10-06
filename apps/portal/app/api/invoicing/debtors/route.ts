@@ -478,35 +478,10 @@ export async function POST(
       if (
         action === "archive"
       ) {
-        const {
-          data,
-          error,
-        } =
-          await client.rpc(
-            "customer_archive_debtor",
-            {
-              p_organization_id:
-                organizationId,
-
-              p_debtor_id:
-                uuid(
-                  input.debtorId,
-                  "Debiteur",
-                ),
-            },
-          );
-
-        if (error) {
-          throw new AccessError(
-            409,
-            "Debiteur kan niet worden gearchiveerd. Controleer of er nog openstaande facturen zijn.",
-          );
-        }
-
-        return Response.json({
-          debtorId:
-            data,
-        });
+        throw new AccessError(
+          403,
+          "Debiteuren archiveren kan alleen door Bestemd Office.",
+        );
       }
 
 

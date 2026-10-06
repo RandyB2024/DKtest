@@ -7,7 +7,6 @@ import {
 } from "react";
 
 import {
-  Archive,
   Pencil,
   Plus,
   Search,
@@ -402,74 +401,6 @@ export default function DebtorManager({
   }
 
 
-  async function archive(
-    debtor: Debtor,
-  ) {
-    if (
-      context.organizationId ===
-      "all"
-    ) {
-      return;
-    }
-
-    if (
-      !window.confirm(
-        `${debtor.name} archiveren?`,
-      )
-    ) {
-      return;
-    }
-
-    setBusy(true);
-    setError("");
-
-    try {
-      const response =
-        await fetch(
-          "/api/invoicing/debtors",
-          {
-            method: "POST",
-
-            headers: {
-              "content-type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-                action:
-                  "archive",
-
-                organizationId:
-                  context.organizationId,
-
-                debtorId:
-                  debtor.id,
-              }),
-          },
-        );
-
-      const result =
-        (await response.json()) as ApiResponse;
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          "Debiteur kon niet worden gearchiveerd.",
-        );
-      }
-
-      await load();
-    } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : "Debiteur kon niet worden gearchiveerd.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
 
 
   if (
@@ -619,19 +550,6 @@ export default function DebtorManager({
                     Bewerken
                   </button>
 
-                  <button
-                    type="button"
-                    className="btn"
-                    disabled={busy}
-                    onClick={() =>
-                      archive(
-                        debtor,
-                      )
-                    }
-                  >
-                    <Archive size={14} />
-                    Archiveren
-                  </button>
                 </div>
               </article>
             ),

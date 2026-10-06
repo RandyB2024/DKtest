@@ -212,6 +212,20 @@ async function renderRoute() {
       const data = await api('/api/clients');
       recordData = data;
       html = '<div id="office-banking"></div>';
+    } else if (path === '/payment-monitoring') {
+      header('Betalingsbewaking');
+
+      const data =
+        await api(
+          '/api/clients'
+        );
+
+      recordData =
+        data;
+
+      html =
+        '<div id="office-payment-monitoring"></div>';
+
     } else if (path === '/documents') {
       header('Documenten');
       const data = await api('/api/clients');
@@ -234,6 +248,24 @@ async function renderRoute() {
       }else if(path==='/banking'){
         const {mountOfficeBanking}=await import('/banking.js');
         if(activeGeneration===generation&&currentUser)mountOfficeBanking($('#office-banking'),api,recordData);
+      }else if(path==='/payment-monitoring'){
+        const {
+          mountPaymentMonitoring
+        }=await import(
+          '/payment-monitoring.js'
+        );
+
+        if(
+          activeGeneration===generation
+          &&currentUser
+        ){
+          await mountPaymentMonitoring(
+            $('#office-payment-monitoring'),
+            api,
+            recordData
+          );
+        }
+
       }else if(path==='/documents'){
         const {mountOfficeDocumentsReadonly}=await import('/documents-readonly.js');
         if(activeGeneration===generation&&currentUser)mountOfficeDocumentsReadonly($('#office-documents-readonly'),api,recordData);
