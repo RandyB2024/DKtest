@@ -879,7 +879,11 @@ async function renderPdf(
     true,
   );
 
-  y -= 17;
+  /*
+   * Extra ruimte tussen de Btw-regel en het totaalvlak.
+   * Zo blijft het volledige Btw-bedrag zichtbaar.
+   */
+  y -= 25;
 
 
   page.drawRectangle({

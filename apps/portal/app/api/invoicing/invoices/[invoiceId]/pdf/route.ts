@@ -1217,6 +1217,13 @@ export async function GET(
         y -= 16;
       }
 
+      /*
+       * Extra ruimte tussen de Btw-regel en het totaalvlak.
+       * Zonder deze ruimte valt het gekleurde vlak gedeeltelijk
+       * over de Btw-regel heen.
+       */
+      y -= 8;
+
 
       page.drawRectangle({
         x:
