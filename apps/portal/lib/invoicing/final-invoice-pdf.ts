@@ -810,7 +810,7 @@ async function renderPdf(
           margin,
 
         y:
-          y + 6,
+          y + 2,
       },
 
       end: {
@@ -819,7 +819,7 @@ async function renderPdf(
           margin,
 
         y:
-          y + 6,
+          y + 2,
       },
 
       thickness:
