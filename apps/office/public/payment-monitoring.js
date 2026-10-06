@@ -249,6 +249,16 @@ export async function mountPaymentMonitoring(
   let current = null;
   let version = 0;
 
+  const canCredit =
+    [
+      'owner',
+      'admin',
+      'accountant',
+      'handler',
+    ].includes(
+      data?.user?.roleCode
+    );
+
   function visibleItems() {
     const q =
       search.value
@@ -330,6 +340,382 @@ export async function mountPaymentMonitoring(
       </article>
     `;
   }
+
+  function openCreditDialog(
+    item,
+  ) {
+    if (!canCredit) {
+      return;
+    }
+
+    if (
+      root.querySelector(
+        'dialog[data-credit-dialog]'
+      )
+    ) {
+      return;
+    }
+
+    const dialog =
+      document.createElement(
+        'dialog'
+      );
+
+    dialog.dataset.creditDialog =
+      'true';
+
+    dialog.className =
+      'customer-dialog';
+
+    const form =
+      document.createElement(
+        'form'
+      );
+
+    const heading =
+      document.createElement(
+        'h2'
+      );
+
+    heading.textContent =
+      'Creditfactuur maken';
+
+
+    const explanation =
+      document.createElement(
+        'p'
+      );
+
+    explanation.className =
+      'muted';
+
+    explanation.textContent =
+      `Factuur ${item.invoiceNumber} van ${item.debtorName} wordt volledig gecrediteerd. De oorspronkelijke factuur blijft in de administratie bewaard.`;
+
+
+    const warning =
+      document.createElement(
+        'p'
+      );
+
+    warning.className =
+      'profile-warning';
+
+    warning.textContent =
+      'Deze actie maakt een definitieve financiële correctie. De creditfactuur krijgt een eigen nummer en wordt na succesvolle verwerking per e-mail verzonden.';
+
+
+    const label =
+      document.createElement(
+        'label'
+      );
+
+    label.textContent =
+      'Reden creditfactuur';
+
+
+    const textarea =
+      document.createElement(
+        'textarea'
+      );
+
+    textarea.name =
+      'reason';
+
+    textarea.required =
+      true;
+
+    textarea.maxLength =
+      500;
+
+    textarea.rows =
+      5;
+
+    textarea.placeholder =
+      'Bijvoorbeeld: factuur ten onrechte verstuurd, opdracht geannuleerd of volledige correctie.';
+
+    label.append(
+      textarea
+    );
+
+
+    const error =
+      document.createElement(
+        'p'
+      );
+
+    error.className =
+      'mutation-error';
+
+    error.setAttribute(
+      'role',
+      'alert'
+    );
+
+
+    const statusMessage =
+      document.createElement(
+        'p'
+      );
+
+    statusMessage.setAttribute(
+      'role',
+      'status'
+    );
+
+
+    const actions =
+      document.createElement(
+        'div'
+      );
+
+    actions.className =
+      'customer-buttons';
+
+
+    const submit =
+      document.createElement(
+        'button'
+      );
+
+    submit.type =
+      'submit';
+
+    submit.className =
+      'customer-action-danger';
+
+    submit.textContent =
+      'Creditfactuur maken';
+
+
+    const cancel =
+      document.createElement(
+        'button'
+      );
+
+    cancel.type =
+      'button';
+
+    cancel.textContent =
+      'Annuleren';
+
+
+    actions.append(
+      submit,
+      cancel
+    );
+
+
+    form.append(
+      heading,
+      explanation,
+      warning,
+      label,
+      error,
+      statusMessage,
+      actions
+    );
+
+    dialog.append(
+      form
+    );
+
+    root.append(
+      dialog
+    );
+
+
+    let pending =
+      false;
+
+
+    function close() {
+      if (pending) {
+        return;
+      }
+
+      dialog.close();
+    }
+
+
+    cancel.onclick =
+      close;
+
+
+    dialog.addEventListener(
+      'cancel',
+      event => {
+        if (pending) {
+          event.preventDefault();
+        }
+      }
+    );
+
+
+    dialog.addEventListener(
+      'close',
+      () => {
+        dialog.remove();
+      }
+    );
+
+
+    form.onsubmit =
+      async event => {
+        event.preventDefault();
+
+        if (pending) {
+          return;
+        }
+
+        const reason =
+          textarea.value.trim();
+
+
+        if (
+          reason.length < 3
+          || reason.length > 500
+        ) {
+          error.textContent =
+            'Geef een duidelijke reden van minimaal 3 tekens op.';
+
+          textarea.focus();
+
+          return;
+        }
+
+
+        const confirmed =
+          window.confirm(
+            `Factuur ${item.invoiceNumber} volledig crediteren? Deze correctie wordt definitief vastgelegd.`
+          );
+
+
+        if (!confirmed) {
+          return;
+        }
+
+
+        pending =
+          true;
+
+        error.textContent =
+          '';
+
+        statusMessage.textContent =
+          'Creditfactuur wordt veilig aangemaakt...';
+
+        textarea.disabled =
+          true;
+
+        submit.disabled =
+          true;
+
+        cancel.disabled =
+          true;
+
+        submit.textContent =
+          'Bezig...';
+
+
+        try {
+          const result =
+            await api(
+              '/api/invoicing/credits',
+              {
+                organizationId:
+                  item.organizationId,
+
+                originalInvoiceId:
+                  item.invoiceId,
+
+                reason,
+
+                idempotencyKey:
+                  crypto.randomUUID(),
+              },
+              'POST'
+            );
+
+
+          const number =
+            result.creditInvoiceNumber
+            || 'de creditfactuur';
+
+
+          if (
+            result.emailStatus ===
+            'unconfirmed'
+          ) {
+            statusMessage.textContent =
+              `${number} is aangemaakt. De e-mailstatus is nog niet bevestigd; er wordt niet automatisch opnieuw verzonden.`;
+
+          } else if (
+            result.alreadySent
+          ) {
+            statusMessage.textContent =
+              `${number} bestond al en was al verzonden.`;
+
+          } else {
+            statusMessage.textContent =
+              `${number} is aangemaakt en verzonden.`;
+          }
+
+
+          /*
+           * Betalingsbewaking opnieuw ophalen.
+           * De originele factuur verdwijnt uit
+           * actieve bewaking zodra deze gecrediteerd is.
+           */
+          await load();
+
+
+          window.setTimeout(
+            () => {
+              if (
+                dialog.isConnected
+              ) {
+                pending =
+                  false;
+
+                dialog.close();
+              }
+            },
+            1400
+          );
+
+        } catch(caught) {
+          error.textContent =
+            caught instanceof Error
+              ? caught.message
+              : 'Creditfactuur kon niet worden verwerkt.';
+
+          statusMessage.textContent =
+            '';
+
+          pending =
+            false;
+
+          textarea.disabled =
+            false;
+
+          submit.disabled =
+            false;
+
+          cancel.disabled =
+            false;
+
+          submit.textContent =
+            'Creditfactuur maken';
+        }
+      };
+
+
+    dialog.showModal();
+
+    textarea.focus();
+  }
+
 
   function render() {
     renderSummary();
@@ -455,6 +841,21 @@ export async function mountPaymentMonitoring(
                 >
                   Klantdossier
                 </a>
+
+                ${
+                  canCredit
+                    ? `
+                      <button
+                        type="button"
+                        data-credit-invoice="${esc(
+                          item.invoiceId
+                        )}"
+                      >
+                        Creditfactuur
+                      </button>
+                    `
+                    : ''
+                }
               </div>
 
               <details class="payment-monitoring-history">
@@ -530,6 +931,38 @@ export async function mountPaymentMonitoring(
 
       </div>
     `;
+
+
+    if (canCredit) {
+      list
+        .querySelectorAll(
+          '[data-credit-invoice]'
+        )
+        .forEach(
+          button => {
+            const item =
+              items.find(
+                currentItem =>
+                  currentItem.invoiceId ===
+                  button.dataset.creditInvoice
+              );
+
+            if (!item) {
+              button.disabled =
+                true;
+
+              return;
+            }
+
+            button.onclick =
+              () => {
+                openCreditDialog(
+                  item
+                );
+              };
+          }
+        );
+    }
   }
 
   async function load() {

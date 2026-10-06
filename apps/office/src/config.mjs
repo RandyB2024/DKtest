@@ -153,6 +153,21 @@ export function loadConfig(env = process.env) {
           env.EMAILJS_REMINDER_PRIVATE_KEY || '',
       }),
 
+    creditEmailjs:
+      Object.freeze({
+        serviceId:
+          env.EMAILJS_CREDIT_SERVICE_ID || '',
+
+        templateId:
+          env.EMAILJS_CREDIT_TEMPLATE_ID || '',
+
+        publicKey:
+          env.EMAILJS_CREDIT_PUBLIC_KEY || '',
+
+        privateKey:
+          env.EMAILJS_CREDIT_PRIVATE_KEY || '',
+      }),
+
     // Legacy values are used only inside the explicitly local demo server.
     sessionSecret:
       allowDevelopmentAuth

@@ -17,7 +17,8 @@
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
-    "@supabase/supabase-js": "^2.117.1"
+    "@supabase/supabase-js": "^2.117.1",
+    "pdf-lib": "^1.17.1"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",

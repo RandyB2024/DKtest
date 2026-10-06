@@ -10,6 +10,7 @@ import { customerMutation } from './customer-management.mjs';
 import { kvkRoute } from './kvk/intake.mjs';
 import { profileRoute } from './customer-profile.mjs';
 import { invoicingSettingsRoute } from './invoicing-settings.mjs';
+import { creditInvoiceRoute } from './credit-invoices.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -754,6 +755,25 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
         res,
         invoicingSettings.status,
         invoicingSettings.data
+      );
+    }
+
+    const creditInvoice =
+      await creditInvoiceRoute(
+        req,
+        url,
+        client,
+        user,
+        body,
+        config,
+        fetchImpl
+      );
+
+    if (creditInvoice) {
+      return sendJson(
+        res,
+        creditInvoice.status,
+        creditInvoice.data
       );
     }
 
