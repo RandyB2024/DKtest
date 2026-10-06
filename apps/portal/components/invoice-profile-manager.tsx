@@ -178,7 +178,6 @@ export default function InvoiceProfileManager({
         result.profile;
 
       if (!profile) {
-        setEditing(true);
         return;
       }
 
@@ -264,12 +263,7 @@ export default function InvoiceProfileManager({
           "C",
       });
 
-      if (
-        !profile.companyName ||
-        !profile.invoiceEmail
-      ) {
-        setEditing(true);
-      }
+
 
     } catch (caught) {
       setError(
