@@ -1,6 +1,7 @@
 import { loadConfig } from './config.mjs';
 import { securityHeaders } from './security.mjs';
 import { handleOfficeApi } from './supabase-api.mjs';
+import { runScheduledInvoiceReminders } from './invoice-reminders.mjs';
 
 const assets = new Set([
   '/index.html', '/offline.html', '/styles.css', '/intake.css', '/supabase.css',
@@ -61,6 +62,50 @@ function unavailable(status = 404) {
 }
 
 export function createWorker(fetchImpl = fetch) { return {
+
+  async scheduled(controller, env, ctx) {
+    const task =
+      (async () => {
+        const config =
+          loadConfig({
+            ...env,
+            NODE_ENV:
+              'production',
+            ALLOW_DEVELOPMENT_AUTH:
+              'false',
+          });
+
+        const result =
+          await runScheduledInvoiceReminders({
+            config,
+            fetchImpl,
+            limit:
+              100,
+          });
+
+        console.log(
+          'invoice reminder run completed',
+          {
+            checked:
+              result.checked,
+
+            sent:
+              result.sent,
+
+            skipped:
+              result.skipped,
+
+            failed:
+              result.failed,
+          }
+        );
+      })();
+
+    ctx.waitUntil(
+      task
+    );
+  },
+
   async fetch(request, env) {
     // Explicit production config: Worker bindings are per request and never mixed
     // with the local demo server or build-time process environment.

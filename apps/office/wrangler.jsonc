@@ -5,6 +5,9 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "routes": [{ "pattern": "office.testadmin.nl", "custom_domain": true }],
+  "triggers": {
+    "crons": ["15 7 * * *"]
+  },
   "assets": {
     "directory": "./worker-public",
     "binding": "ASSETS",

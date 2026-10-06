@@ -111,6 +111,9 @@ export function loadConfig(env = process.env) {
     supabaseKey:
       env.SUPABASE_PUBLISHABLE_KEY,
 
+    supabaseServiceRoleKey:
+      env.SUPABASE_SERVICE_ROLE_KEY || '',
+
     communicationEmailjs:
       Object.freeze({
         privateKey:
@@ -133,6 +136,21 @@ export function loadConfig(env = process.env) {
 
         portalBaseUrl:
           env.PORTAL_BASE_URL || '',
+      }),
+
+    invoiceReminderEmailjs:
+      Object.freeze({
+        serviceId:
+          env.EMAILJS_REMINDER_SERVICE_ID || '',
+
+        templateId:
+          env.EMAILJS_REMINDER_TEMPLATE_ID || '',
+
+        publicKey:
+          env.EMAILJS_REMINDER_PUBLIC_KEY || '',
+
+        privateKey:
+          env.EMAILJS_REMINDER_PRIVATE_KEY || '',
       }),
 
     // Legacy values are used only inside the explicitly local demo server.
