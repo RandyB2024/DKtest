@@ -64,6 +64,718 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
   for(const [key,label] of [['visitAddress','Bezoekadres'],['postalAddress','Postadres']]){const address=p[key];pair(details,label,address?.shielded?'Afgeschermd':address?Object.values(address).filter(x=>typeof x==='string'||typeof x==='number').join(' '):null);}
   pair(details,'Activiteiten / SBI',p.activities?.map(a=>a.code+' — '+a.description).join('\n'));parent.append(details);
  }
+
+ /*
+  * BESTEMD OFFICE INVOICE SETTINGS V1
+  *
+  * Zelfde invoicing_settings als Mijn Bestemming.
+  * Geen dubbele administratie.
+  */
+ async function renderInvoiceSettings(parent){
+  const shell=el('section',undefined,'profile-field-group office-invoice-settings');
+  const head=el('div',undefined,'profile-section-heading');
+  const title=el('div');
+
+  title.append(
+    el('h4','Factuurinstellingen'),
+    el(
+      'p',
+      'Instellingen die worden gebruikt voor verkoopfacturen in Mijn Bestemming.',
+      'profile-help'
+    )
+  );
+
+  head.append(title);
+  shell.append(head);
+
+  const loading=el(
+    'p',
+    'Factuurinstellingen laden…',
+    'profile-empty'
+  );
+
+  shell.append(loading);
+  parent.append(shell);
+
+  let result;
+
+  try{
+    result=await api(
+      '/api/organizations/'
+      +encodeURIComponent(selected)
+      +'/invoicing-settings'
+    );
+  }catch(e){
+    loading.remove();
+    shell.append(
+      errorBox(
+        e.message||
+        'Factuurinstellingen konden niet worden geladen.'
+      )
+    );
+    return;
+  }
+
+  if(!root.isConnected)return;
+
+  loading.remove();
+
+  const profile=
+    result.profile??{};
+
+  const address=
+    profile.businessAddress??{};
+
+  const complete=
+    Boolean(
+      profile.companyName
+      && profile.invoiceEmail
+      && address.street
+      && address.postalCode
+      && address.city
+    );
+
+  const summary=
+    el(
+      'div',
+      undefined,
+      'profile-grid office-invoice-settings-summary'
+    );
+
+  pair(
+    summary,
+    'Bedrijfsnaam',
+    profile.companyName
+  );
+
+  pair(
+    summary,
+    'Factuur e-mailadres',
+    profile.invoiceEmail
+  );
+
+  pair(
+    summary,
+    'Betaaltermijn',
+    profile.defaultPaymentTermDays
+      ? profile.defaultPaymentTermDays+' dagen'
+      : null
+  );
+
+  pair(
+    summary,
+    'Factuurnummering',
+    profile.invoicePrefix
+      ? profile.invoicePrefix+'-YYYY-00001'
+      : null
+  );
+
+  pair(
+    summary,
+    'Creditnummering',
+    profile.creditPrefix
+      ? profile.creditPrefix+'-YYYY-00001'
+      : null
+  );
+
+  pair(
+    summary,
+    'Btw-verwerking',
+    profile.vatAccountingMethod==='cash'
+      ? 'Kasstelsel'
+      : profile.vatAccountingMethod==='invoice'
+        ? 'Factuurstelsel'
+        : profile.vatAccountingMethod
+  );
+
+  pair(
+    summary,
+    'Logo',
+    profile.logoStoragePath
+      ? 'Ingesteld'
+      : 'Nog niet ingesteld'
+  );
+
+  pair(
+    summary,
+    'Status',
+    complete
+      ? 'Factuurgegevens compleet'
+      : 'Factuurgegevens aanvullen'
+  );
+
+  shell.append(summary);
+
+
+  const details=
+    el(
+      'details',
+      undefined,
+      'profile-source'
+    );
+
+  details.append(
+    el(
+      'summary',
+      'Alle factuurgegevens bekijken'
+    )
+  );
+
+  const detailGrid=
+    el(
+      'div',
+      undefined,
+      'profile-grid'
+    );
+
+  pair(
+    detailGrid,
+    'KvK-nummer',
+    profile.registrationNumber
+  );
+
+  pair(
+    detailGrid,
+    'Btw-id',
+    profile.vatNumber
+  );
+
+  pair(
+    detailGrid,
+    'Telefoonnummer',
+    profile.phone
+  );
+
+  pair(
+    detailGrid,
+    'Website',
+    profile.website
+  );
+
+  pair(
+    detailGrid,
+    'IBAN',
+    profile.iban
+  );
+
+  pair(
+    detailGrid,
+    'BIC',
+    profile.bic
+  );
+
+  const addressLine=[
+    address.street,
+    address.houseNumber,
+    address.addition
+  ].filter(Boolean).join(' ');
+
+  const cityLine=[
+    address.postalCode,
+    address.city
+  ].filter(Boolean).join(' ');
+
+  pair(
+    detailGrid,
+    'Adres',
+    [
+      addressLine,
+      cityLine,
+      address.country
+    ].filter(Boolean).join(', ')
+  );
+
+  pair(
+    detailGrid,
+    'Factuurfooter',
+    profile.footerText
+  );
+
+  details.append(detailGrid);
+  shell.append(details);
+
+
+  if(result.canWrite){
+    head.append(
+      button(
+        'Factuurinstellingen bewerken',
+        ()=>editInvoiceSettings(
+          profile,
+          result
+        ),
+        'primary'
+      )
+    );
+  }
+ }
+
+
+ function editInvoiceSettings(profile,result){
+  if(
+    pending
+    ||root.querySelector('dialog')
+  ){
+    return;
+  }
+
+  const address=
+    profile.businessAddress??{};
+
+  const dialog=
+    el(
+      'dialog',
+      undefined,
+      'customer-dialog profile-dialog'
+    );
+
+  const form=
+    el('form');
+
+  const fieldset=
+    el('fieldset');
+
+  const errors=
+    errorBox('');
+
+  const head=
+    el(
+      'div',
+      undefined,
+      'profile-dialog-head'
+    );
+
+  head.append(
+    el(
+      'p',
+      'Facturatie',
+      'eyebrow'
+    ),
+    el(
+      'h2',
+      'Factuurinstellingen bewerken'
+    ),
+    el(
+      'p',
+      'Deze instellingen worden direct gebruikt door Mijn Bestemming.',
+      'profile-help'
+    )
+  );
+
+  form.append(
+    head,
+    fieldset,
+    errors
+  );
+
+  dialog.append(form);
+  root.append(dialog);
+
+
+  const controls={};
+
+
+  function inputField(
+    key,
+    labelText,
+    value='',
+    type='text',
+    max=200,
+    required=false
+  ){
+    const label=
+      el(
+        'label',
+        labelText+
+        (required?' *':'')
+      );
+
+    const input=
+      el('input');
+
+    input.type=type;
+    input.name=key;
+    input.value=value??'';
+    input.maxLength=max;
+    input.required=required;
+
+    label.append(input);
+    fieldset.append(label);
+
+    controls[key]=input;
+  }
+
+
+  inputField(
+    'companyName',
+    'Bedrijfsnaam',
+    profile.companyName,
+    'text',
+    200,
+    true
+  );
+
+  inputField(
+    'registrationNumber',
+    'KvK-nummer',
+    profile.registrationNumber,
+    'text',
+    40
+  );
+
+  inputField(
+    'vatNumber',
+    'Btw-id',
+    profile.vatNumber,
+    'text',
+    40
+  );
+
+  inputField(
+    'invoiceEmail',
+    'Factuur e-mailadres',
+    profile.invoiceEmail,
+    'email',
+    254,
+    true
+  );
+
+  inputField(
+    'phone',
+    'Telefoonnummer',
+    profile.phone,
+    'text',
+    40
+  );
+
+  inputField(
+    'website',
+    'Website',
+    profile.website,
+    'text',
+    200
+  );
+
+  inputField(
+    'iban',
+    'IBAN',
+    profile.iban,
+    'text',
+    40
+  );
+
+  inputField(
+    'bic',
+    'BIC',
+    profile.bic,
+    'text',
+    20
+  );
+
+  inputField(
+    'street',
+    'Straat',
+    address.street,
+    'text',
+    120
+  );
+
+  inputField(
+    'houseNumber',
+    'Huisnummer',
+    address.houseNumber,
+    'text',
+    20
+  );
+
+  inputField(
+    'addition',
+    'Toevoeging',
+    address.addition,
+    'text',
+    20
+  );
+
+  inputField(
+    'postalCode',
+    'Postcode',
+    address.postalCode,
+    'text',
+    20
+  );
+
+  inputField(
+    'city',
+    'Plaats',
+    address.city,
+    'text',
+    100
+  );
+
+  inputField(
+    'country',
+    'Land',
+    address.country||'Nederland',
+    'text',
+    80
+  );
+
+  inputField(
+    'invoicePrefix',
+    'Factuurprefix',
+    profile.invoicePrefix||'F',
+    'text',
+    10,
+    true
+  );
+
+  inputField(
+    'creditPrefix',
+    'Creditprefix',
+    profile.creditPrefix||'C',
+    'text',
+    10,
+    true
+  );
+
+
+  const termLabel=
+    el(
+      'label',
+      'Standaard betaaltermijn *'
+    );
+
+  const term=
+    el('select');
+
+  for(
+    const days of [
+      7,
+      14,
+      30,
+      45,
+      60
+    ]
+  ){
+    const option=
+      el(
+        'option',
+        days+' dagen'
+      );
+
+    option.value=
+      String(days);
+
+    option.selected=
+      Number(
+        profile.defaultPaymentTermDays
+        ??30
+      )===days;
+
+    term.append(option);
+  }
+
+  termLabel.append(term);
+  fieldset.append(termLabel);
+
+  controls.defaultPaymentTermDays=
+    term;
+
+
+  const footerLabel=
+    el(
+      'label',
+      'Tekst onderaan factuur'
+    );
+
+  footerLabel.className=
+    'profile-field-wide';
+
+  const footer=
+    el('textarea');
+
+  footer.name=
+    'footerText';
+
+  footer.maxLength=
+    500;
+
+  footer.value=
+    profile.footerText??'';
+
+  footerLabel.append(footer);
+  fieldset.append(footerLabel);
+
+  controls.footerText=
+    footer;
+
+
+  const readonly=
+    el(
+      'div',
+      undefined,
+      'profile-warning'
+    );
+
+  readonly.textContent=
+    'Btw-verwerking: '
+    +(
+      profile.vatAccountingMethod==='cash'
+        ?'Kasstelsel'
+        :'Factuurstelsel'
+    )
+    +'. Dit veld wijzigen we bewust niet vanuit dit formulier.';
+
+  fieldset.append(readonly);
+
+
+  const actions=
+    el(
+      'div',
+      undefined,
+      'profile-form-actions'
+    );
+
+  const cancel=
+    button(
+      'Annuleren',
+      ()=>{
+        if(pending)return;
+        dialog.close();
+      }
+    );
+
+  const save=
+    el(
+      'button',
+      'Opslaan',
+      'primary profile-button profile-button--primary'
+    );
+
+  save.type=
+    'submit';
+
+  actions.append(
+    cancel,
+    save
+  );
+
+  form.append(actions);
+
+
+  form.onsubmit=
+    async event=>{
+      event.preventDefault();
+
+      if(pending)return;
+
+      errors.textContent='';
+
+      pending=true;
+      fieldset.disabled=true;
+      save.disabled=true;
+      cancel.disabled=true;
+      save.textContent='Opslaan…';
+
+      try{
+        await api(
+          '/api/organizations/'
+          +encodeURIComponent(selected)
+          +'/invoicing-settings',
+          {
+            companyName:
+              controls.companyName.value,
+
+            registrationNumber:
+              controls.registrationNumber.value,
+
+            vatNumber:
+              controls.vatNumber.value,
+
+            phone:
+              controls.phone.value,
+
+            website:
+              controls.website.value,
+
+            businessAddress:{
+              street:
+                controls.street.value,
+
+              houseNumber:
+                controls.houseNumber.value,
+
+              addition:
+                controls.addition.value,
+
+              postalCode:
+                controls.postalCode.value,
+
+              city:
+                controls.city.value,
+
+              country:
+                controls.country.value
+            },
+
+            iban:
+              controls.iban.value,
+
+            bic:
+              controls.bic.value,
+
+            invoiceEmail:
+              controls.invoiceEmail.value,
+
+            footerText:
+              controls.footerText.value,
+
+            defaultPaymentTermDays:
+              Number(
+                controls.defaultPaymentTermDays.value
+              ),
+
+            invoicePrefix:
+              controls.invoicePrefix.value,
+
+            creditPrefix:
+              controls.creditPrefix.value
+          },
+          'PUT'
+        );
+
+        dialog.close();
+
+        if(root.isConnected){
+          await load(
+            'Factuurinstellingen opgeslagen.'
+          );
+        }
+
+      }catch(e){
+        errors.textContent=
+          e.message||
+          'Factuurinstellingen konden niet worden opgeslagen.';
+      }finally{
+        pending=false;
+        fieldset.disabled=false;
+        save.disabled=false;
+        cancel.disabled=false;
+        save.textContent='Opslaan';
+      }
+    };
+
+
+  dialog.addEventListener(
+    'close',
+    ()=>{
+      dialog.remove();
+    }
+  );
+
+
+  dialog.showModal();
+ }
+
  async function render(message=''){
   root.replaceChildren();const hero=el('section',undefined,'panel profile-hero');
   const org=data.organization,rel=data.relationship,company=data.sections.company??{};
@@ -82,7 +794,37 @@ export async function mountCustomerProfile(root,api,relationship,organizations){
    if(!root.isConnected||seq!==request)return;
    const panel=el('section',undefined,'panel profile-section'),heading=el('div',undefined,'profile-section-heading'),headingText=el('div');headingText.append(el('h3',profileSections[section]?.label??'Historie'));heading.append(headingText);panel.append(heading);content.append(panel);
    if(profileSections[section]?.private||section==='history')headingText.append(el('span','Intern','profile-badge'));
-   if(!allowed(section)){panel.append(el('p','Dit onderdeel is niet beschikbaar voor uw Office-rol.','profile-empty'));continue;}
+
+   /*
+    * Factuurinstellingen zijn een apart beveiligd
+    * onderdeel binnen Administratie.
+    */
+   if(section==='administration'){
+     await renderInvoiceSettings(panel);
+   }
+
+   if(!allowed(section)){
+     if(section==='administration'){
+       panel.append(
+         el(
+           'p',
+           'De overige administratieve profielgegevens zijn niet beschikbaar voor uw Office-rol.',
+           'profile-empty'
+         )
+       );
+       continue;
+     }
+
+     panel.append(
+       el(
+         'p',
+         'Dit onderdeel is niet beschikbaar voor uw Office-rol.',
+         'profile-empty'
+       )
+     );
+     continue;
+   }
+
    if(section==='history'||profileSections[section].collection){await collection(panel,section,seq);continue;}
    const record=section==='overview'?data.relationship:section==='company'?{...company,name:org.name,legal_name:org.legal_name}:data.sections[section]??{};
    const fields=Object.fromEntries(Object.entries(profileSections[section].fields).filter(([key])=>(key!=='rsin'||allowed('fiscal'))&&!(section==='fiscal'&&record.vat_status&&['kor','vat_liable'].includes(key))));
