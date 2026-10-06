@@ -776,6 +776,7 @@ export function mountOfficeBanking(
                   match
                     ? `
                       <div class="office-bank-match">
+
                         <div>
                           <span>
                             Voorgestelde factuur
@@ -788,6 +789,7 @@ export function mountOfficeBanking(
                           </strong>
                         </div>
 
+
                         <div>
                           <span>
                             Relatie
@@ -799,6 +801,7 @@ export function mountOfficeBanking(
                             )}
                           </strong>
                         </div>
+
 
                         <div>
                           <span>
@@ -815,6 +818,7 @@ export function mountOfficeBanking(
                           </strong>
                         </div>
 
+
                         <div>
                           <span>
                             Matchscore
@@ -827,11 +831,87 @@ export function mountOfficeBanking(
                           </strong>
                         </div>
 
+
+                        <div>
+                          <span>
+                            Openstaand factuurbedrag
+                          </span>
+
+                          <strong>
+                            ${escapeHtml(
+                              money(
+                                match.outstandingCents
+                              )
+                            )}
+                          </strong>
+                        </div>
+
+
+                        <div>
+                          <span>
+                            Deze bankbetaling
+                          </span>
+
+                          <strong>
+                            ${escapeHtml(
+                              money(
+                                Math.abs(
+                                  transaction.amountCents
+                                )
+                              )
+                            )}
+                          </strong>
+                        </div>
+
+
+                        <div>
+                          <span>
+                            Na verwerking
+                          </span>
+
+                          <strong>
+                            ${
+                              Math.abs(
+                                Number(
+                                  transaction.amountCents
+                                )
+                              ) ===
+                              Number(
+                                match.outstandingCents
+                              )
+                                ? 'Betaald'
+                                : Math.abs(
+                                    Number(
+                                      transaction.amountCents
+                                    )
+                                  ) <
+                                  Number(
+                                    match.outstandingCents
+                                  )
+                                  ? `${escapeHtml(
+                                      money(
+                                        Number(
+                                          match.outstandingCents
+                                        ) -
+                                        Math.abs(
+                                          Number(
+                                            transaction.amountCents
+                                          )
+                                        )
+                                      )
+                                    )} openstaand`
+                                  : 'Controle vereist'
+                            }
+                          </strong>
+                        </div>
+
+
                         <p>
                           ${escapeHtml(
                             match.reason
                           )}
                         </p>
+
                       </div>
                     `
                     : ''
