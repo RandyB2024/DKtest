@@ -6929,3 +6929,292 @@ h3{
 
 }
 
+
+
+/* ==========================================================
+   BESTEMD COMPACT INVOICE SETTINGS V1
+   ========================================================== */
+
+.invoice-settings-card{
+  padding:20px 22px;
+}
+
+.invoice-settings-summary-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.invoice-settings-title{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.invoice-settings-title h2{
+  margin:0;
+  color:#12364f;
+  font-size:1.12rem;
+}
+
+.invoice-settings-title p{
+  margin:4px 0 0;
+  color:#607789;
+  font-size:.84rem;
+}
+
+.invoice-settings-icon{
+  width:42px;
+  height:42px;
+  flex:0 0 42px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:12px;
+
+  background:#edf8fb;
+  color:#078cab;
+}
+
+.invoice-settings-manage{
+  flex:none;
+}
+
+.invoice-settings-loading{
+  padding:22px 0 4px;
+  color:#607789;
+}
+
+
+/* compacte samenvatting */
+.invoice-settings-summary{
+  display:grid;
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  margin-top:18px;
+
+  overflow:hidden;
+
+  border:
+    1px solid #e1eaf0;
+
+  border-radius:13px;
+
+  background:#f7fbfd;
+}
+
+.invoice-settings-summary-item{
+  position:relative;
+
+  min-width:0;
+
+  display:grid;
+  grid-template-columns:
+    40px minmax(0,1fr) auto;
+
+  align-items:center;
+  gap:12px;
+
+  padding:17px 18px;
+}
+
+.invoice-settings-summary-item +
+.invoice-settings-summary-item{
+  border-left:
+    1px solid #dde8ee;
+}
+
+.invoice-settings-summary-icon{
+  width:38px;
+  height:38px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:10px;
+
+  background:#e9f7fa;
+  color:#078cab;
+}
+
+.invoice-settings-summary-item strong{
+  display:block;
+
+  color:#173b53!important;
+
+  font-size:.85rem;
+  line-height:1.3;
+}
+
+.invoice-settings-summary-item span{
+  display:block;
+
+  margin-top:3px;
+
+  color:#62798a!important;
+
+  font-size:.73rem;
+  line-height:1.4;
+
+  opacity:1!important;
+}
+
+.invoice-settings-ok{
+  flex:none;
+  color:#21a36b;
+}
+
+
+/* uitgeklapte editor */
+.invoice-settings-editor{
+  margin-top:18px;
+
+  padding-top:18px;
+
+  border-top:
+    1px solid #e4ebef;
+}
+
+.invoice-settings-editor-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+
+  gap:20px;
+
+  margin-bottom:18px;
+
+  padding:
+    14px 16px;
+
+  border:
+    1px solid #e0e9ee;
+
+  border-radius:11px;
+
+  background:#f8fbfc;
+}
+
+.invoice-settings-editor-head strong{
+  display:block;
+
+  color:#173b53;
+
+  font-size:.86rem;
+}
+
+.invoice-settings-editor-head span{
+  display:block;
+
+  max-width:650px;
+
+  margin-top:4px;
+
+  color:#607789;
+
+  font-size:.75rem;
+  line-height:1.5;
+}
+
+
+/* formulier in edit-mode compacter */
+.invoice-settings-editor
+.invoice-profile-form{
+  margin-top:0;
+}
+
+.invoice-settings-editor
+.invoice-profile-fields{
+  gap:14px 18px;
+}
+
+.invoice-settings-editor
+.invoice-profile-fields label{
+  gap:6px;
+
+  font-size:.76rem;
+}
+
+.invoice-settings-editor
+.invoice-profile-fields input,
+.invoice-settings-editor
+.invoice-profile-fields select{
+  min-height:42px;
+}
+
+.invoice-settings-editor
+.invoice-profile-fields textarea{
+  min-height:90px;
+}
+
+
+/* algemene financiële pagina wat rustiger */
+.invoice-profile-manager,
+.invoice-draft-manager,
+.invoice-archive,
+.debtor-manager{
+  margin-top:16px;
+}
+
+.invoice-profile-manager.card,
+.invoice-draft-manager.card,
+.invoice-archive.card,
+.debtor-manager.card{
+  box-shadow:
+    0 4px 18px
+    rgba(15,55,78,.035);
+}
+
+
+/* tablet */
+@media(max-width:900px){
+
+  .invoice-settings-summary{
+    grid-template-columns:1fr;
+  }
+
+  .invoice-settings-summary-item +
+  .invoice-settings-summary-item{
+    border-left:0;
+
+    border-top:
+      1px solid #dde8ee;
+  }
+
+}
+
+
+/* mobiel */
+@media(max-width:700px){
+
+  .invoice-settings-card{
+    padding:17px;
+  }
+
+  .invoice-settings-summary-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .invoice-settings-manage{
+    width:100%;
+  }
+
+  .invoice-settings-summary-item{
+    padding:15px;
+  }
+
+  .invoice-settings-editor-head{
+    flex-direction:column;
+  }
+
+  .invoice-settings-editor-head .btn{
+    width:100%;
+  }
+
+}
+

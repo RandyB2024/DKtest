@@ -41,7 +41,7 @@ import CommunicationView from "./communication-view";
 const nav = [
   ["Dashboard", LayoutDashboard],
   ["Bankieren", WalletCards],
-  ["Facturen", FileText],
+  ["Debiteuren", FileText],
   ["Crediteuren", Landmark],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
@@ -274,7 +274,7 @@ export default function Portal({
       );
     }
 
-    if (view === "Facturen") {
+    if (view === "Debiteuren") {
       return (
         <ReceivablesView
           context={context}
@@ -342,7 +342,7 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Facturen",
+                  "Debiteuren",
                 )
               }
             >
@@ -362,7 +362,7 @@ if (view === "Documenten") {
             item={item}
             onBack={() =>
               setView(
-                "Facturen",
+                "Debiteuren",
               )
             }
           />
@@ -385,7 +385,7 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Facturen",
+                  "Debiteuren",
                 )
               }
             >

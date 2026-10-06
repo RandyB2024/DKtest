@@ -1092,7 +1092,7 @@ export default function CustomerDashboard({
           }
           onClick={() =>
             go(
-              "Facturen",
+              "Debiteuren",
               "debiteuren",
             )
           }
@@ -1586,7 +1586,7 @@ export default function CustomerDashboard({
               type="button"
               onClick={() =>
                 go(
-                  "Facturen",
+                  "Debiteuren",
                   "debiteuren",
                 )
               }
@@ -1722,7 +1722,7 @@ export default function CustomerDashboard({
               type="button"
               onClick={() =>
                 go(
-                  "Facturen",
+                  "Debiteuren",
                   "nieuwe-factuur",
                 )
               }

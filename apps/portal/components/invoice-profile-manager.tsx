@@ -7,8 +7,11 @@ import {
 
 import {
   Building2,
+  CheckCircle2,
   ImageUp,
   Save,
+  Settings2,
+  X,
 } from "lucide-react";
 
 import type {
@@ -23,6 +26,7 @@ type InvoiceProfile = {
   vatNumber: string | null;
   phone: string | null;
   website: string | null;
+
   businessAddress: {
     street?: string;
     houseNumber?: string;
@@ -31,6 +35,7 @@ type InvoiceProfile = {
     city?: string;
     country?: string;
   };
+
   iban: string | null;
   bic: string | null;
   invoiceEmail: string | null;
@@ -91,16 +96,34 @@ export default function InvoiceProfileManager({
       null,
     );
 
-  const [loading, setLoading] =
+  const [
+    loading,
+    setLoading,
+  ] =
     useState(true);
 
-  const [busy, setBusy] =
+  const [
+    busy,
+    setBusy,
+  ] =
     useState(false);
 
-  const [error, setError] =
+  const [
+    editing,
+    setEditing,
+  ] =
+    useState(false);
+
+  const [
+    error,
+    setError,
+  ] =
     useState("");
 
-  const [success, setSuccess] =
+  const [
+    success,
+    setSuccess,
+  ] =
     useState("");
 
 
@@ -136,7 +159,8 @@ export default function InvoiceProfileManager({
             context.organizationId,
           )}`,
           {
-            cache: "no-store",
+            cache:
+              "no-store",
           },
         );
 
@@ -154,6 +178,7 @@ export default function InvoiceProfileManager({
         result.profile;
 
       if (!profile) {
+        setEditing(true);
         return;
       }
 
@@ -208,10 +233,12 @@ export default function InvoiceProfileManager({
           "Nederland",
 
         iban:
-          profile.iban ?? "",
+          profile.iban ??
+          "",
 
         bic:
-          profile.bic ?? "",
+          profile.bic ??
+          "",
 
         invoiceEmail:
           profile.invoiceEmail ??
@@ -236,6 +263,14 @@ export default function InvoiceProfileManager({
           profile.creditPrefix ||
           "C",
       });
+
+      if (
+        !profile.companyName ||
+        !profile.invoiceEmail
+      ) {
+        setEditing(true);
+      }
+
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -276,7 +311,8 @@ export default function InvoiceProfileManager({
         await fetch(
           "/api/invoicing/profile",
           {
-            method: "POST",
+            method:
+              "POST",
 
             headers: {
               "content-type":
@@ -362,6 +398,11 @@ export default function InvoiceProfileManager({
       setSuccess(
         "Factuurinstellingen opgeslagen.",
       );
+
+      setEditing(false);
+
+      await load();
+
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -411,7 +452,8 @@ export default function InvoiceProfileManager({
         await fetch(
           "/api/invoicing/logo",
           {
-            method: "POST",
+            method:
+              "POST",
             body,
           },
         );
@@ -434,6 +476,7 @@ export default function InvoiceProfileManager({
       setSuccess(
         "Logo opgeslagen.",
       );
+
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -442,7 +485,8 @@ export default function InvoiceProfileManager({
       );
     } finally {
       setBusy(false);
-      event.target.value = "";
+      event.target.value =
+        "";
     }
   }
 
@@ -455,23 +499,52 @@ export default function InvoiceProfileManager({
   }
 
 
+  const companyComplete =
+    Boolean(
+      form.companyName &&
+      form.invoiceEmail &&
+      form.street &&
+      form.postalCode &&
+      form.city,
+    );
+
+
   return (
-    <section className="card invoice-profile-manager">
+    <section className="card invoice-profile-manager invoice-settings-card">
 
-      <div className="section-heading invoice-profile-head">
-        <div>
-          <h2>
-            Factuurinstellingen
-          </h2>
+      <div className="invoice-settings-summary-head">
 
-          <p>
-            Gegevens die op jouw
-            verkoopfacturen worden
-            gebruikt.
-          </p>
+        <div className="invoice-settings-title">
+          <div className="invoice-settings-icon">
+            <Settings2 size={20} />
+          </div>
+
+          <div>
+            <h2>
+              Factuurinstellingen
+            </h2>
+
+            <p>
+              Instellingen die worden gebruikt voor je verkoopfacturen.
+            </p>
+          </div>
         </div>
 
-        <Building2 />
+
+        {!editing && !loading && (
+          <button
+            type="button"
+            className="btn invoice-settings-manage"
+            onClick={() => {
+              setEditing(true);
+              setSuccess("");
+            }}
+          >
+            <Settings2 size={15} />
+            Instellingen beheren
+          </button>
+        )}
+
       </div>
 
 
@@ -486,412 +559,508 @@ export default function InvoiceProfileManager({
 
 
       {success && (
-        <div className="notice">
+        <div
+          className="notice"
+          role="status"
+        >
           {success}
         </div>
       )}
 
 
       {loading ? (
-        <p>
-          Factuurinstellingen worden
-          geladen...
-        </p>
-      ) : (
-        <form
-          className="invoice-profile-form"
-          onSubmit={save}
-        >
+        <div className="invoice-settings-loading">
+          Factuurinstellingen worden geladen...
+        </div>
+      ) : !editing ? (
 
-          <div className="invoice-logo-box">
-            <div className="invoice-logo-placeholder">
-              <ImageUp />
+        <div className="invoice-settings-summary">
+
+          <div className="invoice-settings-summary-item">
+            <div className="invoice-settings-summary-icon">
+              <ImageUp size={18} />
+            </div>
+
+            <div>
               <strong>
-                Bedrijfslogo
+                {logoStoragePath
+                  ? "Logo ingesteld"
+                  : "Nog geen logo"}
               </strong>
 
               <span>
                 {logoStoragePath
-                  ? "Logo ingesteld"
-                  : "Nog geen logo ingesteld"}
+                  ? "Je bedrijfslogo wordt gebruikt op facturen."
+                  : "Voeg een bedrijfslogo toe via Instellingen beheren."}
               </span>
             </div>
 
-            <label className="btn">
-              Logo uploaden
-
-              <input
-                hidden
-                type="file"
-                accept="image/png,image/jpeg"
-                disabled={busy}
-                onChange={uploadLogo}
+            {logoStoragePath && (
+              <CheckCircle2
+                className="invoice-settings-ok"
+                size={17}
               />
-            </label>
-
-            <small>
-              PNG of JPG · maximaal
-              2 MB
-            </small>
+            )}
           </div>
 
 
-          <div className="invoice-profile-fields">
+          <div className="invoice-settings-summary-item">
+            <div className="invoice-settings-summary-icon">
+              <Building2 size={18} />
+            </div>
 
-            <label>
-              Bedrijfsnaam *
+            <div>
+              <strong>
+                {companyComplete
+                  ? "Bedrijfsgegevens compleet"
+                  : "Bedrijfsgegevens aanvullen"}
+              </strong>
 
-              <input
-                required
-                maxLength={200}
-                value={
-                  form.companyName
-                }
-                onChange={(event) =>
-                  field(
-                    "companyName",
-                    event.target.value,
-                  )
-                }
+              <span>
+                {companyComplete
+                  ? form.companyName
+                  : "Controleer de verplichte factuurgegevens."}
+              </span>
+            </div>
+
+            {companyComplete && (
+              <CheckCircle2
+                className="invoice-settings-ok"
+                size={17}
               />
-            </label>
-
-
-            <label>
-              KvK-nummer
-
-              <input
-                maxLength={40}
-                value={
-                  form.registrationNumber
-                }
-                onChange={(event) =>
-                  field(
-                    "registrationNumber",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Btw-id
-
-              <input
-                maxLength={40}
-                value={
-                  form.vatNumber
-                }
-                onChange={(event) =>
-                  field(
-                    "vatNumber",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Factuur e-mailadres *
-
-              <input
-                required
-                type="email"
-                maxLength={254}
-                value={
-                  form.invoiceEmail
-                }
-                onChange={(event) =>
-                  field(
-                    "invoiceEmail",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              IBAN
-
-              <input
-                maxLength={40}
-                value={form.iban}
-                onChange={(event) =>
-                  field(
-                    "iban",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              BIC
-
-              <input
-                maxLength={20}
-                value={form.bic}
-                onChange={(event) =>
-                  field(
-                    "bic",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Telefoonnummer
-
-              <input
-                maxLength={40}
-                value={form.phone}
-                onChange={(event) =>
-                  field(
-                    "phone",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Website
-
-              <input
-                maxLength={200}
-                value={form.website}
-                onChange={(event) =>
-                  field(
-                    "website",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Straat
-
-              <input
-                maxLength={120}
-                value={form.street}
-                onChange={(event) =>
-                  field(
-                    "street",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Huisnummer
-
-              <input
-                maxLength={20}
-                value={
-                  form.houseNumber
-                }
-                onChange={(event) =>
-                  field(
-                    "houseNumber",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Toevoeging
-
-              <input
-                maxLength={20}
-                value={
-                  form.addition
-                }
-                onChange={(event) =>
-                  field(
-                    "addition",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Postcode
-
-              <input
-                maxLength={20}
-                value={
-                  form.postalCode
-                }
-                onChange={(event) =>
-                  field(
-                    "postalCode",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Plaats
-
-              <input
-                maxLength={100}
-                value={form.city}
-                onChange={(event) =>
-                  field(
-                    "city",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Land
-
-              <input
-                maxLength={80}
-                value={form.country}
-                onChange={(event) =>
-                  field(
-                    "country",
-                    event.target.value,
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Standaard betaaltermijn
-
-              <select
-                value={
-                  form.defaultPaymentTermDays
-                }
-                onChange={(event) =>
-                  field(
-                    "defaultPaymentTermDays",
-                    event.target.value,
-                  )
-                }
-              >
-                <option value="7">
-                  7 dagen
-                </option>
-
-                <option value="14">
-                  14 dagen
-                </option>
-
-                <option value="30">
-                  30 dagen
-                </option>
-
-                <option value="45">
-                  45 dagen
-                </option>
-
-                <option value="60">
-                  60 dagen
-                </option>
-              </select>
-            </label>
-
-
-            <label>
-              Factuurprefix
-
-              <input
-                required
-                maxLength={10}
-                value={
-                  form.invoicePrefix
-                }
-                onChange={(event) =>
-                  field(
-                    "invoicePrefix",
-                    event.target.value
-                      .toUpperCase(),
-                  )
-                }
-              />
-            </label>
-
-
-            <label>
-              Creditprefix
-
-              <input
-                required
-                maxLength={10}
-                value={
-                  form.creditPrefix
-                }
-                onChange={(event) =>
-                  field(
-                    "creditPrefix",
-                    event.target.value
-                      .toUpperCase(),
-                  )
-                }
-              />
-            </label>
-
-
-            <label className="invoice-profile-wide">
-              Voettekst op factuur
-
-              <textarea
-                maxLength={500}
-                value={
-                  form.footerText
-                }
-                onChange={(event) =>
-                  field(
-                    "footerText",
-                    event.target.value,
-                  )
-                }
-                placeholder="Bijvoorbeeld bedankt voor je opdracht."
-              />
-            </label>
-
+            )}
           </div>
 
 
-          <div className="invoice-profile-actions">
+          <div className="invoice-settings-summary-item">
+            <div className="invoice-settings-summary-icon">
+              <Save size={18} />
+            </div>
+
+            <div>
+              <strong>
+                Betaaltermijn{" "}
+                {form.defaultPaymentTermDays} dagen
+              </strong>
+
+              <span>
+                Standaard betaaltermijn voor nieuwe facturen.
+              </span>
+            </div>
+
+            <CheckCircle2
+              className="invoice-settings-ok"
+              size={17}
+            />
+          </div>
+
+        </div>
+
+      ) : (
+
+        <div className="invoice-settings-editor">
+
+          <div className="invoice-settings-editor-head">
+            <div>
+              <strong>
+                Factuurgegevens beheren
+              </strong>
+
+              <span>
+                Deze gegevens hoef je normaal alleen te wijzigen wanneer je bedrijfs- of factuurgegevens veranderen.
+              </span>
+            </div>
+
             <button
-              type="submit"
-              className="btn primary"
+              type="button"
+              className="btn"
               disabled={busy}
+              onClick={() => {
+                setEditing(false);
+                setError("");
+                setSuccess("");
+              }}
             >
-              <Save size={16} />
-
-              {busy
-                ? "Opslaan..."
-                : "Factuurinstellingen opslaan"}
+              <X size={15} />
+              Sluiten
             </button>
           </div>
 
-        </form>
+
+          <form
+            className="invoice-profile-form"
+            onSubmit={save}
+          >
+
+            <div className="invoice-logo-box">
+              <div className="invoice-logo-placeholder">
+                <ImageUp />
+
+                <strong>
+                  Bedrijfslogo
+                </strong>
+
+                <span>
+                  {logoStoragePath
+                    ? "Logo ingesteld"
+                    : "Nog geen logo ingesteld"}
+                </span>
+              </div>
+
+              <label className="btn">
+                Logo uploaden
+
+                <input
+                  hidden
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  disabled={busy}
+                  onChange={uploadLogo}
+                />
+              </label>
+
+              <small>
+                PNG of JPG · maximaal 2 MB
+              </small>
+            </div>
+
+
+            <div className="invoice-profile-fields">
+
+              <label>
+                Bedrijfsnaam *
+
+                <input
+                  required
+                  maxLength={200}
+                  value={form.companyName}
+                  onChange={(event) =>
+                    field(
+                      "companyName",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                KvK-nummer
+
+                <input
+                  maxLength={40}
+                  value={form.registrationNumber}
+                  onChange={(event) =>
+                    field(
+                      "registrationNumber",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Btw-id
+
+                <input
+                  maxLength={40}
+                  value={form.vatNumber}
+                  onChange={(event) =>
+                    field(
+                      "vatNumber",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Factuur e-mailadres *
+
+                <input
+                  required
+                  type="email"
+                  maxLength={254}
+                  value={form.invoiceEmail}
+                  onChange={(event) =>
+                    field(
+                      "invoiceEmail",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                IBAN
+
+                <input
+                  maxLength={40}
+                  value={form.iban}
+                  onChange={(event) =>
+                    field(
+                      "iban",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                BIC
+
+                <input
+                  maxLength={20}
+                  value={form.bic}
+                  onChange={(event) =>
+                    field(
+                      "bic",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Telefoonnummer
+
+                <input
+                  maxLength={40}
+                  value={form.phone}
+                  onChange={(event) =>
+                    field(
+                      "phone",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Website
+
+                <input
+                  maxLength={200}
+                  value={form.website}
+                  onChange={(event) =>
+                    field(
+                      "website",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Straat
+
+                <input
+                  maxLength={120}
+                  value={form.street}
+                  onChange={(event) =>
+                    field(
+                      "street",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Huisnummer
+
+                <input
+                  maxLength={20}
+                  value={form.houseNumber}
+                  onChange={(event) =>
+                    field(
+                      "houseNumber",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Toevoeging
+
+                <input
+                  maxLength={20}
+                  value={form.addition}
+                  onChange={(event) =>
+                    field(
+                      "addition",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Postcode
+
+                <input
+                  maxLength={20}
+                  value={form.postalCode}
+                  onChange={(event) =>
+                    field(
+                      "postalCode",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Plaats
+
+                <input
+                  maxLength={100}
+                  value={form.city}
+                  onChange={(event) =>
+                    field(
+                      "city",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Land
+
+                <input
+                  maxLength={80}
+                  value={form.country}
+                  onChange={(event) =>
+                    field(
+                      "country",
+                      event.target.value,
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Standaard betaaltermijn
+
+                <select
+                  value={form.defaultPaymentTermDays}
+                  onChange={(event) =>
+                    field(
+                      "defaultPaymentTermDays",
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="7">
+                    7 dagen
+                  </option>
+
+                  <option value="14">
+                    14 dagen
+                  </option>
+
+                  <option value="30">
+                    30 dagen
+                  </option>
+
+                  <option value="45">
+                    45 dagen
+                  </option>
+
+                  <option value="60">
+                    60 dagen
+                  </option>
+                </select>
+              </label>
+
+
+              <label>
+                Factuurprefix
+
+                <input
+                  required
+                  maxLength={10}
+                  value={form.invoicePrefix}
+                  onChange={(event) =>
+                    field(
+                      "invoicePrefix",
+                      event.target.value
+                        .toUpperCase(),
+                    )
+                  }
+                />
+              </label>
+
+
+              <label>
+                Creditprefix
+
+                <input
+                  required
+                  maxLength={10}
+                  value={form.creditPrefix}
+                  onChange={(event) =>
+                    field(
+                      "creditPrefix",
+                      event.target.value
+                        .toUpperCase(),
+                    )
+                  }
+                />
+              </label>
+
+
+              <label className="invoice-profile-wide">
+                Voettekst op factuur
+
+                <textarea
+                  maxLength={500}
+                  value={form.footerText}
+                  onChange={(event) =>
+                    field(
+                      "footerText",
+                      event.target.value,
+                    )
+                  }
+                  placeholder="Bijvoorbeeld bedankt voor je opdracht."
+                />
+              </label>
+
+            </div>
+
+
+            <div className="invoice-profile-actions">
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={busy}
+              >
+                <Save size={16} />
+
+                {busy
+                  ? "Opslaan..."
+                  : "Factuurinstellingen opslaan"}
+              </button>
+            </div>
+
+          </form>
+
+        </div>
       )}
 
     </section>
