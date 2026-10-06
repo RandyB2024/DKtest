@@ -8,6 +8,7 @@ import { writeOfficeCookie } from './auth/supabase.mjs';
 import { customerMutation } from './customer-management.mjs';
 import { kvkRoute } from './kvk/intake.mjs';
 import { profileRoute } from './customer-profile.mjs';
+import { invoicingSettingsRoute } from './invoicing-settings.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -722,6 +723,23 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     if(tasks)return sendJson(res,tasks.status,tasks.data);
     const address=await addressRoute(req,url,client,user,config,fetchImpl);
     if(address)return sendJson(res,address.status,address.data);
+    const invoicingSettings =
+      await invoicingSettingsRoute(
+        req,
+        url,
+        client,
+        user,
+        body
+      );
+
+    if (invoicingSettings) {
+      return sendJson(
+        res,
+        invoicingSettings.status,
+        invoicingSettings.data
+      );
+    }
+
     const profile = await profileRoute(req,url,client,user,body);
     if (profile) return sendJson(res,profile.status,profile.data);
     const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);
