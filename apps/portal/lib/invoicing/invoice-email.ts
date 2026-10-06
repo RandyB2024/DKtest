@@ -3,7 +3,7 @@ import type {
 } from "@supabase/supabase-js";
 
 import {
-  ensureFinalInvoicePdf,
+  createFinalInvoiceDownloadUrl,
 } from "./final-invoice-pdf";
 
 
@@ -24,32 +24,48 @@ type SendInput = {
 };
 
 
-function base64(
-  bytes: Uint8Array,
+function cleanEmail(
+  value: unknown,
 ) {
-  let binary = "";
-
-  const chunk =
-    0x8000;
-
-  for (
-    let index = 0;
-    index < bytes.length;
-    index += chunk
+  if (
+    typeof value !== "string"
   ) {
-    binary +=
-      String.fromCharCode(
-        ...bytes.subarray(
-          index,
-          Math.min(
-            index + chunk,
-            bytes.length,
-          ),
-        ),
-      );
+    return "";
   }
 
-  return btoa(binary);
+  return value
+    .trim()
+    .toLowerCase();
+}
+
+
+function validEmail(
+  value: string,
+) {
+  return (
+    value.length >= 5 &&
+    value.length <= 254 &&
+    value.includes("@")
+  );
+}
+
+
+function dateNl(
+  value: string,
+) {
+  return new Intl.DateTimeFormat(
+    "nl-NL",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      timeZone: "UTC",
+    },
+  ).format(
+    new Date(
+      `${value}T12:00:00Z`,
+    ),
+  );
 }
 
 
@@ -87,10 +103,8 @@ sendInvoiceEmail(
 
 
   const {
-    data:
-      snapshotRow,
-    error:
-      snapshotError,
+    data: snapshotRow,
+    error: snapshotError,
   } =
     await input.client
       .from(
@@ -123,15 +137,6 @@ sendInvoiceEmail(
   const snapshot =
     snapshotRow.snapshot as any;
 
-
-  const finalPdf =
-    await ensureFinalInvoicePdf(
-      input.client,
-      input.organizationId,
-      input.invoiceId,
-    );
-
-
   const invoice =
     snapshot.invoice;
 
@@ -142,30 +147,83 @@ sendInvoiceEmail(
     snapshot.debtor;
 
 
+  const recipientEmail =
+    cleanEmail(
+      input.recipientEmail,
+    );
+
+
+  /*
+   * BCC-kopie voor de klant.
+   * Voor V1 gebruiken we het factuuradres
+   * van de onderneming.
+   */
+  const customerCopyEmail =
+    cleanEmail(
+      seller.invoiceEmail,
+    );
+
+
+  if (
+    !validEmail(
+      recipientEmail,
+    )
+  ) {
+    throw new Error(
+      "Het e-mailadres van de debiteur is ongeldig.",
+    );
+  }
+
+
+  if (
+    !validEmail(
+      customerCopyEmail,
+    )
+  ) {
+    throw new Error(
+      "Het factuur-e-mailadres van de klant ontbreekt of is ongeldig.",
+    );
+  }
+
+
+  /*
+   * Geen e-mailbijlage.
+   *
+   * De debiteur krijgt een tijdelijke,
+   * beveiligde downloadlink naar de
+   * immutable factuur-PDF.
+   */
+  const download =
+    await createFinalInvoiceDownloadUrl(
+      input.organizationId,
+      input.invoiceId,
+    );
+
+
   const subject =
     input.deliveryType ===
       "invoice"
       ? `Factuur ${invoice.invoiceNumber} van ${seller.companyName}`
       : input.deliveryType ===
           "reminder_1"
-        ? `Betalingsherinnering factuur ${invoice.invoiceNumber}`
+        ? `Betalingsherinnering factuur ${invoice.invoiceNumber} van ${seller.companyName}`
         : input.deliveryType ===
             "reminder_2"
-          ? `Tweede betalingsherinnering factuur ${invoice.invoiceNumber}`
-          : `Laatste betalingsherinnering factuur ${invoice.invoiceNumber}`;
+          ? `Tweede betalingsherinnering factuur ${invoice.invoiceNumber} van ${seller.companyName}`
+          : `Laatste betalingsherinnering factuur ${invoice.invoiceNumber} van ${seller.companyName}`;
 
 
   const message =
     input.deliveryType ===
       "invoice"
-      ? `Bijgaand ontvang je factuur ${invoice.invoiceNumber} van ${seller.companyName}.`
+      ? `Hierbij ontvang je factuur ${invoice.invoiceNumber} van ${seller.companyName}.`
       : input.deliveryType ===
           "reminder_1"
-        ? `Volgens onze administratie staat factuur ${invoice.invoiceNumber} nog open. We vragen je vriendelijk om deze alsnog te voldoen.`
+        ? `Volgens onze administratie staat factuur ${invoice.invoiceNumber} nog open.`
         : input.deliveryType ===
             "reminder_2"
-          ? `Factuur ${invoice.invoiceNumber} staat volgens onze administratie nog steeds open. We verzoeken je deze zo spoedig mogelijk te voldoen.`
-          : `Dit is de laatste betalingsherinnering voor factuur ${invoice.invoiceNumber}. We verzoeken je het openstaande bedrag zo spoedig mogelijk te voldoen.`;
+          ? `Factuur ${invoice.invoiceNumber} staat volgens onze administratie nog steeds open.`
+          : `Dit is de laatste betalingsherinnering voor factuur ${invoice.invoiceNumber}.`;
 
 
   const response =
@@ -198,8 +256,15 @@ sendInvoiceEmail(
               privateKey,
 
             template_params: {
+
               to_email:
-                input.recipientEmail,
+                recipientEmail,
+
+              to_klant_email:
+                customerCopyEmail,
+
+              reply_to:
+                customerCopyEmail,
 
               debtor_name:
                 debtor.name,
@@ -207,23 +272,21 @@ sendInvoiceEmail(
               company_name:
                 seller.companyName,
 
-              reply_to:
-                seller.invoiceEmail,
-
               invoice_number:
                 invoice.invoiceNumber,
 
               email_subject:
                 subject,
 
-              delivery_type:
-                input.deliveryType,
-
               invoice_date:
-                invoice.invoiceDate,
+                dateNl(
+                  invoice.invoiceDate,
+                ),
 
               due_date:
-                invoice.dueDate,
+                dateNl(
+                  invoice.dueDate,
+                ),
 
               total_amount:
                 new Intl.NumberFormat(
@@ -240,16 +303,13 @@ sendInvoiceEmail(
                     100,
                 ),
 
+              invoice_download_url:
+                download.url,
+
               invoice_filename:
-                finalPdf.filename,
+                download.filename,
 
-              invoice_pdf:
-                base64(
-                  finalPdf.bytes,
-                ),
-
-              message:
-                message,
+              message,
             },
           }),
       },
@@ -279,6 +339,10 @@ sendInvoiceEmail(
 
   return {
     filename:
-      finalPdf.filename,
+      download.filename,
+
+    recipientEmail,
+
+    customerCopyEmail,
   };
 }

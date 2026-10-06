@@ -1349,3 +1349,114 @@ export async function ensureFinalInvoicePdf(
     filename,
   };
 }
+
+
+/*
+ * BESTEMD SIGNED INVOICE DOWNLOAD V1
+ *
+ * Maakt uitsluitend een tijdelijke downloadlink
+ * voor een reeds definitief opgeslagen factuur-PDF.
+ *
+ * De invoice-pdfs bucket blijft privé.
+ */
+export async function createFinalInvoiceDownloadUrl(
+  organizationId: string,
+  invoiceId: string,
+  expiresInSeconds = 60 * 60 * 24 * 30,
+) {
+  const admin =
+    adminClient();
+
+  const {
+    data: invoice,
+    error: invoiceError,
+  } =
+    await admin
+      .from(
+        "sales_invoices",
+      )
+      .select(
+        "id,organization_id,invoice_number,document_status,pdf_storage_path",
+      )
+      .eq(
+        "id",
+        invoiceId,
+      )
+      .eq(
+        "organization_id",
+        organizationId,
+      )
+      .maybeSingle();
+
+
+  if (
+    invoiceError ||
+    !invoice
+  ) {
+    throw new Error(
+      "Factuur kon niet worden geladen.",
+    );
+  }
+
+
+  if (
+    invoice.document_status ===
+      "draft" ||
+    !invoice.invoice_number
+  ) {
+    throw new Error(
+      "Alleen definitieve facturen kunnen worden gedeeld.",
+    );
+  }
+
+
+  /*
+   * Zorg ervoor dat de definitieve PDF bestaat.
+   * Dit gebruikt altijd de immutable snapshot.
+   */
+  const finalPdf =
+    await ensureFinalInvoicePdf(
+      admin,
+      organizationId,
+      invoiceId,
+    );
+
+
+  const {
+    data,
+    error,
+  } =
+    await admin.storage
+      .from(
+        "invoice-pdfs",
+      )
+      .createSignedUrl(
+        finalPdf.path,
+        expiresInSeconds,
+        {
+          download:
+            finalPdf.filename,
+        },
+      );
+
+
+  if (
+    error ||
+    !data?.signedUrl
+  ) {
+    throw new Error(
+      "De beveiligde factuurlink kon niet worden aangemaakt.",
+    );
+  }
+
+
+  return {
+    url:
+      data.signedUrl,
+
+    filename:
+      finalPdf.filename,
+
+    expiresInSeconds,
+  };
+}
