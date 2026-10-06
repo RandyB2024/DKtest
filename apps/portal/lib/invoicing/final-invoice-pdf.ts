@@ -763,7 +763,7 @@ async function renderPdf(
         },
       );
 
-      descriptionY -= 11;
+      descriptionY -= 13;
     }
 
     text(

@@ -1060,7 +1060,7 @@ export async function GET(
             },
           );
 
-          descriptionY -= 11;
+          descriptionY -= 13;
         }
 
 
