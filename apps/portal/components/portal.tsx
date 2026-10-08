@@ -41,8 +41,8 @@ import CommunicationView from "./communication-view";
 const nav = [
   ["Dashboard", LayoutDashboard],
   ["Bankieren", WalletCards],
-  ["Debiteuren", FileText],
-  ["Crediteuren", Landmark],
+  ["Afnemers", FileText],
+  ["Leveranciers", Landmark],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
   ["Agenda", CalendarDays],
@@ -274,7 +274,7 @@ export default function Portal({
       );
     }
 
-    if (view === "Debiteuren") {
+    if (view === "Afnemers") {
       return (
         <ReceivablesView
           context={context}
@@ -286,7 +286,7 @@ export default function Portal({
       );
     }
 
-    if (view === "Crediteuren") {
+    if (view === "Leveranciers") {
       return (
         <PayablesView
           context={context}
@@ -342,7 +342,7 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Debiteuren",
+                  "Afnemers",
                 )
               }
             >
@@ -362,7 +362,7 @@ if (view === "Documenten") {
             item={item}
             onBack={() =>
               setView(
-                "Debiteuren",
+                "Afnemers",
               )
             }
           />
@@ -385,7 +385,7 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Debiteuren",
+                  "Afnemers",
                 )
               }
             >
@@ -425,12 +425,12 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Crediteuren",
+                  "Leveranciers",
                 )
               }
             >
               Terug naar
-              crediteuren
+              leveranciers
             </button>
           </section>
         );
@@ -446,7 +446,7 @@ if (view === "Documenten") {
             item={item}
             onBack={() =>
               setView(
-                "Crediteuren",
+                "Leveranciers",
               )
             }
           />
@@ -469,12 +469,12 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Crediteuren",
+                  "Leveranciers",
                 )
               }
             >
               Terug naar
-              crediteuren
+              leveranciers
             </button>
           </section>
         );

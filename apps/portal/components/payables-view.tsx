@@ -308,7 +308,7 @@ export default function PayablesView({
             );
 
             setError(
-              "Selecteer eerst één onderneming om de crediteuren te bekijken.",
+              "Selecteer eerst één onderneming om de leveranciers te bekijken.",
             );
           }
 
@@ -351,7 +351,7 @@ export default function PayablesView({
               "error" in result &&
                 result.error
                 ? result.error
-                : "Crediteuren konden niet worden geladen.",
+                : "Leveranciers konden niet worden geladen.",
             );
           }
 
@@ -376,7 +376,7 @@ export default function PayablesView({
               caughtError
                 instanceof Error
                 ? caughtError.message
-                : "Crediteuren konden niet worden geladen.",
+                : "Leveranciers konden niet worden geladen.",
             );
           }
         } finally {
@@ -497,7 +497,7 @@ export default function PayablesView({
           </button>
 
           <h1>
-            Crediteuren
+            Leveranciers
           </h1>
 
           <p>
@@ -525,7 +525,7 @@ export default function PayablesView({
       {loading && (
         <section className="card">
           <p>
-            Crediteuren worden
+            Leveranciers worden
             geladen...
           </p>
         </section>
@@ -668,7 +668,7 @@ export default function PayablesView({
 
             <nav
               className="invoice-filters"
-              aria-label="Crediteurenonderdelen"
+              aria-label="Leveranciersonderdelen"
             >
               <button
                 type="button"
@@ -878,7 +878,7 @@ export default function PayablesView({
                   <div className="section-heading">
                     <div>
                       <h2>
-                        Crediteurenouderdom
+                        Leveranciersouderdom
                       </h2>
 
                       <p>
@@ -1462,7 +1462,7 @@ export default function PayablesView({
                     </h2>
 
                     <p>
-                      Crediteurenstamgegevens
+                      Leveranciersstamgegevens
                       en actuele
                       verplichtingen.
                     </p>

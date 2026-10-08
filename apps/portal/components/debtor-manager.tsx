@@ -142,7 +142,7 @@ export default function DebtorManager({
       if (!response.ok) {
         throw new Error(
           result.error ||
-          "Debiteuren konden niet worden geladen.",
+          "Afnemers konden niet worden geladen.",
         );
       }
 
@@ -153,7 +153,7 @@ export default function DebtorManager({
       setError(
         caught instanceof Error
           ? caught.message
-          : "Debiteuren konden niet worden geladen.",
+          : "Afnemers konden niet worden geladen.",
       );
     } finally {
       setLoading(false);
@@ -411,7 +411,7 @@ export default function DebtorManager({
       <section className="card">
         <div className="notice">
           Selecteer één onderneming
-          om debiteuren te beheren.
+          om afnemers te beheren.
         </div>
       </section>
     );
@@ -424,7 +424,7 @@ export default function DebtorManager({
       <div className="section-heading debtor-manager-head">
         <div>
           <h2>
-            Debiteurenbeheer
+            Afnemersbeheer
           </h2>
 
           <p>
@@ -471,13 +471,13 @@ export default function DebtorManager({
 
       {loading ? (
         <p>
-          Debiteuren worden geladen...
+          Afnemers worden geladen...
         </p>
       ) : visible.length === 0 ? (
         <div className="debtor-empty">
           <Users />
           <strong>
-            Nog geen debiteuren
+            Nog geen afnemers
           </strong>
 
           <span>

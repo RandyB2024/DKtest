@@ -7335,3 +7335,23 @@ h3{
   font-weight: 700;
 }
 
+
+/* BESTEMD_PORTAL_STICKY_NAV_START */
+
+/*
+ * Desktop navigatie blijft tijdens scrollen zichtbaar.
+ * Mobiele navigatie/hamburgermenu blijft ongemoeid.
+ */
+@media (min-width: 961px) {
+  .sidebar {
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+/* BESTEMD_PORTAL_STICKY_NAV_END */

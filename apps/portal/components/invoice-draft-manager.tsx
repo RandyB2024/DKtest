@@ -276,7 +276,7 @@ export default function InvoiceDraftManager({
       if (!debtorResponse.ok) {
         throw new Error(
           debtorResult.error ||
-          "Debiteuren konden niet worden geladen.",
+          "Afnemers konden niet worden geladen.",
         );
       }
 

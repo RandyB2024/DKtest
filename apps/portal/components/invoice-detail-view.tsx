@@ -133,8 +133,8 @@ export default function InvoiceDetailView(
             <ArrowLeft />
             Terug naar{" "}
             {isReceivable
-              ? "debiteuren"
-              : "crediteuren"}
+              ? "afnemers"
+              : "leveranciers"}
           </button>
 
           <h1>{pageTitle}</h1>

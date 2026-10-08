@@ -1077,7 +1077,7 @@ export default function CustomerDashboard({
         />
 
         <MetricCard
-          title="Debiteuren"
+          title="Afnemers"
           value={
             receivablesValue
           }
@@ -1092,14 +1092,14 @@ export default function CustomerDashboard({
           }
           onClick={() =>
             go(
-              "Debiteuren",
-              "debiteuren",
+              "Afnemers",
+              "afnemers",
             )
           }
         />
 
         <MetricCard
-          title="Crediteuren"
+          title="Leveranciers"
           value={
             payablesValue
           }
@@ -1114,8 +1114,8 @@ export default function CustomerDashboard({
           }
           onClick={() =>
             go(
-              "Crediteuren",
-              "crediteuren",
+              "Leveranciers",
+              "leveranciers",
             )
           }
         />
@@ -1586,8 +1586,8 @@ export default function CustomerDashboard({
               type="button"
               onClick={() =>
                 go(
-                  "Debiteuren",
-                  "debiteuren",
+                  "Afnemers",
+                  "afnemers",
                 )
               }
             >
@@ -1614,7 +1614,7 @@ export default function CustomerDashboard({
               </small>
 
               <b>
-                Open debiteuren
+                Open afnemers
                 <ArrowRight />
               </b>
             </button>
@@ -1623,8 +1623,8 @@ export default function CustomerDashboard({
               type="button"
               onClick={() =>
                 go(
-                  "Crediteuren",
-                  "crediteuren",
+                  "Leveranciers",
+                  "leveranciers",
                 )
               }
             >
@@ -1651,7 +1651,7 @@ export default function CustomerDashboard({
               </small>
 
               <b>
-                Open crediteuren
+                Open leveranciers
                 <ArrowRight />
               </b>
             </button>
@@ -1722,7 +1722,7 @@ export default function CustomerDashboard({
               type="button"
               onClick={() =>
                 go(
-                  "Debiteuren",
+                  "Afnemers",
                   "nieuwe-factuur",
                 )
               }

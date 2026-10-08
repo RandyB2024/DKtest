@@ -137,7 +137,7 @@ export default function ReceivablesView({
         setLoading(false);
 
         setError(
-          "Selecteer eerst één onderneming om de debiteuren te bekijken.",
+          "Selecteer eerst één onderneming om de afnemers te bekijken.",
         );
 
         return;
@@ -169,7 +169,7 @@ export default function ReceivablesView({
             "error" in result &&
               result.error
               ? result.error
-              : "Debiteuren konden niet worden geladen.",
+              : "Afnemers konden niet worden geladen.",
           );
         }
 
@@ -185,7 +185,7 @@ export default function ReceivablesView({
           setError(
             caughtError instanceof Error
               ? caughtError.message
-              : "Debiteuren konden niet worden geladen.",
+              : "Afnemers konden niet worden geladen.",
           );
         }
       } finally {
@@ -266,7 +266,7 @@ export default function ReceivablesView({
             Terug naar dashboard
           </button>
 
-          <h1>Debiteuren</h1>
+          <h1>Afnemers</h1>
 
           <p>
             Openstaande verkoopfacturen
@@ -287,7 +287,7 @@ export default function ReceivablesView({
       {loading && (
         <section className="card">
           <p>
-            Debiteuren worden
+            Afnemers worden
             geladen...
           </p>
         </section>
@@ -373,7 +373,7 @@ export default function ReceivablesView({
 
                 <p>
                   Bekijk waar het
-                  debiteurensaldo uit
+                  afnemerssaldo uit
                   bestaat.
                 </p>
               </div>
