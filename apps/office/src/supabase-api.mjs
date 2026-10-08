@@ -12,6 +12,7 @@ import { profileRoute } from './customer-profile.mjs';
 import { invoicingSettingsRoute } from './invoicing-settings.mjs';
 import { creditInvoiceRoute } from './credit-invoices.mjs';
 import { paidInvoiceDocumentsRoute } from './paid-invoice-documents.mjs';
+import { creditorsRoute } from './creditors.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -711,6 +712,22 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
         res,
         paidInvoiceDocuments.status,
         paidInvoiceDocuments.data
+      );
+    }
+
+
+    const creditors =
+      await creditorsRoute(
+        req,
+        url,
+        client
+      );
+
+    if (creditors) {
+      return sendJson(
+        res,
+        creditors.status,
+        creditors.data
       );
     }
 

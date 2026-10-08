@@ -70,11 +70,552 @@ function portalUsersView(r){return table('Portaalgebruikers',['Naam','E-mail','F
 function relationshipChanges(r){return `<section class="panel"><p class="eyebrow">Mijn Destination Known</p><h2>Wijzigingsverzoeken</h2><div class="change-list">${r.changeRequests.map(x=>`<article><div><strong>${esc(x.type)}</strong><small>${esc(r.organizations.find(o=>o.id===x.organizationId)?.name)} · gewenst ${new Date(x.desiredEffectiveAt).toLocaleDateString('nl-NL')}</small></div>${badge(x.status)}<button class="link-button" data-go="/work-queue">Open in werkvoorraad</button></article>`).join('')||'<p>Geen wijzigingsverzoeken.</p>'}</div></section>`}
 function overview(c,r,d){return `<section class="metrics finance-metrics">${[['Omzet YTD',r.revenue],['Kosten YTD',r.costs],['Resultaat YTD',r.result],['BTW lopend kwartaal',r.vat],['Openstaande debiteuren',r.receivables],['Openstaande crediteuren',r.payables]].map(([l,v])=>`<article><span>${l}</span><strong>${money.format(v)}</strong></article>`).join('')}</section><div class="content-grid"><section class="panel"><p class="eyebrow">Aandacht nodig</p><h2>${d.tasks.length?`${d.tasks.length} open punten`:'Administratie is bijgewerkt'}</h2><div class="task-list">${d.tasks.map(t=>`<button><i class="${t.type.includes('Document')?'warn':''}"></i><span><strong>${t.type}</strong><small>${t.description}</small></span>${badge(t.status)}</button>`).join('')||'<p>Geen open aandachtspunten.</p>'}</div></section><section class="panel"><p class="eyebrow">Recente activiteit</p><h2>Audittrail</h2><div class="activity">${d.activity.map(a=>`<div><i></i><span><strong>${a.user} · ${a.action}</strong><small>${new Date(a.at).toLocaleString('nl-NL')}</small></span></div>`).join('')||'<p>Nog geen activiteit.</p>'}</div></section></div>`}
 function generic(tab,c){const x={Bedrijfsgegevens:`KvK-nummer: ${c.kvk}<br>Rechtsvorm: ${c.legalForm}<br>Contactpersoon: ${esc(c.contact)}`,Profiel:`Auto op de zaak: ${c.profile.car?'Ja':'Nee'}<br>Personeel: ${c.profile.staff?'Ja':'Nee'}<br>BTW-plichtig: ${c.profile.vat?'Ja':'Nee'}<br>KOR: ${c.profile.kor?'Ja':'Nee'}`,Documenten:'Documenten worden uitsluitend na een geldige sessie opgehaald en nooit offline gecachet.',Aangiften:'Omzetbelasting Q3 · In voorbereiding',Communicatie:'Geen nieuwe berichten in dit dossier.',Agenda:`Volgende afspraak: ${c.appointment}`,'Interne notities':'Alleen zichtbaar voor Office-gebruikers.'};return `<section class="panel prose"><p class="eyebrow">${tab}</p><h2>${esc(c.name)}</h2><p>${x[tab]||'Dit onderdeel is voorbereid.'}</p></section>`}
-const accountTabs=['Financieel overzicht','Dagboeken','Grootboek','Bank','Inkoop','Verkoop','Debiteuren','Crediteuren','BTW','Memoriaal','Balans','Winst en verlies','Kolommenbalans','Jaarafsluiting'];async function accountingTab(id,sub='Financieel overzicht'){const el=$('#dossier-content');el.innerHTML='<section class="panel loading">Boekhouding veilig ophalen…</section>';const d=await getJson(`/api/clients/${id}/accounting`);el.innerHTML=`<nav class="subtabs">${accountTabs.map(t=>`<button class="${t===sub?'active':''}" data-account-tab="${t}">${t}</button>`).join('')}</nav><div>${accountViewV2(sub,d,id)}</div>`;document.querySelectorAll('[data-account-tab]').forEach(b=>b.onclick=()=>accountingTab(id,b.dataset.accountTab));wireAccounting(id,sub)}
+const accountTabs=['Financieel overzicht','Dagboeken','Grootboek','Bank','Inkoop','Verkoop','Debiteuren','Crediteuren','BTW','Memoriaal','Balans','Winst en verlies','Kolommenbalans','Jaarafsluiting'];async function accountingTab(id,sub='Financieel overzicht'){
+  const el=$('#dossier-content');
+
+  el.innerHTML=
+    '<section class="panel loading">Boekhouding veilig ophalen…</section>';
+
+  const d=
+    await getJson(
+      `/api/clients/${encodeURIComponent(id)}/accounting`
+    );
+
+  if(sub==='Crediteuren'){
+    try{
+      d.creditors=
+        await getJson(
+          `/api/creditors?relationshipId=${encodeURIComponent(id)}`
+        );
+    }catch(error){
+      d.creditorsError=
+        error?.message
+        ||'Crediteuren konden niet worden geladen.';
+    }
+  }
+
+  el.innerHTML=
+    `<nav class="subtabs">${
+      accountTabs.map(
+        t=>
+          `<button class="${t===sub?'active':''}" data-account-tab="${t}">${t}</button>`
+      ).join('')
+    }</nav><div>${accountViewV2(sub,d,id)}</div>`;
+
+  document
+    .querySelectorAll(
+      '[data-account-tab]'
+    )
+    .forEach(
+      b=>
+        b.onclick=
+          ()=>accountingTab(
+            id,
+            b.dataset.accountTab
+          )
+    );
+
+  wireAccounting(
+    id,
+    sub
+  );
+}
+
 function accountView(tab,d,id){const r=d.report;if(tab==='Dashboard')return `<section class="metrics finance-metrics">${[['Omzet',r.revenue],['Kosten',r.costs],['Resultaat',r.result],['Banksaldo',r.bank],['Verkoop open',r.receivables],['Inkoop open',r.payables]].map(([l,v])=>`<article><span>${l}</span><strong>${money.format(v)}</strong></article>`).join('')}</section><div class="content-grid"><section class="panel"><p class="eyebrow">Resultaat per maand</p><h2>Financiële ontwikkeling</h2>${miniChart([52,64,59,74,82,77])}</section><section class="panel"><p class="eyebrow">Controle</p><h2>${d.period.ready?'Periode gereed voor afsluiting':`Nog ${d.period.issues} aandachtspunten`}</h2><div class="check-list"><span>Banktransacties <b>${d.period.checks.openTransactions}</b></span><span>Ontbrekende documenten <b>${d.period.checks.missingDocuments}</b></span><span>Conceptboekingen <b>${d.period.checks.draftEntries}</b></span></div></section></div>`;if(tab==='Bank')return table('Banktransacties',['Datum','Tegenpartij','Omschrijving','Bedrag','Status','Document'],d.bankTransactions.map(t=>[t.date,t.party,t.description,money.format(t.amount),badge(t.status),t.documentId?'Gekoppeld':`<button class="link-button" data-document="${t.id}">Document koppelen</button>`]));if(tab==='Inkoop')return table('Inkoopfacturen',['Leverancier','Factuurnummer','Datum','Vervaldatum','Excl. btw','Btw','Totaal','Status','Betaalstatus'],d.purchaseInvoices.map(i=>[i.supplier,i.number,i.date,i.due,money.format(i.net),money.format(i.vat),money.format(i.total),badge(i.status),i.payment]));if(tab==='Verkoop')return table('Verkoopfacturen',['Factuurnummer','Debiteur','Datum','Vervaldatum','Excl. btw','Btw','Totaal','Status','Betaalstatus'],d.salesInvoices.map(i=>[i.number,i.debtor,i.date,i.due,money.format(i.net),money.format(i.vat),money.format(i.total),badge(i.status),i.payment]));if(tab==='Grootboek')return table('Grootboekschema',['Nummer','Rekening','Type'],d.ledgerAccounts.map(a=>[a.code,a.name,a.type]));if(tab==='Debiteuren')return table('Debiteuren',['Debiteur','Openstaand saldo','Oudste factuur','Dagen open','Status'],d.salesInvoices.map(i=>[i.debtor,money.format(i.total),i.number,'30',badge(i.status==='Vervallen'?'Herinnering nodig':'Normaal')]));if(tab==='Crediteuren')return table('Crediteuren',['Leverancier','Openstaand saldo','Vervaldatum','Betaalstatus'],d.purchaseInvoices.map(i=>[i.supplier,money.format(i.total),i.due,i.payment]));if(tab==='BTW')return `<section class="panel"><div class="panel-head"><div><p class="eyebrow">BTW-overzicht</p><h2>Kwartaal 3 · 2026</h2></div><select><option>Q3 2026</option><option>Q2 2026</option></select></div><div class="vat-grid"><div><span>Omzet 21%</span><strong>${money.format(r.revenue)}</strong></div><div><span>Verschuldigde btw</span><strong>${money.format(r.vat+3820)}</strong></div><div><span>Voorbelasting</span><strong>${money.format(3820)}</strong></div><div class="total"><span>Te betalen</span><strong>${money.format(r.vat)}</strong></div></div>${badge(d.period.ready?'Klaar voor aangifte':'Controle nodig')}</section>`;if(tab==='Memoriaal')return `<section class="panel prose"><p class="eyebrow">Memoriaal</p><h2>Correcties en periodeboekingen</h2><p>Afschrijvingen, loonjournaal en jaarafsluiting gebruiken dezelfde dubbele-boekhoudvalidatie.</p><button id="balanced-demo" class="primary">Gebalanceerde demopost toevoegen</button></section>`;return `<section class="panel"><p class="eyebrow">Periodecontrole</p><h2>${d.period.ready?'Periode gereed voor afsluiting':`Nog ${d.period.issues} aandachtspunten`}</h2><div class="period-checks">${Object.entries(d.period.checks).map(([k,v])=>`<div><span>${k.replace(/([A-Z])/g,' $1')}</span><strong>${typeof v==='boolean'?(v?'Gereed':'Open'):v}</strong></div>`).join('')}</div><button class="primary" ${d.period.ready?'':'disabled'}>${d.period.ready?'Periode afsluiten':'Eerst aandachtspunten oplossen'}</button></section>`}
 function table(title,headers,rows){return `<section class="panel"><p class="eyebrow">Boekhouding</p><h2>${title}</h2><div class="table-wrap"><table><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${headers.length}" class="empty-cell">Geen gegevens voor deze klant.</td></tr>`}</tbody></table></div></section>`}
 function wireAccounting(id,tab){document.querySelectorAll('[data-document]').forEach(b=>b.onclick=async()=>{await getJson(`/api/clients/${id}/bank-transactions/${b.dataset.document}/document`,{method:'POST',body:'{}'});accountingTab(id,'Bank')});if(tab==='Memoriaal'&&$('#balanced-demo'))$('#balanced-demo').onclick=async()=>{await getJson(`/api/clients/${id}/journal-entries`,{method:'POST',body:JSON.stringify({date:new Date().toISOString().slice(0,10),description:'Afschrijving inventaris',bookNumber:'M26001',source:'handmatig',status:'Concept',lines:[{account:'4400',debit:250,credit:0},{account:'2000',debit:0,credit:250}]})});accountingTab(id,'Memoriaal')}}
-function accountViewV2(tab,d,id){if(tab==='Financieel overzicht')return accountView('Dashboard',d,id);if(tab==='Dagboeken')return `<section class="panel"><div class="panel-head"><div><p class="eyebrow">Dagboeken</p><h2>Boekingen en nummering</h2></div><button class="primary" data-new-booking>Nieuwe boeking</button></div><div class="organization-cards">${d.journals.map(j=>`<article><h3>${j.name}</h3><p>${j.code} · volgend ${j.nextNumber}</p><strong>${j.count} boekingen</strong></article>`).join('')}</div></section>${table('Journaalposten',['Datum','Dagboek','Boekstuk','Omschrijving','Debet','Credit','Status'],d.entries.slice().reverse().map(e=>[e.date,e.source,e.bookNumber,e.description,money.format(e.debitCents/100),money.format(e.creditCents/100),badge(e.status)]))}`;if(tab==='Grootboek')return table('Grootboekschema',['Nummer','Rekening','Type','Rubriek','Debet','Credit','Eindsaldo'],d.accounts.map(a=>[a.code,a.name,a.type,a.rubric,money.format(a.debit),money.format(a.credit),money.format(a.endingBalance)]));if(tab==='Balans')return table('Balans',['Rekening','Omschrijving','Saldo'],d.accounts.filter(a=>a.type==='Balans').map(a=>[a.code,a.name,money.format(a.endingBalance)]));if(tab==='Winst en verlies')return table('Winst- en verliesrekening',['Rekening','Omschrijving','Saldo'],d.accounts.filter(a=>a.type!=='Balans').map(a=>[a.code,a.name,money.format(a.endingBalance)]));if(tab==='Kolommenbalans')return table('Kolommenbalans',['Rekening','Omschrijving','Begin','Debet','Credit','Eind debet','Eind credit'],d.trialBalance.rows.map(a=>[a.code,a.name,money.format(a.openingBalanceCents/100),money.format(a.debitCents/100),money.format(a.creditCents/100),money.format(a.endingDebitCents/100),money.format(a.endingCreditCents/100)]));if(tab==='Jaarafsluiting')return `<section class="panel"><p class="eyebrow">Fase 4 voorbereid</p><h2>Jaarafsluiting nog niet vrijgegeven</h2><p class="muted">Eerst worden BTW, rapportages en alle aansluitingen op deze financiële basis gevalideerd. Er wordt geen definitieve jaarrekening gesimuleerd.</p></section>`;return accountView(tab,d,id)}
+
+function creditorMoney(cents){
+  return money.format(
+    Number(cents||0)/100
+  )
+}
+
+function creditorDate(value){
+  if(!value)return '—';
+
+  const parsed=
+    new Date(
+      `${value}T12:00:00`
+    );
+
+  if(
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ){
+    return esc(value)
+  }
+
+  return parsed.toLocaleDateString(
+    'nl-NL'
+  )
+}
+
+function creditorFrequency(value){
+  return ({
+    monthly:'Maandelijks',
+    quarterly:'Per kwartaal',
+    half_yearly:'Halfjaarlijks',
+    yearly:'Jaarlijks',
+    one_off:'Eenmalig'
+  })[value]||value||'—'
+}
+
+function officeCreditorOrganizationView(entry){
+  const p=
+    entry?.payables||{};
+
+  const s=
+    p.summary||{};
+
+  const aging=
+    p.aging||{};
+
+  const invoices=
+    Array.isArray(p.items)
+      ?p.items
+      :[];
+
+  const expected=
+    Array.isArray(
+      p.expectedCosts
+    )
+      ?p.expectedCosts
+      :[];
+
+  const missing=
+    Array.isArray(
+      p.missingDocuments
+    )
+      ?p.missingDocuments
+      :[];
+
+  const suppliers=
+    Array.isArray(
+      p.suppliers
+    )
+      ?p.suppliers
+      :[];
+
+  return `
+    <section class="metrics finance-metrics">
+      ${[
+        [
+          'Nog te betalen',
+          creditorMoney(
+            s.totalCents
+          )
+        ],
+        [
+          'Vervallen',
+          creditorMoney(
+            s.overdueCents
+          )
+        ],
+        [
+          'Binnen 7 dagen',
+          creditorMoney(
+            s.due7Cents
+          )
+        ],
+        [
+          'Binnen 30 dagen',
+          creditorMoney(
+            s.due30Cents
+          )
+        ],
+        [
+          'Verwachte kosten',
+          creditorMoney(
+            s.expected30Cents
+          )
+        ],
+        [
+          'Document ontbreekt',
+          `${Number(
+            s.missingDocumentCount||0
+          )} · ${creditorMoney(
+            s.missingDocumentCents
+          )}`
+        ]
+      ].map(
+        ([label,value])=>
+          `<article>
+            <span>${label}</span>
+            <strong>${value}</strong>
+          </article>`
+      ).join('')}
+    </section>
+
+    <div class="content-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">
+              Betalingsplanning
+            </p>
+            <h2>
+              Komende verplichtingen
+            </h2>
+          </div>
+        </div>
+
+        <div class="check-list">
+          <span>
+            Vervallen
+            <b>${creditorMoney(s.overdueCents)}</b>
+          </span>
+
+          <span>
+            Binnen 7 dagen
+            <b>${creditorMoney(s.due7Cents)}</b>
+          </span>
+
+          <span>
+            Binnen 30 dagen
+            <b>${creditorMoney(s.due30Cents)}</b>
+          </span>
+
+          <span>
+            Verwachte vaste kosten
+            <b>${creditorMoney(s.expected30Cents)}</b>
+          </span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">
+              Aandacht nodig
+            </p>
+            <h2>
+              Controlepunten
+            </h2>
+          </div>
+        </div>
+
+        <div class="check-list">
+          <span>
+            Vervallen facturen
+            <b>${Number(s.overdueCount||0)}</b>
+          </span>
+
+          <span>
+            Gedeeltelijk betaald
+            <b>${Number(s.partialCount||0)}</b>
+          </span>
+
+          <span>
+            Document ontbreekt
+            <b>${Number(s.missingDocumentCount||0)}</b>
+          </span>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <p class="eyebrow">
+            Crediteurenouderdom
+          </p>
+          <h2>
+            Openstaande posten
+          </h2>
+        </div>
+      </div>
+
+      <section class="metrics finance-metrics">
+        ${[
+          [
+            'Binnen termijn',
+            aging.notDueCents
+          ],
+          [
+            '1–30 dagen',
+            aging.days1to30Cents
+          ],
+          [
+            '31–60 dagen',
+            aging.days31to60Cents
+          ],
+          [
+            '61–90 dagen',
+            aging.days61to90Cents
+          ],
+          [
+            '> 90 dagen',
+            aging.over90Cents
+          ]
+        ].map(
+          ([label,value])=>
+            `<article>
+              <span>${label}</span>
+              <strong>
+                ${creditorMoney(value)}
+              </strong>
+            </article>`
+        ).join('')}
+      </section>
+    </section>
+
+    ${table(
+      'Openstaande inkoopfacturen',
+      [
+        'Leverancier',
+        'Factuurnummer',
+        'Factuurdatum',
+        'Vervaldatum',
+        'Totaal',
+        'Betaald',
+        'Openstaand',
+        'Status'
+      ],
+      invoices.map(
+        invoice=>[
+          esc(
+            invoice.creditor?.name
+            ||'Onbekend'
+          ),
+          esc(
+            invoice.invoiceNumber
+            ||'—'
+          ),
+          creditorDate(
+            invoice.invoiceDate
+          ),
+          creditorDate(
+            invoice.dueDate
+          ),
+          creditorMoney(
+            invoice.totalCents
+          ),
+          creditorMoney(
+            invoice.paidCents
+          ),
+          creditorMoney(
+            invoice.outstandingCents
+          ),
+          badge(
+            invoice.overdue
+              ?'Vervallen'
+              :invoice.paidCents>0
+                ?'Deels betaald'
+                :invoice.dueSoon
+                  ?'Vervalt binnenkort'
+                  :'Te betalen'
+          )
+        ]
+      )
+    )}
+
+    ${table(
+      'Verwachte kosten',
+      [
+        'Kostenpost',
+        'Frequentie',
+        'Verwacht bedrag',
+        'Volgende datum',
+        'Betaling',
+        'Contract einddatum'
+      ],
+      expected.map(
+        item=>[
+          esc(
+            item.name||'—'
+          ),
+          creditorFrequency(
+            item.frequency
+          ),
+          creditorMoney(
+            item.expectedAmountCents
+          ),
+          creditorDate(
+            item.nextExpectedDate
+          ),
+          item.automaticDebit
+            ?'Automatische incasso'
+            :'Zelf betalen',
+          creditorDate(
+            item.contractEndDate
+          )
+        ]
+      )
+    )}
+
+    ${table(
+      'Ontbrekende documenten',
+      [
+        'Datum',
+        'Tegenpartij',
+        'Omschrijving',
+        'Bedrag',
+        'Status'
+      ],
+      missing.map(
+        item=>[
+          creditorDate(
+            item.transactionDate
+          ),
+          esc(
+            item.counterparty
+            ||'Onbekend'
+          ),
+          esc(
+            item.description
+            ||'—'
+          ),
+          creditorMoney(
+            item.amountCents
+          ),
+          badge(
+            item.status==='requested'
+              ?'Opgevraagd'
+              :'Document ontbreekt'
+          )
+        ]
+      )
+    )}
+
+    ${table(
+      'Leveranciers',
+      [
+        'Leverancier',
+        'IBAN',
+        'Openstaand',
+        'Open facturen',
+        'Betaaltermijn',
+        'Oudste vervaldatum'
+      ],
+      suppliers.map(
+        supplier=>[
+          esc(
+            supplier.name
+            ||'—'
+          ),
+          esc(
+            supplier.iban
+            ||'—'
+          ),
+          creditorMoney(
+            supplier.outstandingCents
+          ),
+          Number(
+            supplier.openCount||0
+          ),
+          `${
+            Number(
+              supplier.paymentTermDays
+              ||0
+            )
+          } dagen`,
+          creditorDate(
+            supplier.oldestDueDate
+          )
+        ]
+      )
+    )}
+  `
+}
+
+function officeCreditorsView(d){
+  if(
+    d.creditorsError
+  ){
+    return `
+      <section class="panel empty">
+        <p class="eyebrow">
+          Crediteuren
+        </p>
+
+        <h2>
+          Crediteuren konden niet worden geladen
+        </h2>
+
+        <p>
+          ${esc(
+            d.creditorsError
+          )}
+        </p>
+      </section>
+    `
+  }
+
+  const organizations=
+    d.creditors?.organizations||[];
+
+  if(
+    !organizations.length
+  ){
+    return `
+      <section class="panel empty">
+        <p class="eyebrow">
+          Crediteuren
+        </p>
+
+        <h2>
+          Geen onderneming gevonden
+        </h2>
+
+        <p>
+          Er is geen actieve onderneming
+          gekoppeld aan deze klantrelatie.
+        </p>
+      </section>
+    `
+  }
+
+  return organizations.map(
+    entry=>`
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">
+              Crediteurenadministratie
+            </p>
+
+            <h2>
+              ${esc(
+                entry.organization?.name
+                ||'Onderneming'
+              )}
+            </h2>
+
+            ${
+              entry.organization
+                ?.registrationNumber
+                ?`<p class="muted">
+                    KvK ${esc(
+                      entry.organization
+                        .registrationNumber
+                    )}
+                  </p>`
+                :''
+            }
+          </div>
+
+          ${badge(
+            `${
+              Number(
+                entry.payables
+                  ?.summary
+                  ?.count||0
+              )
+            } open`
+          )}
+        </div>
+      </section>
+
+      ${officeCreditorOrganizationView(
+        entry
+      )}
+    `
+  ).join('')
+}
+
+function accountViewV2(tab,d,id){if(tab==='Crediteuren')return officeCreditorsView(d);if(tab==='Financieel overzicht')return accountView('Dashboard',d,id);if(tab==='Dagboeken')return `<section class="panel"><div class="panel-head"><div><p class="eyebrow">Dagboeken</p><h2>Boekingen en nummering</h2></div><button class="primary" data-new-booking>Nieuwe boeking</button></div><div class="organization-cards">${d.journals.map(j=>`<article><h3>${j.name}</h3><p>${j.code} · volgend ${j.nextNumber}</p><strong>${j.count} boekingen</strong></article>`).join('')}</div></section>${table('Journaalposten',['Datum','Dagboek','Boekstuk','Omschrijving','Debet','Credit','Status'],d.entries.slice().reverse().map(e=>[e.date,e.source,e.bookNumber,e.description,money.format(e.debitCents/100),money.format(e.creditCents/100),badge(e.status)]))}`;if(tab==='Grootboek')return table('Grootboekschema',['Nummer','Rekening','Type','Rubriek','Debet','Credit','Eindsaldo'],d.accounts.map(a=>[a.code,a.name,a.type,a.rubric,money.format(a.debit),money.format(a.credit),money.format(a.endingBalance)]));if(tab==='Balans')return table('Balans',['Rekening','Omschrijving','Saldo'],d.accounts.filter(a=>a.type==='Balans').map(a=>[a.code,a.name,money.format(a.endingBalance)]));if(tab==='Winst en verlies')return table('Winst- en verliesrekening',['Rekening','Omschrijving','Saldo'],d.accounts.filter(a=>a.type!=='Balans').map(a=>[a.code,a.name,money.format(a.endingBalance)]));if(tab==='Kolommenbalans')return table('Kolommenbalans',['Rekening','Omschrijving','Begin','Debet','Credit','Eind debet','Eind credit'],d.trialBalance.rows.map(a=>[a.code,a.name,money.format(a.openingBalanceCents/100),money.format(a.debitCents/100),money.format(a.creditCents/100),money.format(a.endingDebitCents/100),money.format(a.endingCreditCents/100)]));if(tab==='Jaarafsluiting')return `<section class="panel"><p class="eyebrow">Fase 4 voorbereid</p><h2>Jaarafsluiting nog niet vrijgegeven</h2><p class="muted">Eerst worden BTW, rapportages en alle aansluitingen op deze financiële basis gevalideerd. Er wordt geen definitieve jaarrekening gesimuleerd.</p></section>`;return accountView(tab,d,id)}
 async function workQueue(includeDone=false){setHeader('Werkvoorraad','Operationele opvolging en klantwijzigingen');loading();const [d,changes]=await Promise.all([getJson(`/api/work-queue?includeDone=${includeDone}`),getJson('/api/change-requests')]);done();const openChanges=changes.changeRequests.filter(x=>includeDone||!['Afgewezen','Verwerkt'].includes(x.status));$('#view').innerHTML=`<section class="page-intro"><div><p class="eyebrow">Dagelijkse werkplek</p><h2>${d.tasks.length+openChanges.length} acties vragen aandacht</h2><p>Administratieve taken en verzoeken uit Mijn Destination Known in één overzicht.</p></div><label class="toggle"><input id="show-done" type="checkbox" ${includeDone?'checked':''}> Toon afgerond</label></section><section class="panel"><div class="panel-head"><div><p class="eyebrow">Wijzigingsverzoeken</p><h2>${openChanges.length} klantverzoeken</h2></div>${badge('Controle nodig')}</div><div class="change-list">${openChanges.map(x=>`<article><div><strong>${esc(x.type)}</strong><small>${esc(x.relationship.name)} · ${esc(x.organization.name)} · door ${esc(x.requester.name)}</small><small>Gewenste ingangsdatum ${new Date(x.desiredEffectiveAt).toLocaleDateString('nl-NL')} · ${x.impactedModules.map(esc).join(', ')}</small></div>${badge(x.status)}<button class="link-button" data-go="/organizations/${x.organizationId}">Beoordelen</button></article>`).join('')||'<p class="muted">Geen open wijzigingsverzoeken.</p>'}</div></section>${table('Overige werkvoorraad',['Prioriteit','Categorie','Klant','Omschrijving','Beheerder','Ontvangen','Deadline','Status'],d.tasks.map(t=>[t.priority||'Normaal',t.type,`<button class="link-button" data-go="/clients/${t.clientId}">${esc(t.clientName)}</button>`,esc(t.description),t.owner,new Date(t.createdAt).toLocaleDateString('nl-NL'),t.deadline?new Date(t.deadline).toLocaleDateString('nl-NL'):'—',badge(t.status)]))}`;$('#show-done').onchange=e=>workQueue(e.target.checked)}
 async function documentsPage(){setHeader('Documenten','Veilige dossierstukken en ontbrekende onderbouwing');loading();const d=await getJson('/api/documents');done();$('#view').innerHTML=`<section class="page-intro"><div><p class="eyebrow">Documentbeheer</p><h2>${d.documents.length} documenten · ${d.missing.length} ontbrekend</h2></div><button class="primary" id="upload-global">+ Document uploaden</button></section>${table('Ontvangen documenten',['Bestand','Klant','Type','Datum','Bedrag','Leverancier','Status','Bron','Uploadtijd'],d.documents.map(x=>[x.fileName,`<button class="link-button" data-go="/clients/${x.clientId}">${x.clientName}</button>`,x.type,new Date(x.date).toLocaleDateString('nl-NL'),money.format(x.amount),x.supplier,badge(x.status),x.source,new Date(x.uploadedAt).toLocaleString('nl-NL')]))}<section class="panel"><p class="eyebrow">Ontbrekende documenten</p><h2>Mogelijke koppelingen</h2><div class="task-list">${d.missing.map(t=>`<button data-go="/clients/${t.clientId}"><i class="warn"></i><span><strong>${t.clientName} · ${t.party}</strong><small>${money.format(Math.abs(t.amount))} · ${t.description}</small></span>${badge(t.status)}</button>`).join('')||'<p>Geen ontbrekende documenten.</p>'}</div></section>`;$('#upload-global').onclick=()=>openDialog('Document uploaden','<div class="confirm-copy"><p>Open eerst een klantdossier zodat het document veilig aan de juiste client_id wordt gekoppeld.</p><div class="form-actions"><button data-close-form>Sluiten</button></div></div>');setTimeout(()=>{$('[data-close-form]')&&($('[data-close-form]').onclick=closeDialog)},0)}
 async function administrationPage(){setHeader('Administratie','Alle administraties vanuit dezelfde boekhouding');loading();const d=await getJson('/api/administration');done();$('#view').innerHTML=table('Administraties',['Klant','Bijgewerkt t/m','Onverwerkt','Documenten','Controle','BTW-status','Laatste import'],d.administrations.map(a=>[`<button class="link-button" data-go="/clients/${a.clientId}">${a.clientName}</button>`,a.through||'Nog te bepalen',a.unprocessed,a.missing,a.review,badge(a.vatStatus),a.lastImport]))}
