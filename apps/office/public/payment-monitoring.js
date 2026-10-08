@@ -356,6 +356,36 @@ export async function mountPaymentMonitoring(
       return;
     }
 
+
+    const originalCents =
+      Math.max(
+        0,
+        Number(
+          item.totalCents
+          ?? item.amountCents
+          ?? item.outstandingCents
+          ?? 0
+        )
+      );
+
+
+    const euroValue =
+      cents =>
+        new Intl.NumberFormat(
+          'nl-NL',
+          {
+            style:
+              'currency',
+
+            currency:
+              'EUR',
+          }
+        ).format(
+          Number(cents || 0)
+          / 100
+        );
+
+
     const dialog =
       document.createElement(
         'dialog'
@@ -367,10 +397,12 @@ export async function mountPaymentMonitoring(
     dialog.className =
       'customer-dialog';
 
+
     const form =
       document.createElement(
         'form'
       );
+
 
     const heading =
       document.createElement(
@@ -390,7 +422,43 @@ export async function mountPaymentMonitoring(
       'muted';
 
     explanation.textContent =
-      `Factuur ${item.invoiceNumber} van ${item.debtorName} wordt volledig gecrediteerd. De oorspronkelijke factuur blijft in de administratie bewaard.`;
+      `Maak een volledige of gedeeltelijke credit voor factuur ${item.invoiceNumber} van ${item.debtorName}.`;
+
+
+    const summary =
+      document.createElement(
+        'div'
+      );
+
+    summary.className =
+      'credit-summary';
+
+
+    const originalRow =
+      document.createElement(
+        'p'
+      );
+
+    originalRow.textContent =
+      `Factuurbedrag: ${euroValue(originalCents)}`;
+
+
+    const hint =
+      document.createElement(
+        'p'
+      );
+
+    hint.className =
+      'muted';
+
+    hint.textContent =
+      'Het definitieve resterende crediteerbare bedrag wordt bij verwerking opnieuw door de database gecontroleerd.';
+
+
+    summary.append(
+      originalRow,
+      hint
+    );
 
 
     const warning =
@@ -402,15 +470,137 @@ export async function mountPaymentMonitoring(
       'profile-warning';
 
     warning.textContent =
-      'Deze actie maakt een definitieve financiële correctie. De creditfactuur krijgt een eigen nummer en wordt na succesvolle verwerking per e-mail verzonden.';
+      'Een creditfactuur is een definitieve financiële correctie en krijgt een eigen factuurnummer, PDF en verzendregistratie.';
 
 
-    const label =
+    const typeField =
+      document.createElement(
+        'fieldset'
+      );
+
+    const legend =
+      document.createElement(
+        'legend'
+      );
+
+    legend.textContent =
+      'Type credit';
+
+
+    const fullLabel =
       document.createElement(
         'label'
       );
 
-    label.textContent =
+    const full =
+      document.createElement(
+        'input'
+      );
+
+    full.type =
+      'radio';
+
+    full.name =
+      'creditType';
+
+    full.value =
+      'full';
+
+    full.checked =
+      true;
+
+    fullLabel.append(
+      full,
+      document.createTextNode(
+        ' Volledig crediteren'
+      )
+    );
+
+
+    const partialLabel =
+      document.createElement(
+        'label'
+      );
+
+    const partial =
+      document.createElement(
+        'input'
+      );
+
+    partial.type =
+      'radio';
+
+    partial.name =
+      'creditType';
+
+    partial.value =
+      'partial';
+
+    partialLabel.append(
+      partial,
+      document.createTextNode(
+        ' Gedeeltelijk crediteren'
+      )
+    );
+
+
+    typeField.append(
+      legend,
+      fullLabel,
+      partialLabel
+    );
+
+
+    const amountLabel =
+      document.createElement(
+        'label'
+      );
+
+    amountLabel.textContent =
+      'Te crediteren bedrag incl. btw';
+
+
+    const amount =
+      document.createElement(
+        'input'
+      );
+
+    amount.type =
+      'number';
+
+    amount.name =
+      'amount';
+
+    amount.min =
+      '0.01';
+
+    amount.step =
+      '0.01';
+
+    if (originalCents > 0) {
+      amount.max =
+        (
+          originalCents / 100
+        ).toFixed(2);
+    }
+
+    amount.disabled =
+      true;
+
+    amount.placeholder =
+      '0,00';
+
+    amountLabel.append(
+      amount
+    );
+
+
+    const reasonLabel =
+      document.createElement(
+        'label'
+      );
+
+    reasonLabel.textContent =
       'Reden creditfactuur';
 
 
@@ -432,9 +622,9 @@ export async function mountPaymentMonitoring(
       5;
 
     textarea.placeholder =
-      'Bijvoorbeeld: factuur ten onrechte verstuurd, opdracht geannuleerd of volledige correctie.';
+      'Bijvoorbeeld: gedeeltelijke vergoeding, correctie van werkzaamheden of factuur ten onrechte verstuurd.';
 
-    label.append(
+    reasonLabel.append(
       textarea
     );
 
@@ -509,12 +699,16 @@ export async function mountPaymentMonitoring(
     form.append(
       heading,
       explanation,
+      summary,
       warning,
-      label,
+      typeField,
+      amountLabel,
+      reasonLabel,
       error,
       statusMessage,
       actions
     );
+
 
     dialog.append(
       form
@@ -523,6 +717,32 @@ export async function mountPaymentMonitoring(
     root.append(
       dialog
     );
+
+
+    function updateType() {
+      const isPartial =
+        partial.checked;
+
+      amount.disabled =
+        !isPartial;
+
+      amount.required =
+        isPartial;
+
+      if (!isPartial) {
+        amount.value =
+          '';
+      } else {
+        amount.focus();
+      }
+    }
+
+
+    full.onchange =
+      updateType;
+
+    partial.onchange =
+      updateType;
 
 
     let pending =
@@ -568,6 +788,11 @@ export async function mountPaymentMonitoring(
           return;
         }
 
+
+        error.textContent =
+          '';
+
+
         const reason =
           textarea.value.trim();
 
@@ -585,9 +810,69 @@ export async function mountPaymentMonitoring(
         }
 
 
+        const isPartial =
+          partial.checked;
+
+
+        let amountCents =
+          null;
+
+
+        if (isPartial) {
+          const numeric =
+            Number(
+              String(
+                amount.value
+              ).replace(
+                ',',
+                '.'
+              )
+            );
+
+          amountCents =
+            Math.round(
+              numeric * 100
+            );
+
+
+          if (
+            !Number.isSafeInteger(
+              amountCents
+            )
+            || amountCents <= 0
+          ) {
+            error.textContent =
+              'Vul een geldig creditbedrag groter dan € 0,00 in.';
+
+            amount.focus();
+
+            return;
+          }
+
+
+          if (
+            originalCents > 0
+            && amountCents >= originalCents
+          ) {
+            error.textContent =
+              'Kies voor volledig crediteren als het hele factuurbedrag moet worden gecrediteerd.';
+
+            amount.focus();
+
+            return;
+          }
+        }
+
+
+        const description =
+          isPartial
+            ? `${euroValue(amountCents)} gedeeltelijk crediteren`
+            : 'het volledige resterende bedrag crediteren';
+
+
         const confirmed =
           window.confirm(
-            `Factuur ${item.invoiceNumber} volledig crediteren? Deze correctie wordt definitief vastgelegd.`
+            `Factuur ${item.invoiceNumber}: ${description}? Deze correctie wordt definitief vastgelegd.`
           );
 
 
@@ -599,13 +884,19 @@ export async function mountPaymentMonitoring(
         pending =
           true;
 
-        error.textContent =
-          '';
-
         statusMessage.textContent =
           'Creditfactuur wordt veilig aangemaakt...';
 
         textarea.disabled =
+          true;
+
+        amount.disabled =
+          true;
+
+        full.disabled =
+          true;
+
+        partial.disabled =
           true;
 
         submit.disabled =
@@ -631,6 +922,8 @@ export async function mountPaymentMonitoring(
 
                 reason,
 
+                amountCents,
+
                 idempotencyKey:
                   crypto.randomUUID(),
               },
@@ -648,13 +941,13 @@ export async function mountPaymentMonitoring(
             'unconfirmed'
           ) {
             statusMessage.textContent =
-              `${number} is aangemaakt. De e-mailstatus is nog niet bevestigd; er wordt niet automatisch opnieuw verzonden.`;
+              `${number} is aangemaakt. De e-mailstatus is nog niet bevestigd.`;
 
           } else if (
             result.alreadySent
           ) {
             statusMessage.textContent =
-              `${number} bestond al en was al verzonden.`;
+              `${number} was al verzonden.`;
 
           } else {
             statusMessage.textContent =
@@ -662,11 +955,6 @@ export async function mountPaymentMonitoring(
           }
 
 
-          /*
-           * Betalingsbewaking opnieuw ophalen.
-           * De originele factuur verdwijnt uit
-           * actieve bewaking zodra deze gecrediteerd is.
-           */
           await load();
 
 
@@ -681,7 +969,7 @@ export async function mountPaymentMonitoring(
                 dialog.close();
               }
             },
-            1400
+            1600
           );
 
         } catch(caught) {
@@ -698,6 +986,15 @@ export async function mountPaymentMonitoring(
 
           textarea.disabled =
             false;
+
+          full.disabled =
+            false;
+
+          partial.disabled =
+            false;
+
+          amount.disabled =
+            !partial.checked;
 
           submit.disabled =
             false;

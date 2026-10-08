@@ -1398,6 +1398,7 @@ export async function creditInvoiceRoute(
       'organizationId',
       'originalInvoiceId',
       'reason',
+      'amountCents',
       'idempotencyKey',
     ]);
 
@@ -1465,6 +1466,28 @@ export async function creditInvoiceRoute(
   }
 
 
+  const amountCents =
+    input.amountCents === null
+    || input.amountCents === undefined
+      ? null
+      : Number(input.amountCents);
+
+
+  if (
+    amountCents !== null
+    && (
+      !Number.isSafeInteger(amountCents)
+      || amountCents <= 0
+    )
+  ) {
+    throw new OfficeError(
+      400,
+      'INVALID_CREDIT_AMOUNT',
+      'Het creditbedrag is ongeldig.'
+    );
+  }
+
+
   /*
    * Organisatie moet ook via de normale
    * Office-gebruikerssessie leesbaar zijn.
@@ -1500,92 +1523,75 @@ export async function creditInvoiceRoute(
 
 
   /*
-   * Eerst controleren of een eerdere poging
-   * de creditfactuur al heeft aangemaakt.
-   * Daardoor kunnen PDF/e-mail veilig worden hervat.
+   * Iedere aanvraag mag een nieuwe gedeeltelijke of volledige
+   * creditfactuur maken. De database bewaakt transactioneel
+   * hoeveel nog gecrediteerd mag worden.
    */
-  let credit =
-    checkQuery(
-      await client
-        .from(
-          'sales_invoices'
-        )
-        .select(
-          'id,invoice_number,credit_reason,debtor_id,sent_at'
-        )
-        .eq(
-          'organization_id',
-          organizationId
-        )
-        .eq(
-          'original_invoice_id',
-          originalInvoiceId
-        )
-        .eq(
-          'invoice_kind',
-          'credit'
-        )
-        .neq(
-          'document_status',
-          'cancelled'
-        )
-        .is(
-          'archived_at',
-          null
-        )
-        .maybeSingle()
+  const {
+    data: creditData,
+    error: creditError,
+  } =
+    await client.rpc(
+      'office_create_credit_invoice',
+      {
+        p_organization_id:
+          organizationId,
+
+        p_original_invoice_id:
+          originalInvoiceId,
+
+        p_reason:
+          reason,
+
+        p_amount_cents:
+          amountCents,
+
+        p_idempotency_key:
+          idempotencyKey,
+      }
     );
 
 
-  if (!credit) {
-    const {
-      data,
-      error,
-    } =
-      await client.rpc(
-        'office_create_full_credit_invoice',
-        {
-          p_organization_id:
-            organizationId,
-
-          p_original_invoice_id:
-            originalInvoiceId,
-
-          p_reason:
-            reason,
-        }
-      );
-
-
-    if (
-      error
-      || !data?.creditInvoiceId
-    ) {
-      throw new OfficeError(
-        409,
-        'CREDIT_CREATE_FAILED',
-        'De creditfactuur kon niet worden aangemaakt.'
-      );
-    }
-
-
-    credit = {
-      id:
-        data.creditInvoiceId,
-
-      invoice_number:
-        data.creditInvoiceNumber,
-
-      credit_reason:
-        data.creditReason,
-
-      debtor_id:
-        null,
-
-      sent_at:
-        null,
-    };
+  if (
+    creditError
+    || !creditData?.creditInvoiceId
+  ) {
+    throw new OfficeError(
+      409,
+      'CREDIT_CREATE_FAILED',
+      creditError?.message
+        || 'De creditfactuur kon niet worden aangemaakt.'
+    );
   }
+
+
+  const credit = {
+    id:
+      creditData.creditInvoiceId,
+
+    invoice_number:
+      creditData.creditInvoiceNumber,
+
+    credit_reason:
+      creditData.creditReason,
+
+    debtor_id:
+      null,
+
+    sent_at:
+      null,
+
+    total_cents:
+      creditData.totalCents,
+
+    remaining_cents:
+      creditData.remainingCents,
+
+    fully_credited:
+      Boolean(
+        creditData.fullyCredited
+      ),
+  };
 
 
   const admin =
