@@ -1894,16 +1894,36 @@ export function mountOfficeDocumentsReadonly(
       'Documenten veilig ophalen...';
 
     try {
-      const result = await api(
-        `/api/documents?organizationId=${encodeURIComponent(organizationId)}`
-      );
+      const [
+        result,
+        paidInvoiceResult,
+      ] = await Promise.all([
+        api(
+          `/api/documents?organizationId=${encodeURIComponent(organizationId)}`
+        ),
+        api(
+          `/api/documents/paid-sales-invoices?organizationId=${encodeURIComponent(organizationId)}`
+        ),
+      ]);
 
       if (version !== requestVersion) return;
 
-      const documents =
+      const regularDocuments =
         Array.isArray(result.documents)
           ? result.documents
           : [];
+
+      const paidInvoiceDocuments =
+        Array.isArray(
+          paidInvoiceResult.documents
+        )
+          ? paidInvoiceResult.documents
+          : [];
+
+      const documents = [
+        ...regularDocuments,
+        ...paidInvoiceDocuments,
+      ];
 
       const activeDocuments =
         documents.filter(

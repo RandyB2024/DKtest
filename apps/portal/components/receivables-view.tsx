@@ -529,8 +529,8 @@ export default function ReceivablesView({
 
           <InvoiceArchive
             context={context}
-            title="Factuurarchief"
-            description="Alle definitieve verkoopfacturen en creditfacturen."
+            title="Openstaande facturen"
+            description="Openstaande, gedeeltelijk betaalde en vervallen verkoopfacturen."
           />
 
           <DebtorManager

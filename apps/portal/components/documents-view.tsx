@@ -1148,13 +1148,29 @@ export default function DocumentsView({
     setError("");
 
     try {
+      const invoicePrefix =
+        "sales-invoice:";
+
+      const downloadUrl =
+        item.id.startsWith(
+          invoicePrefix,
+        )
+          ? `/api/documents/sales-invoice/${encodeURIComponent(
+              item.id.slice(
+                invoicePrefix.length,
+              ),
+            )}/download?organizationId=${encodeURIComponent(
+              context.organizationId,
+            )}`
+          : `/api/documents/${encodeURIComponent(
+              item.id,
+            )}/download?organizationId=${encodeURIComponent(
+              context.organizationId,
+            )}`;
+
       const response =
         await fetch(
-          `/api/documents/${encodeURIComponent(
-            item.id,
-          )}/download?organizationId=${encodeURIComponent(
-            context.organizationId,
-          )}`,
+          downloadUrl,
           {
             method:
               "GET",

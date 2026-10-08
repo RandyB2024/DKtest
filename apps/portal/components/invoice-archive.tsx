@@ -202,8 +202,8 @@ function paymentClass(
 export default function InvoiceArchive({
   context,
   debtorId = null,
-  title = "Factuurarchief",
-  description = "Alle definitieve verkoopfacturen.",
+  title = "Openstaande facturen",
+  description = "Openstaande verkoopfacturen.",
   compact = false,
 }: Props) {
   const [
@@ -298,7 +298,7 @@ export default function InvoiceArchive({
         if (!response.ok) {
           throw new Error(
             result.error ||
-            "Factuurarchief kon niet worden geladen.",
+            "Openstaande facturen konden niet worden geladen.",
           );
         }
 
@@ -315,7 +315,7 @@ export default function InvoiceArchive({
             caught instanceof
               Error
               ? caught.message
-              : "Factuurarchief kon niet worden geladen.",
+              : "Openstaande facturen konden niet worden geladen.",
           );
         }
       } finally {

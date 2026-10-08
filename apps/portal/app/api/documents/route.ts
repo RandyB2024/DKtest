@@ -311,6 +311,160 @@ export async function GET(
         }
       }
 
+      if (
+        scope === "archive"
+        || scope === "all"
+      ) {
+        const {
+          data:
+            paidInvoices,
+          error:
+            paidInvoicesError,
+        } =
+          await client
+            .from(
+              "sales_invoices",
+            )
+            .select(
+              [
+                "id",
+                "organization_id",
+                "invoice_number",
+                "invoice_kind",
+                "document_status",
+                "payment_status",
+                "invoice_date",
+                "total_cents",
+                "paid_cents",
+                "pdf_storage_path",
+                "created_at",
+                "finalized_at",
+              ].join(","),
+            )
+            .eq(
+              "organization_id",
+              organizationId,
+            )
+            .eq(
+              "invoice_kind",
+              "invoice",
+            )
+            .eq(
+              "payment_status",
+              "paid",
+            )
+            .neq(
+              "document_status",
+              "draft",
+            )
+            .neq(
+              "document_status",
+              "cancelled",
+            )
+            .not(
+              "invoice_number",
+              "is",
+              null,
+            )
+            .not(
+              "pdf_storage_path",
+              "is",
+              null,
+            )
+            .order(
+              "invoice_date",
+              {
+                ascending:
+                  false,
+              },
+            );
+
+        if (
+          paidInvoicesError
+        ) {
+          console.error(
+            "paid invoice documents list failed",
+            {
+              code:
+                paidInvoicesError.code,
+              message:
+                paidInvoicesError.message,
+            },
+          );
+        } else {
+          for (
+            const invoice
+            of paidInvoices ?? []
+          ) {
+            const date =
+              new Date(
+                `${invoice.invoice_date}T12:00:00`,
+              );
+
+            documents.push(
+              {
+                id:
+                  `sales-invoice:${invoice.id}`,
+                organization_id:
+                  invoice.organization_id,
+                folder_id:
+                  null,
+                filename:
+                  `${String(
+                    invoice.invoice_number,
+                  ).replace(
+                    /[\\/:*?"<>|]+/g,
+                    "-",
+                  )}.pdf`,
+                mime_type:
+                  "application/pdf",
+                size_bytes:
+                  0,
+                source:
+                  "system",
+                status:
+                  "archived",
+                document_type:
+                  "sales_invoice",
+                book_year:
+                  Number.isNaN(
+                    date.getTime(),
+                  )
+                    ? null
+                    : date.getFullYear(),
+                book_month:
+                  Number.isNaN(
+                    date.getTime(),
+                  )
+                    ? null
+                    : date.getMonth() + 1,
+                archive_folder_name:
+                  "Verkoopfacturen",
+                visible_to_customer:
+                  true,
+                customer_action_required:
+                  false,
+                acknowledgement_required:
+                  false,
+                notes:
+                  null,
+                processed_at:
+                  invoice.finalized_at
+                  ?? invoice.created_at,
+                created_at:
+                  invoice.created_at,
+                updated_at:
+                  invoice.finalized_at
+                  ?? invoice.created_at,
+                archived_at:
+                  invoice.finalized_at
+                  ?? invoice.created_at,
+              } as DocumentRow,
+            );
+          }
+        }
+      }
+
       return Response.json({
         items:
           documents.map(
