@@ -868,6 +868,7 @@ async function renderPdf(
       euro(
         snapshot.invoice
           .subtotalCents,
+      ),
     ),
     500,
     9,
@@ -888,6 +889,7 @@ async function renderPdf(
       euro(
         snapshot.invoice
           .vatCents,
+      ),
     ),
     500,
     9,
@@ -938,9 +940,7 @@ async function renderPdf(
       euro(
         snapshot.invoice
           .totalCents,
-    ),
-    ),
-    ),
+      ),
     ),
     490,
     11,

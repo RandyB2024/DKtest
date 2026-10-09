@@ -1085,10 +1085,11 @@ export async function GET(
 
 
         draw(
-    moneyColumn(
-      euro(
-            Number(
-              line.unit_price_cents,
+          moneyColumn(
+            euro(
+              Number(
+                line.unit_price_cents,
+              ),
             ),
           ),
           column.price,
@@ -1111,10 +1112,11 @@ export async function GET(
 
 
         draw(
-    moneyColumn(
-      euro(
-            Number(
-              line.total_incl_vat_cents,
+          moneyColumn(
+            euro(
+              Number(
+                line.total_incl_vat_cents,
+              ),
             ),
           ),
           column.total,
