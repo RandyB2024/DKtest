@@ -7850,3 +7850,499 @@ h3{
 }
 
 /* BESTEMD_SPLIT_PORTAL_END */
+
+
+/* BESTEMD_PERSONAL_SHELL_V2_START */
+
+.personal-app-shell{
+  min-height:100vh;
+  display:grid;
+  grid-template-columns:250px 1fr;
+  background:#f4f7f9;
+}
+
+.personal-sidebar{
+  position:sticky;
+  top:0;
+  height:100vh;
+  padding:26px 18px;
+  background:#0b3554;
+  color:#fff;
+  display:flex;
+  flex-direction:column;
+}
+
+.personal-sidebar-brand{
+  padding:0 10px 24px;
+  display:grid;
+  gap:8px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+.personal-sidebar-brand img{
+  width:145px;
+  max-width:100%;
+  height:auto;
+}
+
+.personal-sidebar-brand span{
+  color:#a9c5d6;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.personal-navigation{
+  display:grid;
+  gap:5px;
+  margin-top:22px;
+}
+
+.personal-navigation button{
+  width:100%;
+  border:0;
+  border-radius:10px;
+  padding:11px 12px;
+  background:transparent;
+  color:#c9dce7;
+  display:flex;
+  align-items:center;
+  gap:11px;
+  text-align:left;
+  cursor:pointer;
+}
+
+.personal-navigation button:hover,
+.personal-navigation button.active{
+  background:#185477;
+  color:#fff;
+}
+
+.personal-navigation svg{
+  width:18px;
+  height:18px;
+  flex:none;
+}
+
+.personal-sidebar-footer{
+  margin-top:auto;
+  padding-top:18px;
+  border-top:1px solid rgba(255,255,255,.12);
+}
+
+.personal-switch-environment{
+  text-decoration:none;
+  color:#bed3df;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:9px;
+}
+
+.personal-switch-environment:hover{
+  background:#174b6a;
+  color:#fff;
+}
+
+.personal-switch-environment svg{
+  width:18px;
+}
+
+.personal-app-main{
+  min-width:0;
+}
+
+.personal-topbar-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.personal-content{
+  max-width:1280px;
+  margin:0 auto;
+}
+
+.personal-start-grid{
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+}
+
+button.personal-start-card{
+  width:100%;
+  border:1px solid #e1e8ec;
+  text-align:left;
+  cursor:pointer;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:18px;
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease;
+}
+
+button.personal-start-card:hover{
+  transform:translateY(-2px);
+  border-color:#bed2dd;
+  box-shadow:0 8px 24px rgba(18,52,79,.07);
+}
+
+.personal-start-card span{
+  display:block;
+}
+
+.personal-module-page{
+  display:grid;
+  gap:24px;
+}
+
+.personal-module-heading h1{
+  margin:6px 0 10px;
+  font:700 clamp(2rem,4vw,3rem)/1.05 Georgia,serif;
+  color:#12344f;
+}
+
+.personal-module-heading p{
+  max-width:760px;
+  margin:0;
+  color:#687d8c;
+  line-height:1.65;
+}
+
+.personal-module-empty{
+  background:#fff;
+  border:1px solid #e1e8ec;
+  border-radius:18px;
+  padding:28px;
+  display:flex;
+  gap:18px;
+  align-items:flex-start;
+}
+
+.personal-module-empty-icon{
+  width:48px;
+  height:48px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:#edf4f7;
+  color:#0b4b78;
+  flex:none;
+}
+
+.personal-module-empty-icon svg{
+  width:22px;
+}
+
+.personal-module-empty h2{
+  margin:0 0 8px;
+  color:#17374f;
+}
+
+.personal-module-empty p{
+  margin:0;
+  color:#6b7f8e;
+  line-height:1.65;
+}
+
+@media(max-width:900px){
+  .personal-app-shell{
+    grid-template-columns:82px 1fr;
+  }
+
+  .personal-sidebar{
+    padding:22px 10px;
+  }
+
+  .personal-sidebar-brand{
+    padding:0 4px 22px;
+  }
+
+  .personal-sidebar-brand img{
+    width:54px;
+  }
+
+  .personal-sidebar-brand span,
+  .personal-navigation span,
+  .personal-switch-environment span{
+    display:none;
+  }
+
+  .personal-navigation button,
+  .personal-switch-environment{
+    justify-content:center;
+  }
+}
+
+@media(max-width:700px){
+  .personal-app-shell{
+    display:block;
+  }
+
+  .personal-sidebar{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    top:auto;
+    z-index:30;
+    width:auto;
+    height:auto;
+    padding:
+      7px
+      5px
+      max(
+        7px,
+        env(safe-area-inset-bottom)
+      );
+  }
+
+  .personal-sidebar-brand,
+  .personal-sidebar-footer{
+    display:none;
+  }
+
+  .personal-navigation{
+    margin:0;
+    display:grid;
+    grid-template-columns:
+      repeat(4,1fr);
+    gap:2px;
+  }
+
+  .personal-navigation button{
+    padding:6px 2px;
+    display:grid;
+    justify-items:center;
+    gap:2px;
+    font-size:10px;
+  }
+
+  .personal-navigation button:nth-child(n+5){
+    display:none;
+  }
+
+  .personal-navigation span{
+    display:block;
+  }
+
+  .personal-navigation svg{
+    width:19px;
+  }
+
+  .personal-topbar-actions > a{
+    display:none;
+  }
+
+  .personal-content{
+    padding-bottom:95px;
+  }
+
+  .personal-start-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+/* BESTEMD_PERSONAL_SHELL_V2_END */
+
+
+/* BESTEMD_LIFEPLAN_COACHING_START */
+
+.personal-functional-page{
+  display:grid;
+  gap:22px;
+}
+
+.personal-life-layout{
+  display:grid;
+  grid-template-columns:
+    minmax(0,1.15fr)
+    minmax(340px,.85fr);
+  gap:20px;
+  align-items:start;
+}
+
+.personal-life-form,
+.personal-goals-card{
+  display:grid;
+  gap:20px;
+}
+
+.personal-card-title{
+  display:flex;
+  gap:13px;
+  align-items:flex-start;
+}
+
+.personal-card-title > svg{
+  width:24px;
+  height:24px;
+  color:#0b4b78;
+  flex:none;
+}
+
+.personal-card-title h2{
+  margin:3px 0 0;
+  color:#17374f;
+}
+
+.personal-functional-page textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.personal-two-column{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+
+.personal-goal-list{
+  display:grid;
+}
+
+.personal-goal-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 0;
+  border-bottom:1px solid #e2e8ec;
+}
+
+.personal-goal-row > div{
+  display:grid;
+  gap:4px;
+}
+
+.personal-goal-row span{
+  color:#728593;
+  font-size:13px;
+}
+
+.personal-delete-button{
+  width:36px;
+  height:36px;
+  border:0;
+  border-radius:10px;
+  background:#f5f6f7;
+  color:#8c4040;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  flex:none;
+}
+
+.personal-delete-button svg{
+  width:17px;
+  height:17px;
+}
+
+.personal-add-goal{
+  display:grid;
+  gap:14px;
+  padding-top:4px;
+}
+
+.personal-add-goal h3{
+  margin:0;
+}
+
+.personal-review-note{
+  display:flex;
+  gap:11px;
+  align-items:flex-start;
+  padding:15px;
+  border-radius:12px;
+  background:#eef5f7;
+  color:#536f80;
+}
+
+.personal-review-note svg{
+  width:19px;
+  height:19px;
+  flex:none;
+}
+
+.personal-review-note p{
+  margin:0;
+  line-height:1.55;
+}
+
+.personal-form-error,
+.personal-form-success{
+  margin:0;
+  padding:12px 14px;
+  border-radius:10px;
+  font-size:14px;
+}
+
+.personal-form-error{
+  background:#fff0f0;
+  color:#843d3d;
+}
+
+.personal-form-success{
+  background:#edf8f1;
+  color:#276a45;
+}
+
+.personal-coaching-list{
+  display:grid;
+  gap:14px;
+}
+
+.personal-coaching-entry{
+  border:1px solid #e1e8ec;
+  border-radius:13px;
+  padding:16px;
+  display:grid;
+  gap:14px;
+}
+
+.personal-coaching-entry-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.personal-coaching-entry-head > div{
+  display:grid;
+  gap:4px;
+}
+
+.personal-coaching-entry-head span{
+  color:#718593;
+  font-size:13px;
+}
+
+.personal-coaching-entry small{
+  display:block;
+  margin-bottom:4px;
+  color:#577287;
+  font-weight:700;
+}
+
+.personal-coaching-entry p{
+  margin:0;
+  color:#5f7483;
+  white-space:pre-wrap;
+  line-height:1.55;
+}
+
+@media(max-width:1050px){
+  .personal-life-layout{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:700px){
+  .personal-two-column{
+    grid-template-columns:1fr;
+  }
+}
+
+/* BESTEMD_LIFEPLAN_COACHING_END */
