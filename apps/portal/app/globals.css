@@ -7376,3 +7376,224 @@ h3{
   }
 }
 /* BESTEMD_PORTAL_SIDEBAR_FIT_END */
+
+
+/* BESTEMD_PERSONAL_PORTAL_START */
+
+.portal-grouped-nav{
+  display:grid;
+  gap:22px;
+}
+
+.portal-nav-section{
+  display:grid;
+  gap:5px;
+}
+
+.portal-nav-label{
+  padding:0 12px 5px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#71889a;
+}
+
+.personal-dashboard{
+  display:grid;
+  gap:24px;
+}
+
+.personal-hero{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:28px;
+  padding:34px;
+  border:1px solid #dfe8ee;
+  border-radius:22px;
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #f2f7fa 100%
+    );
+  box-shadow:
+    0 8px 28px rgba(21,53,78,.05);
+}
+
+.personal-hero h1{
+  margin:4px 0 12px;
+  font:
+    700 clamp(2rem,4vw,3.2rem)/1.05
+    Georgia,
+    serif;
+  color:#102f4a;
+}
+
+.personal-hero p{
+  max-width:680px;
+  margin:0;
+  color:#627787;
+  font-size:16px;
+  line-height:1.7;
+}
+
+.personal-kicker{
+  display:block;
+  margin-bottom:7px;
+  color:#47718c;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.personal-hero-icon{
+  width:74px;
+  height:74px;
+  border-radius:22px;
+  display:grid;
+  place-items:center;
+  flex:none;
+  background:#e6f0f5;
+  color:#0b4b78;
+}
+
+.personal-hero-icon svg{
+  width:34px;
+  height:34px;
+}
+
+.personal-module-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+
+.personal-module-card{
+  min-height:170px;
+  border:1px solid #e0e8ed;
+  border-radius:18px;
+  background:#fff;
+  padding:22px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:start;
+  gap:16px;
+  text-align:left;
+  cursor:pointer;
+  color:#16384f;
+  box-shadow:
+    0 4px 18px rgba(17,49,73,.04);
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease;
+}
+
+.personal-module-card:hover{
+  transform:translateY(-2px);
+  border-color:#bfd4e0;
+  box-shadow:
+    0 10px 26px rgba(17,49,73,.08);
+}
+
+.personal-module-card > svg{
+  width:18px;
+  color:#7890a0;
+}
+
+.personal-module-icon{
+  width:44px;
+  height:44px;
+  border-radius:13px;
+  display:grid;
+  place-items:center;
+  background:#edf5f8;
+  color:#0b4b78;
+}
+
+.personal-module-icon svg{
+  width:21px;
+  height:21px;
+}
+
+.personal-module-copy{
+  display:grid;
+  gap:8px;
+}
+
+.personal-module-copy strong{
+  font-size:16px;
+  color:#153651;
+}
+
+.personal-module-copy small{
+  color:#6b7f8e;
+  font-size:14px;
+  line-height:1.55;
+}
+
+.personal-intro-card{
+  border-radius:20px;
+  padding:28px;
+  background:#0d3b5c;
+  color:#fff;
+}
+
+.personal-intro-card h2{
+  margin:0 0 10px;
+  font-size:22px;
+}
+
+.personal-intro-card p{
+  max-width:780px;
+  margin:0;
+  color:#d2e1ea;
+  line-height:1.7;
+}
+
+.personal-intro-card .personal-kicker{
+  color:#9fc3d7;
+}
+
+.personal-placeholder{
+  max-width:850px;
+}
+
+@media(max-width:1050px){
+  .personal-module-grid{
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:700px){
+  .portal-nav-label{
+    display:none;
+  }
+
+  .personal-hero{
+    padding:24px;
+    align-items:flex-start;
+  }
+
+  .personal-hero-icon{
+    width:54px;
+    height:54px;
+  }
+
+  .personal-module-grid{
+    grid-template-columns:1fr;
+  }
+
+  .personal-module-card{
+    min-height:unset;
+  }
+}
+
+/* BESTEMD_PERSONAL_PORTAL_END */
