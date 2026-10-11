@@ -3378,3 +3378,25 @@ body.sidebar-collapsed #logout::after{
 }
 
 /* BESTEMD_PERSONAL_ACCESS_END */
+
+/* BESTEMD_OFFICE_SIDEBAR_CLEANUP_START */
+
+.sidebar .portal-nav-label,
+.sidebar .office-nav-section-label,
+.sidebar .menu-group-label,
+.office-sidebar .portal-nav-label,
+.office-sidebar .office-nav-section-label,
+.office-sidebar .menu-group-label,
+.office-shell .portal-nav-label,
+.office-shell .office-nav-section-label,
+.office-shell .menu-group-label {
+  display: none !important;
+}
+
+.sidebar .sidebar-nav,
+.office-sidebar .sidebar-nav,
+.office-shell .sidebar-nav {
+  gap: 8px;
+}
+
+/* BESTEMD_OFFICE_SIDEBAR_CLEANUP_END */

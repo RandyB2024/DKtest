@@ -10250,3 +10250,201 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_PERSONAL_CHROME_V4_END */
+
+/* BESTEMD_PERSONAL_SIDEBAR_TUNE_START */
+
+.personal-sidebar,
+.personal-portal .personal-sidebar,
+.personal-portal-shell .personal-sidebar,
+.personal-layout .personal-sidebar {
+  background: linear-gradient(180deg, #0a3c61 0%, #0c4a73 100%);
+  color: #eef6fb;
+}
+
+.personal-sidebar .portal-nav-label,
+.personal-sidebar .personal-sidebar-section-label,
+.personal-sidebar .personal-nav-group-label,
+.personal-sidebar .personal-sidebar-group-label {
+  color: #9ab1c2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.personal-sidebar .personal-sidebar-toggle,
+.personal-sidebar .personal-brand-trigger,
+.personal-sidebar .personal-sidebar-brand-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+}
+
+.personal-sidebar .personal-sidebar-brand-mark,
+.personal-sidebar .personal-brand-mark,
+.personal-sidebar .personal-sidebar-brand-badge,
+.personal-sidebar .personal-logo-mark,
+.personal-hero-logo,
+.personal-hero-mark-card,
+.personal-dashboard-hero__logo,
+.personal-portal-hero-logo {
+  position: relative;
+  overflow: hidden;
+}
+
+.personal-sidebar .personal-sidebar-brand-mark,
+.personal-sidebar .personal-brand-mark,
+.personal-sidebar .personal-sidebar-brand-badge,
+.personal-sidebar .personal-logo-mark {
+  width: 58px;
+  height: 58px;
+  min-width: 58px;
+  border-radius: 18px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.18);
+}
+
+.personal-sidebar .personal-sidebar-brand-mark img,
+.personal-sidebar .personal-brand-mark img,
+.personal-sidebar .personal-sidebar-brand-badge img,
+.personal-sidebar .personal-logo-mark img {
+  opacity: 0 !important;
+}
+
+.personal-sidebar .personal-sidebar-brand-mark::before,
+.personal-sidebar .personal-brand-mark::before,
+.personal-sidebar .personal-sidebar-brand-badge::before,
+.personal-sidebar .personal-logo-mark::before {
+  content: "";
+  width: 100%;
+  height: 100%;
+  background: url("/assets/icon-192.png") center center / contain no-repeat;
+  display: block;
+}
+
+.personal-sidebar[data-collapsed="true"],
+.personal-sidebar.is-collapsed {
+  width: 86px;
+}
+
+.personal-sidebar[data-collapsed="true"] .portal-nav-label,
+.personal-sidebar.is-collapsed .portal-nav-label,
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-section-label,
+.personal-sidebar.is-collapsed .personal-sidebar-section-label,
+.personal-sidebar[data-collapsed="true"] .personal-nav-group-label,
+.personal-sidebar.is-collapsed .personal-nav-group-label,
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-brand-title,
+.personal-sidebar.is-collapsed .personal-sidebar-brand-title,
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-brand-subtitle,
+.personal-sidebar.is-collapsed .personal-sidebar-brand-subtitle,
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-vertical-label,
+.personal-sidebar.is-collapsed .personal-sidebar-vertical-label,
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-vertical-word,
+.personal-sidebar.is-collapsed .personal-sidebar-vertical-word,
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-wordmark,
+.personal-sidebar.is-collapsed .personal-sidebar-wordmark {
+  display: none !important;
+}
+
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-nav a,
+.personal-sidebar.is-collapsed .personal-sidebar-nav a,
+.personal-sidebar[data-collapsed="true"] .personal-nav-link,
+.personal-sidebar.is-collapsed .personal-nav-link {
+  justify-content: center !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-nav a span,
+.personal-sidebar.is-collapsed .personal-sidebar-nav a span,
+.personal-sidebar[data-collapsed="true"] .personal-nav-link span,
+.personal-sidebar.is-collapsed .personal-nav-link span {
+  display: none !important;
+}
+
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-brand-mark,
+.personal-sidebar.is-collapsed .personal-sidebar-brand-mark,
+.personal-sidebar[data-collapsed="true"] .personal-brand-mark,
+.personal-sidebar.is-collapsed .personal-brand-mark,
+.personal-sidebar[data-collapsed="true"] .personal-sidebar-brand-badge,
+.personal-sidebar.is-collapsed .personal-sidebar-brand-badge,
+.personal-sidebar[data-collapsed="true"] .personal-logo-mark,
+.personal-sidebar.is-collapsed .personal-logo-mark {
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  padding: 8px;
+  border-radius: 16px;
+}
+
+.personal-hero-logo,
+.personal-hero-mark-card,
+.personal-dashboard-hero__logo,
+.personal-portal-hero-logo {
+  width: 200px;
+  height: 200px;
+  min-width: 200px;
+  border-radius: 30px;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 22px 56px rgba(12, 74, 115, 0.12);
+}
+
+.personal-hero-logo img,
+.personal-hero-mark-card img,
+.personal-dashboard-hero__logo img,
+.personal-portal-hero-logo img {
+  opacity: 0 !important;
+}
+
+.personal-hero-logo::before,
+.personal-hero-mark-card::before,
+.personal-dashboard-hero__logo::before,
+.personal-portal-hero-logo::before {
+  content: "";
+  width: 140px;
+  height: 140px;
+  background: url("/assets/icon-192.png") center center / contain no-repeat;
+  display: block;
+}
+
+.personal-topbar,
+.personal-portal-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.personal-topbar .button,
+.personal-topbar button,
+.personal-portal-topbar .button,
+.personal-portal-topbar button {
+  min-height: 44px;
+  border-radius: 14px;
+}
+
+@media (max-width: 960px) {
+  .personal-hero-logo,
+  .personal-hero-mark-card,
+  .personal-dashboard-hero__logo,
+  .personal-portal-hero-logo {
+    width: 148px;
+    height: 148px;
+    min-width: 148px;
+    border-radius: 24px;
+  }
+
+  .personal-hero-logo::before,
+  .personal-hero-mark-card::before,
+  .personal-dashboard-hero__logo::before,
+  .personal-portal-hero-logo::before {
+    width: 104px;
+    height: 104px;
+  }
+}
+
+/* BESTEMD_PERSONAL_SIDEBAR_TUNE_END */
