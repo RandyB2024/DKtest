@@ -7,6 +7,7 @@ import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
 import { parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 import { writeOfficeCookie } from './auth/supabase.mjs';
 import { customerMutation } from './customer-management.mjs';
+import { personalPortalAccessRoute } from './personal-portal-access.mjs';
 import { kvkRoute } from './kvk/intake.mjs';
 import { profileRoute } from './customer-profile.mjs';
 import { invoicingSettingsRoute } from './invoicing-settings.mjs';
@@ -809,6 +810,23 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
         res,
         creditInvoice.status,
         creditInvoice.data
+      );
+    }
+
+    const personalAccess =
+      await personalPortalAccessRoute(
+        req,
+        url,
+        client,
+        user,
+        body
+      );
+
+    if (personalAccess) {
+      return sendJson(
+        res,
+        personalAccess.status,
+        personalAccess.data
       );
     }
 

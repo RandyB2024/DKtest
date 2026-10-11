@@ -203,7 +203,7 @@ async function renderRoute() {
       html = (path==='/dashboard'?'<div id="dashboard-tasks" class="profile-grid"><section id="tasks-today"></section><section id="tasks-overdue"></section></div>':'')+'<div id="client-workspace"></div>';
     } else if (/^\/clients\/[^/]+$/.test(path)) {
       const id = path.split('/').pop(), data = await api('/api/clients/' + id); recordData = data; header('Klantdossier');
-      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><span>Klantdossier</span></div><div id="customer-profile"></div>`;
+      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><span>Klantdossier</span></div><div id="personal-portal-access"></div><div id="customer-profile"></div>`;
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
       const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header('Onderneming');
       html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
@@ -274,6 +274,31 @@ async function renderRoute() {
         if(activeGeneration===generation&&currentUser)await mountOfficeCommunication($('#office-communication'),api,currentUser);
       }else customerControls(path, recordData);
       if(path==='/dashboard'){const {mountTasks}=await import('/tasks.js');if(activeGeneration===generation&&currentUser)await Promise.all([mountTasks($('#tasks-today'),api,{bucket:'today'}),mountTasks($('#tasks-overdue'),api,{bucket:'overdue'})]);}
+      if(
+        path.startsWith('/clients/')
+        && recordData?.relationship
+        && document.querySelector('#personal-portal-access')
+      ){
+        const {
+          mountPersonalPortalAccess
+        } =
+          await import(
+            '/personal-portal-access.js'
+          );
+
+        if(
+          activeGeneration===generation
+          &&currentUser
+        ){
+          await mountPersonalPortalAccess(
+            $('#personal-portal-access'),
+            api,
+            recordData.relationship,
+            currentUser.canManageCustomers
+          );
+        }
+      }
+
       if(recordData?.relationship || recordData?.organization){
         const {mountCustomerProfile}=await import('/customer-profile.js');
         let rel=recordData.relationship,orgs=recordData.organizations;

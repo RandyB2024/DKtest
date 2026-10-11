@@ -3301,3 +3301,80 @@ body.sidebar-collapsed #logout::after{
   }
 
 }
+
+
+/* BESTEMD_PERSONAL_ACCESS_START */
+
+.personal-access-panel{
+  margin-bottom:18px;
+}
+
+.personal-access-heading{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  align-items:flex-start;
+}
+
+.personal-access-heading h2{
+  margin:3px 0 6px;
+}
+
+.personal-access-list{
+  display:grid;
+  gap:0;
+  margin-top:18px;
+}
+
+.personal-access-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:16px 0;
+  border-top:1px solid
+    var(--border, #dde5ea);
+}
+
+.personal-access-person{
+  display:grid;
+  gap:4px;
+  min-width:0;
+}
+
+.personal-access-person strong{
+  color:#17324d;
+}
+
+.personal-access-person small{
+  color:#6b7d8a;
+  overflow-wrap:anywhere;
+}
+
+.personal-access-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.personal-access-status{
+  min-height:20px;
+  margin:10px 0 0;
+  color:#5d7281;
+  font-size:14px;
+}
+
+@media(max-width:700px){
+  .personal-access-row{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+
+  .personal-access-actions{
+    justify-content:flex-start;
+  }
+}
+
+/* BESTEMD_PERSONAL_ACCESS_END */

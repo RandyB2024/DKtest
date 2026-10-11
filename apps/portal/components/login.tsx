@@ -9,7 +9,11 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-export default function Login() {
+export default function Login({
+  redirectTo = "/mijn-onderneming",
+}: {
+  redirectTo?: string;
+}) {
   const [email, setEmail] =
     useState("");
 
@@ -72,7 +76,7 @@ export default function Login() {
         return;
       }
 
-      location.replace("/");
+      location.replace(redirectTo);
     } catch {
       setError(
         "Inloggen is tijdelijk niet beschikbaar. Probeer het opnieuw.",

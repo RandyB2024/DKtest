@@ -7597,3 +7597,256 @@ h3{
 }
 
 /* BESTEMD_PERSONAL_PORTAL_END */
+
+
+/* BESTEMD_SPLIT_PORTAL_START */
+
+.bestemd-choice-page{
+  min-height:100vh;
+  display:grid;
+  align-content:center;
+  gap:36px;
+  max-width:1180px;
+  margin:0 auto;
+  padding:48px 28px;
+}
+
+.bestemd-choice-header{
+  display:flex;
+  align-items:center;
+  gap:28px;
+}
+
+.bestemd-choice-logo{
+  width:150px;
+  height:auto;
+}
+
+.bestemd-choice-header h1{
+  margin:5px 0 10px;
+  font:700 clamp(2.1rem,4vw,3.6rem)/1.05 Georgia,serif;
+  color:#12344f;
+}
+
+.bestemd-choice-header p{
+  margin:0;
+  color:#6b7e8c;
+  font-size:17px;
+}
+
+.bestemd-choice-kicker,
+.bestemd-choice-label,
+.personal-area-label{
+  display:block;
+  color:#56778c;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+
+.bestemd-choice-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+}
+
+.bestemd-choice-card{
+  text-decoration:none;
+  color:inherit;
+  background:#fff;
+  border:1px solid #dfe7ec;
+  border-radius:22px;
+  padding:30px;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:22px;
+  min-height:290px;
+  box-shadow:0 10px 34px rgba(13,48,73,.06);
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
+}
+
+.bestemd-choice-card:hover{
+  transform:translateY(-3px);
+  border-color:#b8cfdb;
+  box-shadow:0 16px 38px rgba(13,48,73,.10);
+}
+
+.bestemd-choice-icon{
+  width:56px;
+  height:56px;
+  border-radius:16px;
+  background:#edf4f7;
+  color:#0b4b78;
+  display:grid;
+  place-items:center;
+}
+
+.bestemd-choice-icon svg{
+  width:26px;
+  height:26px;
+}
+
+.bestemd-choice-card h2{
+  margin:6px 0 12px;
+  font-size:26px;
+  color:#12344f;
+}
+
+.bestemd-choice-card p{
+  margin:0 0 24px;
+  color:#687d8c;
+  line-height:1.65;
+}
+
+.bestemd-choice-card strong{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:#0b4b78;
+}
+
+.bestemd-choice-card strong svg{
+  width:18px;
+}
+
+.bestemd-choice-footer{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:8px;
+  color:#708290;
+  font-size:14px;
+}
+
+.bestemd-choice-footer svg{
+  width:17px;
+}
+
+.personal-shell{
+  min-height:100vh;
+  background:#f4f7f9;
+}
+
+.personal-topbar{
+  height:76px;
+  background:#fff;
+  border-bottom:1px solid var(--border);
+  padding:0 32px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.personal-topbar > div:first-child{
+  display:grid;
+  gap:3px;
+}
+
+.personal-content{
+  max-width:1220px;
+  margin:0 auto;
+  padding:40px 28px;
+  display:grid;
+  gap:28px;
+}
+
+.personal-welcome h1{
+  margin:6px 0 10px;
+  font:700 clamp(2rem,4vw,3.1rem)/1.05 Georgia,serif;
+  color:#12344f;
+}
+
+.personal-welcome p{
+  color:#6c7e8c;
+  margin:0;
+}
+
+.personal-start-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+}
+
+.personal-start-card{
+  background:#fff;
+  border:1px solid #e1e8ec;
+  border-radius:18px;
+  padding:24px;
+}
+
+.personal-start-card > svg{
+  width:24px;
+  height:24px;
+  color:#0b4b78;
+  margin-bottom:18px;
+}
+
+.personal-start-card h2{
+  margin:0 0 8px;
+  color:#17374f;
+}
+
+.personal-start-card p{
+  margin:0;
+  color:#6b7e8d;
+  line-height:1.55;
+}
+
+.personal-security-note{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  padding:20px;
+  background:#eaf4f7;
+  border-radius:15px;
+  color:#234b64;
+}
+
+.personal-security-note svg{
+  width:22px;
+  flex:none;
+}
+
+.personal-security-note p{
+  margin:5px 0 0;
+  color:#5d7585;
+}
+
+@media(max-width:760px){
+  .bestemd-choice-page{
+    padding:28px 18px;
+  }
+
+  .bestemd-choice-header{
+    display:grid;
+  }
+
+  .bestemd-choice-logo{
+    width:125px;
+  }
+
+  .bestemd-choice-grid{
+    grid-template-columns:1fr;
+  }
+
+  .bestemd-choice-card{
+    min-height:unset;
+    padding:22px;
+  }
+
+  .personal-content{
+    padding:26px 18px;
+  }
+
+  .personal-start-grid{
+    grid-template-columns:1fr;
+  }
+
+  .personal-topbar{
+    padding:0 18px;
+  }
+}
+
+/* BESTEMD_SPLIT_PORTAL_END */

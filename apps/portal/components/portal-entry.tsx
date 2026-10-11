@@ -31,7 +31,7 @@ export default function PortalEntry() {
     window.addEventListener("focus", load);
     return () => { window.clearInterval(timer); window.removeEventListener("focus", load); };
   }, [load]);
-  if (state.kind === "login") return <Login />;
+  if (state.kind === "login") return <Login redirectTo="/mijn-onderneming" />;
   if (state.kind === "mfa") return <Mfa onComplete={load} />;
   if (state.kind === "portal") return <Portal context={state.context} onContext={context => setState({ kind: "portal", context })} onRefresh={load} />;
   return <main className="login"><section className="login-panel"><div className="login-box"><h1>Mijn Destination Known</h1><p role="status">{state.kind === "loading" ? "Uw beveiligde sessie wordt gecontroleerd…" : state.message}</p>{state.kind === "error" && <><button className="btn primary" onClick={load}>Opnieuw proberen</button><Logout /></>}</div></section></main>;
