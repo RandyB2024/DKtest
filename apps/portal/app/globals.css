@@ -7601,252 +7601,788 @@ h3{
 
 /* BESTEMD_SPLIT_PORTAL_START */
 
-.bestemd-choice-page{
-  min-height:100vh;
-  display:grid;
-  align-content:center;
-  gap:36px;
-  max-width:1180px;
-  margin:0 auto;
-  padding:48px 28px;
-}
+/* ==========================================================
+   MIJN BESTEMMING / MIJN ONDERNEMING - PREMIUM ENTRY
+   ========================================================== */
 
-.bestemd-choice-header{
+.bestemd-choice-page{
+  --choice-navy:#0b3554;
+  --choice-blue:#145f91;
+  --choice-mid:#59778d;
+  --choice-soft:#eef6fb;
+  --choice-border:#d8e4eb;
+
+  position:relative;
+  min-height:100svh;
+  overflow:hidden;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255,255,255,.98) 0%,
+      rgba(249,252,254,.96) 34%,
+      rgba(240,247,251,.98) 100%
+    );
+
   display:flex;
   align-items:center;
-  gap:28px;
+  justify-content:center;
+
+  padding:
+    clamp(36px,5vw,72px)
+    28px;
+
+  isolation:isolate;
 }
+
+
+/* subtiele organische achtergrond */
+
+.bestemd-choice-decoration{
+  position:absolute;
+  pointer-events:none;
+  z-index:-1;
+}
+
+.bestemd-choice-decoration--left{
+  width:740px;
+  height:740px;
+
+  left:-430px;
+  top:-330px;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(210,233,248,.9),
+      rgba(236,247,253,.35)
+    );
+
+  box-shadow:
+    70px 90px 0 70px rgba(224,240,250,.40);
+}
+
+.bestemd-choice-decoration--left::after{
+  content:"";
+  position:absolute;
+
+  width:610px;
+  height:250px;
+
+  left:220px;
+  top:480px;
+
+  border-top:
+    1px solid rgba(255,255,255,.92);
+
+  border-radius:50%;
+
+  transform:
+    rotate(-39deg);
+}
+
+
+.bestemd-choice-decoration--right{
+  width:720px;
+  height:720px;
+
+  right:-470px;
+  bottom:-430px;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(216,237,250,.25),
+      rgba(195,226,245,.72)
+    );
+
+  box-shadow:
+    -110px -55px 0 50px rgba(230,243,251,.40);
+}
+
+
+/* hoofdcontainer */
+
+.bestemd-choice-content{
+  width:min(1180px,100%);
+  margin:0 auto;
+
+  display:grid;
+  gap:34px;
+}
+
+
+/* hero */
+
+.bestemd-choice-hero{
+  display:grid;
+  justify-items:center;
+  text-align:center;
+
+  gap:26px;
+}
+
 
 .bestemd-choice-logo{
-  width:150px;
-  height:auto;
-}
-
-.bestemd-choice-header h1{
-  margin:5px 0 10px;
-  font:700 clamp(2.1rem,4vw,3.6rem)/1.05 Georgia,serif;
-  color:#12344f;
-}
-
-.bestemd-choice-header p{
-  margin:0;
-  color:#6b7e8c;
-  font-size:17px;
-}
-
-.bestemd-choice-kicker,
-.bestemd-choice-label,
-.personal-area-label{
   display:block;
-  color:#56778c;
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:.09em;
-  text-transform:uppercase;
+
+  width:
+    clamp(
+      285px,
+      29vw,
+      460px
+    );
+
+  max-width:90%;
+
+  height:auto;
+
+  object-fit:contain;
+
+  filter:
+    drop-shadow(
+      0 8px 24px
+      rgba(12,48,74,.05)
+    );
 }
 
-.bestemd-choice-grid{
+
+.bestemd-choice-title{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:24px;
+  justify-items:center;
+  gap:11px;
 }
 
-.bestemd-choice-card{
-  text-decoration:none;
-  color:inherit;
-  background:#fff;
-  border:1px solid #dfe7ec;
-  border-radius:22px;
-  padding:30px;
-  display:grid;
-  grid-template-columns:auto 1fr;
-  gap:22px;
-  min-height:290px;
-  box-shadow:0 10px 34px rgba(13,48,73,.06);
-  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
-}
 
-.bestemd-choice-card:hover{
-  transform:translateY(-3px);
-  border-color:#b8cfdb;
-  box-shadow:0 16px 38px rgba(13,48,73,.10);
-}
-
-.bestemd-choice-icon{
-  width:56px;
-  height:56px;
-  border-radius:16px;
-  background:#edf4f7;
-  color:#0b4b78;
-  display:grid;
-  place-items:center;
-}
-
-.bestemd-choice-icon svg{
-  width:26px;
-  height:26px;
-}
-
-.bestemd-choice-card h2{
-  margin:6px 0 12px;
-  font-size:26px;
-  color:#12344f;
-}
-
-.bestemd-choice-card p{
-  margin:0 0 24px;
-  color:#687d8c;
-  line-height:1.65;
-}
-
-.bestemd-choice-card strong{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  color:#0b4b78;
-}
-
-.bestemd-choice-card strong svg{
-  width:18px;
-}
-
-.bestemd-choice-footer{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:8px;
-  color:#708290;
-  font-size:14px;
-}
-
-.bestemd-choice-footer svg{
-  width:17px;
-}
-
-.personal-shell{
-  min-height:100vh;
-  background:#f4f7f9;
-}
-
-.personal-topbar{
-  height:76px;
-  background:#fff;
-  border-bottom:1px solid var(--border);
-  padding:0 32px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
-}
-
-.personal-topbar > div:first-child{
-  display:grid;
-  gap:3px;
-}
-
-.personal-content{
-  max-width:1220px;
-  margin:0 auto;
-  padding:40px 28px;
-  display:grid;
-  gap:28px;
-}
-
-.personal-welcome h1{
-  margin:6px 0 10px;
-  font:700 clamp(2rem,4vw,3.1rem)/1.05 Georgia,serif;
-  color:#12344f;
-}
-
-.personal-welcome p{
-  color:#6c7e8c;
+.bestemd-choice-title h1{
   margin:0;
+
+  max-width:900px;
+
+  color:var(--choice-navy);
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size:
+    clamp(
+      3rem,
+      5.4vw,
+      5.15rem
+    );
+
+  line-height:.98;
+
+  letter-spacing:
+    -.045em;
+
+  font-weight:700;
 }
 
-.personal-start-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:18px;
-}
 
-.personal-start-card{
-  background:#fff;
-  border:1px solid #e1e8ec;
-  border-radius:18px;
-  padding:24px;
-}
-
-.personal-start-card > svg{
-  width:24px;
-  height:24px;
-  color:#0b4b78;
-  margin-bottom:18px;
-}
-
-.personal-start-card h2{
-  margin:0 0 8px;
-  color:#17374f;
-}
-
-.personal-start-card p{
+.bestemd-choice-title p{
   margin:0;
-  color:#6b7e8d;
+
+  color:var(--choice-mid);
+
+  font-size:
+    clamp(
+      1rem,
+      1.4vw,
+      1.22rem
+    );
+
   line-height:1.55;
 }
 
-.personal-security-note{
+
+/* kaarten */
+
+.bestemd-choice-grid{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0,1fr)
+    );
+
+  gap:22px;
+}
+
+
+.bestemd-choice-card{
+  position:relative;
+  overflow:hidden;
+
+  min-height:368px;
+
+  padding:
+    40px
+    46px;
+
+  text-decoration:none;
+  color:inherit;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      .94
+    );
+
+  border:
+    1px solid
+    var(--choice-border);
+
+  border-radius:24px;
+
+  box-shadow:
+    0 20px 55px
+      rgba(
+        20,
+        68,
+        99,
+        .08
+      );
+
   display:flex;
-  gap:14px;
-  align-items:flex-start;
-  padding:20px;
-  background:#eaf4f7;
-  border-radius:15px;
-  color:#234b64;
+  flex-direction:column;
+
+  transition:
+    transform .20s ease,
+    box-shadow .20s ease,
+    border-color .20s ease;
 }
 
-.personal-security-note svg{
-  width:22px;
+
+.bestemd-choice-card:hover{
+  transform:
+    translateY(-5px);
+
+  border-color:
+    #bed4e1;
+
+  box-shadow:
+    0 28px 70px
+      rgba(
+        20,
+        68,
+        99,
+        .13
+      );
+}
+
+
+.bestemd-choice-card:focus-visible{
+  outline:
+    3px solid
+    rgba(20,95,145,.32);
+
+  outline-offset:4px;
+}
+
+
+/* decoratieve golf ín kaart */
+
+.bestemd-choice-card-wave{
+  position:absolute;
+
+  width:420px;
+  height:220px;
+
+  right:-100px;
+  bottom:-125px;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      130deg,
+      rgba(238,247,252,.15),
+      rgba(210,233,247,.75)
+    );
+
+  transform:
+    rotate(-18deg);
+
+  pointer-events:none;
+}
+
+
+.bestemd-choice-card-wave::before{
+  content:"";
+
+  position:absolute;
+
+  width:380px;
+  height:180px;
+
+  left:-95px;
+  top:-45px;
+
+  border-radius:50%;
+
+  border-top:
+    1px solid
+    rgba(
+      201,
+      225,
+      240,
+      .85
+    );
+}
+
+
+/* kaart header */
+
+.bestemd-choice-card-top{
+  position:relative;
+  z-index:1;
+
+  display:flex;
+  align-items:center;
+
+  gap:20px;
+}
+
+
+.bestemd-choice-icon{
+  width:58px;
+  height:58px;
+
   flex:none;
+
+  border-radius:17px;
+
+  display:grid;
+  place-items:center;
+
+  color:#075d91;
+
+  background:
+    linear-gradient(
+      145deg,
+      #eff8fd,
+      #e3f0f8
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(
+      210,
+      230,
+      241,
+      .65
+    );
 }
 
-.personal-security-note p{
-  margin:5px 0 0;
-  color:#5d7585;
+
+.bestemd-choice-icon svg{
+  width:27px;
+  height:27px;
+
+  stroke-width:2;
 }
 
-@media(max-width:760px){
+
+.bestemd-choice-card-title{
+  display:grid;
+  gap:5px;
+}
+
+
+.bestemd-choice-label{
+  display:block;
+
+  color:#397497;
+
+  font-size:12px;
+
+  line-height:1;
+
+  letter-spacing:.13em;
+
+  text-transform:uppercase;
+
+  font-weight:800;
+}
+
+
+.bestemd-choice-card h2{
+  margin:0;
+
+  color:var(--choice-navy);
+
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
+
+  font-size:
+    clamp(
+      1.75rem,
+      2.2vw,
+      2.2rem
+    );
+
+  line-height:1.1;
+
+  font-weight:700;
+}
+
+
+/* beschrijving */
+
+.bestemd-choice-description{
+  position:relative;
+  z-index:1;
+
+  max-width:490px;
+
+  margin:
+    26px
+    0
+    30px;
+
+  color:#5f7890;
+
+  font-size:16px;
+
+  line-height:1.75;
+}
+
+
+/* CTA button-look */
+
+.bestemd-choice-action{
+  position:relative;
+  z-index:1;
+
+  margin-top:auto;
+
+  width:max-content;
+  max-width:100%;
+
+  min-height:58px;
+
+  padding:
+    0
+    28px;
+
+  border-radius:14px;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:18px;
+
+  color:#fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0a3f69,
+      #0b5d91
+    );
+
+  box-shadow:
+    0 12px 24px
+      rgba(
+        9,
+        72,
+        112,
+        .18
+      );
+
+  font-size:15px;
+
+  font-weight:800;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease;
+}
+
+
+.bestemd-choice-card:hover
+.bestemd-choice-action{
+  transform:
+    translateX(2px);
+
+  box-shadow:
+    0 14px 30px
+      rgba(
+        9,
+        72,
+        112,
+        .25
+      );
+}
+
+
+.bestemd-choice-action svg{
+  width:20px;
+  height:20px;
+
+  transition:
+    transform .18s ease;
+}
+
+
+.bestemd-choice-card:hover
+.bestemd-choice-action svg{
+  transform:
+    translateX(4px);
+}
+
+
+/* beveiligingsregel */
+
+.bestemd-choice-footer{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:24px;
+
+  color:#6f8799;
+
+  font-size:14px;
+}
+
+
+.bestemd-choice-footer-line{
+  width:92px;
+  height:1px;
+
+  background:
+    #cfdee7;
+}
+
+
+.bestemd-choice-footer-security{
+  display:inline-flex;
+  align-items:center;
+
+  gap:9px;
+
+  white-space:nowrap;
+}
+
+
+.bestemd-choice-footer-security svg{
+  width:18px;
+  height:18px;
+
+  color:#6f8da2;
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media(max-width:900px){
+
   .bestemd-choice-page{
-    padding:28px 18px;
+    align-items:flex-start;
+
+    padding:
+      42px
+      22px;
   }
 
-  .bestemd-choice-header{
-    display:grid;
+
+  .bestemd-choice-content{
+    gap:30px;
   }
+
 
   .bestemd-choice-logo{
-    width:125px;
+    width:
+      clamp(
+        260px,
+        48vw,
+        390px
+      );
   }
+
+
+  .bestemd-choice-title h1{
+    font-size:
+      clamp(
+        2.8rem,
+        8vw,
+        4.4rem
+      );
+  }
+
 
   .bestemd-choice-grid{
     grid-template-columns:1fr;
   }
 
+
   .bestemd-choice-card{
-    min-height:unset;
-    padding:22px;
+    min-height:315px;
   }
 
-  .personal-content{
-    padding:26px 18px;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:600px){
+
+  .bestemd-choice-page{
+    padding:
+      28px
+      16px
+      36px;
   }
 
-  .personal-start-grid{
-    grid-template-columns:1fr;
+
+  .bestemd-choice-content{
+    gap:24px;
   }
 
-  .personal-topbar{
-    padding:0 18px;
+
+  .bestemd-choice-hero{
+    gap:20px;
   }
+
+
+  .bestemd-choice-logo{
+    width:
+      min(
+        310px,
+        88vw
+      );
+  }
+
+
+  .bestemd-choice-title{
+    gap:9px;
+  }
+
+
+  .bestemd-choice-title h1{
+    font-size:
+      clamp(
+        2.45rem,
+        13vw,
+        3.5rem
+      );
+
+    line-height:1.02;
+  }
+
+
+  .bestemd-choice-title p{
+    max-width:330px;
+
+    font-size:15px;
+  }
+
+
+  .bestemd-choice-grid{
+    gap:16px;
+  }
+
+
+  .bestemd-choice-card{
+    min-height:0;
+
+    padding:
+      25px
+      22px;
+
+    border-radius:19px;
+  }
+
+
+  .bestemd-choice-card-top{
+    align-items:flex-start;
+
+    gap:15px;
+  }
+
+
+  .bestemd-choice-icon{
+    width:50px;
+    height:50px;
+
+    border-radius:14px;
+  }
+
+
+  .bestemd-choice-icon svg{
+    width:23px;
+    height:23px;
+  }
+
+
+  .bestemd-choice-card h2{
+    font-size:1.65rem;
+  }
+
+
+  .bestemd-choice-description{
+    margin:
+      20px
+      0
+      23px;
+
+    font-size:15px;
+
+    line-height:1.65;
+  }
+
+
+  .bestemd-choice-action{
+    width:100%;
+
+    min-height:54px;
+
+    padding:
+      0
+      20px;
+
+    justify-content:space-between;
+  }
+
+
+  .bestemd-choice-footer{
+    gap:12px;
+
+    font-size:12px;
+  }
+
+
+  .bestemd-choice-footer-line{
+    width:32px;
+  }
+
+
+  .bestemd-choice-decoration--left{
+    opacity:.55;
+  }
+
+
+  .bestemd-choice-decoration--right{
+    opacity:.45;
+  }
+
 }
 
 /* BESTEMD_SPLIT_PORTAL_END */
