@@ -22,6 +22,7 @@ import {
 import Logout from "./logout";
 import PersonalLifePlan from "./personal-life-plan";
 import PersonalCoaching from "./personal-coaching";
+import { PersonalDocumentsView } from "./personal-documents-view";
 
 
 const personalNav = [
@@ -542,7 +543,9 @@ export default function PersonalPortal({
               ? <PersonalLifePlan />
               : view === "Lifecoaching"
                 ? <PersonalCoaching />
-                : renderPlaceholder(
+                : view === "Mijn documenten"
+                  ? <PersonalDocumentsView />
+                  : renderPlaceholder(
                     view,
                   )}
 
