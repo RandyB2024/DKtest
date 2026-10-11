@@ -6,8 +6,6 @@ import {
 } from "react";
 
 import {
-  Bell,
-  Building2,
   CalendarDays,
   Car,
   ChartNoAxesCombined,
@@ -50,8 +48,6 @@ const nav = [
   ["Aangiften", ClipboardCheck],
   ["Voertuigen", Car],
   ["Verzekeringen", Umbrella],
-  ["Notificaties", Bell],
-  ["Bedrijfsprofiel", Building2],
   ["Instellingen", Settings],
 ] as const;
 
@@ -572,100 +568,6 @@ if (view === "Documenten") {
       );
     }
 
-    if (
-      view ===
-      "Bedrijfsprofiel"
-    ) {
-      return (
-        <>
-          <div className="heading">
-            <div>
-              <h1>
-                Bedrijfsprofiel
-              </h1>
-
-              <p>
-                Bekijk de
-                ondernemingen die
-                aan uw account zijn
-                gekoppeld.
-              </p>
-            </div>
-          </div>
-
-          <section className="grid">
-            {visibleOrganizations.map(
-              (item) => (
-                <article
-                  className="card"
-                  key={item.id}
-                >
-                  <h2>
-                    {item.name}
-                  </h2>
-
-                  <div className="customer-status-list">
-                    <div>
-                      <span>
-                        Juridische naam
-                      </span>
-
-                      <strong>
-                        {item.legal_name ||
-                          "Nog niet ingevuld"}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>
-                        KvK-nummer
-                      </span>
-
-                      <strong>
-                        {item.registration_number ||
-                          "Nog niet ingevuld"}
-                      </strong>
-                    </div>
-
-                    <div>
-                      <span>
-                        Status
-                      </span>
-
-                      <strong>
-                        Actief
-                      </strong>
-                    </div>
-                  </div>
-
-                  {context.organizationId ===
-                    "all" && (
-                    <p>
-                      <button
-                        type="button"
-                        className="btn"
-                        disabled={
-                          busy
-                        }
-                        onClick={() =>
-                          switchOrganization(
-                            item.id,
-                          )
-                        }
-                      >
-                        Onderneming
-                        openen
-                      </button>
-                    </p>
-                  )}
-                </article>
-              ),
-            )}
-          </section>
-        </>
-      );
-    }
-
     return (
       <>
         <div className="heading">
@@ -786,16 +688,6 @@ if (view === "Documenten") {
           )}
         </nav>
 
-        <div className="sidebar-foot">
-          Beveiligd klantportaal
-          <br />
-
-          <strong>
-            {context.aal2
-              ? "Tweestapsverificatie bevestigd"
-              : "Aangemeld"}
-          </strong>
-        </div>
       </aside>
 
       <main className="main">
