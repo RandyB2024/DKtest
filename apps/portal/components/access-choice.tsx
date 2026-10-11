@@ -39,10 +39,6 @@ export default function AccessChoice() {
               Waar wil jij naartoe?
             </h1>
 
-            <p>
-              Kies de omgeving die het beste past
-              bij jouw doel en situatie.
-            </p>
 
           </div>
 
