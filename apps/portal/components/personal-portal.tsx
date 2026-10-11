@@ -73,6 +73,8 @@ type Props = {
 export default function PersonalPortal({
   displayName,
 }: Props) {
+  const [personalMobileMenuOpen, setPersonalMobileMenuOpen] = useState(false);
+
   const [personalSidebarCollapsed, setPersonalSidebarCollapsed] = useState(false);
 
   const [
@@ -86,207 +88,246 @@ export default function PersonalPortal({
 
   function renderOverview() {
     return (
-      <>
-        <section className="personal-welcome">
+      <div className="personal-dashboard">
 
-          <span className="personal-area-label">
-            MIJN BESTEMMING
-          </span>
+        <section className="personal-dashboard-hero">
 
-          <h1>
-            Welkom, {displayName}
-          </h1>
+          <div className="personal-dashboard-hero-copy">
 
-          <p>
-            Jouw persoonlijke omgeving voor
-            levensplanning, financiële rust
-            en jouw toekomstige bestemming.
-          </p>
+            <span className="personal-area-label">
+              MIJN BESTEMMING
+            </span>
+
+            <h1>
+              Welkom, {displayName}
+            </h1>
+
+            <p>
+              Jouw persoonlijke omgeving voor rust,
+              overzicht en richting. Alles wat
+              belangrijk is voor jouw bestemming
+              staat hier bij elkaar.
+            </p>
+
+          </div>
+
+
+          <div className="personal-dashboard-hero-brand">
+
+            <div className="personal-brand-tile">
+              <img
+                src="/mijn-bestemming-logo.png"
+                alt="Mijn Bestemming"
+              />
+            </div>
+
+          </div>
 
         </section>
 
 
-        <section className="personal-start-grid">
+        <section className="personal-dashboard-grid">
 
           <button
             type="button"
-            className="personal-start-card"
+            className="personal-dashboard-card"
             onClick={() =>
-              setView(
-                "Mijn levensplan",
-              )
+              setView("Mijn levensplan")
             }
           >
-            <Target />
+            <div className="personal-dashboard-card-icon">
+              <Target />
+            </div>
 
-            <span>
+            <div>
+              <span className="personal-dashboard-card-label">
+                Richting
+              </span>
+
               <h2>
                 Mijn levensplan
               </h2>
 
               <p>
-                Waar staat jij nu,
-                waar wilt jij naartoe
-                en wat is daarvoor nodig?
+                Waar sta jij nu, waar wil jij naartoe
+                en welke stappen horen daarbij?
               </p>
-            </span>
+            </div>
           </button>
 
 
           <button
             type="button"
-            className="personal-start-card"
+            className="personal-dashboard-card"
             onClick={() =>
-              setView(
-                "Lifecoaching",
-              )
+              setView("Lifecoaching")
             }
           >
-            <HeartHandshake />
+            <div className="personal-dashboard-card-icon">
+              <HeartHandshake />
+            </div>
 
-            <span>
+            <div>
+              <span className="personal-dashboard-card-label">
+                Ontwikkeling
+              </span>
+
               <h2>
                 Lifecoaching
               </h2>
 
               <p>
                 Persoonlijke gesprekken,
-                aandachtspunten en
-                ontwikkeling.
+                reflectie en jouw volgende stap.
               </p>
-            </span>
+            </div>
           </button>
 
 
           <button
             type="button"
-            className="personal-start-card"
+            className="personal-dashboard-card"
             onClick={() =>
-              setView(
-                "Mijn ABC",
-              )
+              setView("Mijn ABC")
             }
           >
-            <Compass />
+            <div className="personal-dashboard-card-icon">
+              <Compass />
+            </div>
 
-            <span>
+            <div>
+              <span className="personal-dashboard-card-label">
+                Financiële basis
+              </span>
+
               <h2>
                 Mijn ABC
               </h2>
 
               <p>
-                A voor evenwicht,
-                B voor buffers en
-                C voor creatie.
+                Inzicht in evenwicht, buffers
+                en waardecreatie.
               </p>
-            </span>
+            </div>
           </button>
 
 
           <button
             type="button"
-            className="personal-start-card"
+            className="personal-dashboard-card"
             onClick={() =>
-              setView(
-                "Mijn vermogen",
-              )
+              setView("Mijn vermogen")
             }
           >
-            <PiggyBank />
+            <div className="personal-dashboard-card-icon">
+              <PiggyBank />
+            </div>
 
-            <span>
+            <div>
+              <span className="personal-dashboard-card-label">
+                Vermogen
+              </span>
+
               <h2>
                 Mijn vermogen
               </h2>
 
               <p>
-                Persoonlijk inzicht in
-                bezit, verplichtingen
-                en vermogensontwikkeling.
+                Overzicht van bezit,
+                verplichtingen en ontwikkeling.
               </p>
-            </span>
+            </div>
           </button>
 
 
           <button
             type="button"
-            className="personal-start-card"
+            className="personal-dashboard-card"
             onClick={() =>
-              setView(
-                "Mijn verzekeringen",
-              )
+              setView("Mijn verzekeringen")
             }
           >
-            <Umbrella />
+            <div className="personal-dashboard-card-icon">
+              <Umbrella />
+            </div>
 
-            <span>
+            <div>
+              <span className="personal-dashboard-card-label">
+                Zekerheid
+              </span>
+
               <h2>
                 Mijn verzekeringen
               </h2>
 
               <p>
-                Jouw persoonlijke
-                verzekeringen en
-                belangrijke aandachtspunten.
+                Persoonlijke verzekeringen
+                en belangrijke aandachtspunten.
               </p>
-            </span>
+            </div>
           </button>
 
 
           <button
             type="button"
-            className="personal-start-card"
+            className="personal-dashboard-card"
             onClick={() =>
-              setView(
-                "Inkomstenbelasting",
-              )
+              setView("Inkomstenbelasting")
             }
           >
-            <ClipboardCheck />
+            <div className="personal-dashboard-card-icon">
+              <ClipboardCheck />
+            </div>
 
-            <span>
+            <div>
+              <span className="personal-dashboard-card-label">
+                Belasting
+              </span>
+
               <h2>
                 Inkomstenbelasting
               </h2>
 
               <p>
-                Status van jouw persoonlijke
-                aangifte en wat er nog
-                nodig is.
+                Status van jouw aangifte
+                en wat er nog nodig is.
               </p>
-            </span>
+            </div>
           </button>
 
 
           <button
             type="button"
-            className="personal-start-card"
+            className="personal-dashboard-card personal-dashboard-card-wide"
             onClick={() =>
-              setView(
-                "Mijn documenten",
-              )
+              setView("Mijn documenten")
             }
           >
-            <FileText />
+            <div className="personal-dashboard-card-icon">
+              <FolderOpen />
+            </div>
 
-            <span>
+            <div>
+              <span className="personal-dashboard-card-label">
+                Documenten
+              </span>
+
               <h2>
                 Mijn documenten
               </h2>
 
               <p>
-                Persoonlijke stukken zoals
-                fiscale documenten,
-                aktes en belangrijke
-                overeenkomsten.
+                Nieuwe documenten in jouw inbox.
+                Verwerkte documenten worden
+                automatisch in het juiste archief gezet.
               </p>
-            </span>
+            </div>
           </button>
 
         </section>
 
 
-        <section className="personal-security-note">
+        <section className="personal-dashboard-security">
 
           <ShieldCheck />
 
@@ -296,16 +337,16 @@ export default function PersonalPortal({
             </strong>
 
             <p>
-              Deze omgeving staat los van
-              Mijn Onderneming. Zakelijke
-              medewerkers of assistenten
-              krijgen hierdoor geen toegang
-              tot jouw persoonlijke gegevens.
+              Mijn Bestemming staat los van
+              Mijn Onderneming. Zakelijke medewerkers
+              krijgen geen toegang tot jouw
+              persoonlijke gegevens.
             </p>
           </div>
 
         </section>
-      </>
+
+      </div>
     );
   }
 
@@ -424,7 +465,7 @@ export default function PersonalPortal({
   return (
     <div className="personal-app-shell">
 
-      <aside className={`personal-sidebar${personalSidebarCollapsed ? " is-collapsed" : ""}`}>
+      <aside className={`personal-sidebar${personalSidebarCollapsed ? " is-collapsed" : ""}${personalMobileMenuOpen ? " is-mobile-open" : ""}`}>
 
         <div className="personal-sidebar-brand">
           <button
@@ -470,9 +511,10 @@ export default function PersonalPortal({
                     ? "active"
                     : ""
                 }
-                onClick={() =>
-                  setView(label)
-                }
+                onClick={() => {
+                  setView(label);
+                  setPersonalMobileMenuOpen(false);
+                }}
               >
                 <Icon />
 
@@ -504,9 +546,33 @@ export default function PersonalPortal({
       </aside>
 
 
+      {personalMobileMenuOpen && (
+        <button
+          type="button"
+          className="personal-mobile-overlay"
+          aria-label="Menu sluiten"
+          onClick={() =>
+            setPersonalMobileMenuOpen(false)
+          }
+        />
+      )}
+
       <main className="personal-app-main">
 
         <header className="personal-topbar">
+
+          <button
+            type="button"
+            className="personal-mobile-menu-button"
+            aria-label="Menu openen"
+            onClick={() =>
+              setPersonalMobileMenuOpen(true)
+            }
+          >
+            <span />
+            <span />
+            <span />
+          </button>
 
           <div>
             <span className="personal-area-label">

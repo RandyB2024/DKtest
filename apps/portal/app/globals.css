@@ -9348,3 +9348,444 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_PERSONAL_DOCUMENTS_END */
+
+
+/* BESTEMD_PERSONAL_DASHBOARD_V3_START */
+
+.personal-dashboard{
+  display:grid;
+  gap:24px;
+}
+
+.personal-dashboard-hero{
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:28px;
+  align-items:center;
+  min-height:250px;
+  padding:36px 40px;
+  border:1px solid #d8e4ec;
+  border-radius:30px;
+  background:
+    radial-gradient(
+      circle at 95% 15%,
+      rgba(205,231,247,.62),
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #ffffff 0%,
+      #f7fbfe 100%
+    );
+  box-shadow:0 18px 48px rgba(9,35,59,.08);
+}
+
+.personal-dashboard-hero::after{
+  content:"";
+  position:absolute;
+  right:-80px;
+  bottom:-140px;
+  width:360px;
+  height:260px;
+  border-radius:50%;
+  border:1px solid rgba(154,201,230,.35);
+  transform:rotate(-18deg);
+  pointer-events:none;
+}
+
+.personal-dashboard-hero-copy{
+  position:relative;
+  z-index:1;
+  max-width:760px;
+}
+
+.personal-dashboard-hero-copy h1{
+  margin:8px 0 14px;
+  color:#0f3655;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(2.5rem,4vw,4rem);
+  line-height:1.02;
+  letter-spacing:-.035em;
+}
+
+.personal-dashboard-hero-copy p{
+  margin:0;
+  max-width:680px;
+  color:#5b7487;
+  font-size:17px;
+  line-height:1.7;
+}
+
+.personal-dashboard-hero-brand{
+  position:relative;
+  z-index:1;
+}
+
+.personal-brand-tile{
+  width:160px;
+  height:160px;
+  display:grid;
+  place-items:center;
+  border-radius:26px;
+  background:#ffffff;
+  box-shadow:
+    0 20px 45px rgba(9,40,66,.10),
+    inset 0 0 0 1px #e0e9ef;
+}
+
+.personal-brand-tile img{
+  width:120px;
+  height:120px;
+  object-fit:contain;
+}
+
+.personal-dashboard-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+
+.personal-dashboard-card{
+  min-height:190px;
+  border:1px solid #d9e4ec;
+  border-radius:22px;
+  background:#ffffff;
+  padding:22px;
+  text-align:left;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:16px;
+  align-items:start;
+  cursor:pointer;
+  box-shadow:0 10px 26px rgba(8,35,57,.05);
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease;
+}
+
+.personal-dashboard-card:hover{
+  transform:translateY(-2px);
+  border-color:#bfd5e2;
+  box-shadow:0 18px 34px rgba(8,35,57,.09);
+}
+
+.personal-dashboard-card-wide{
+  grid-column:span 3;
+  min-height:140px;
+}
+
+.personal-dashboard-card-icon{
+  width:52px;
+  height:52px;
+  border-radius:15px;
+  display:grid;
+  place-items:center;
+  background:#edf6fb;
+  color:#0e5b90;
+  flex:none;
+}
+
+.personal-dashboard-card-icon svg{
+  width:23px;
+  height:23px;
+}
+
+.personal-dashboard-card-label{
+  display:block;
+  margin-bottom:5px;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:#6b8396;
+  font-weight:800;
+}
+
+.personal-dashboard-card h2{
+  margin:0;
+  color:#143752;
+  font-size:21px;
+  line-height:1.2;
+}
+
+.personal-dashboard-card p{
+  margin:10px 0 0;
+  color:#61798b;
+  font-size:14.5px;
+  line-height:1.65;
+}
+
+.personal-dashboard-security{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  padding:20px 22px;
+  border:1px solid #dbe6ed;
+  border-radius:20px;
+  background:#f8fbfd;
+}
+
+.personal-dashboard-security svg{
+  width:22px;
+  height:22px;
+  color:#0d608f;
+  flex:none;
+}
+
+.personal-dashboard-security strong{
+  display:block;
+  color:#173a55;
+  margin-bottom:5px;
+}
+
+.personal-dashboard-security p{
+  margin:0;
+  color:#647c8f;
+  line-height:1.6;
+}
+
+
+/* ============================================================
+   TOPBAR + MOBILE MENU
+   ============================================================ */
+
+.personal-mobile-menu-button{
+  display:none;
+  width:44px;
+  height:44px;
+  border:1px solid #d8e3eb;
+  border-radius:13px;
+  background:#ffffff;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  gap:4px;
+  cursor:pointer;
+  box-shadow:0 6px 14px rgba(11,45,72,.06);
+}
+
+.personal-mobile-menu-button span{
+  width:18px;
+  height:2px;
+  border-radius:999px;
+  background:#173a55;
+}
+
+.personal-mobile-overlay{
+  display:none;
+}
+
+
+/* ============================================================
+   RESPONSIVE TABLET
+   ============================================================ */
+
+@media(max-width:1100px){
+
+  .personal-dashboard-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .personal-dashboard-card-wide{
+    grid-column:span 2;
+  }
+
+  .personal-dashboard-hero{
+    padding:30px;
+  }
+
+}
+
+
+/* ============================================================
+   RESPONSIVE MOBILE
+   ============================================================ */
+
+@media(max-width:760px){
+
+  .personal-app-shell{
+    display:block !important;
+  }
+
+  .personal-app-main{
+    width:100%;
+    min-width:0;
+  }
+
+  .personal-topbar{
+    position:sticky;
+    top:0;
+    z-index:25;
+    min-height:68px;
+    padding:12px 16px;
+    background:rgba(255,255,255,.95);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid #e3ebf0;
+  }
+
+  .personal-mobile-menu-button{
+    display:flex;
+  }
+
+  .personal-sidebar{
+    position:fixed !important;
+    left:0 !important;
+    top:0 !important;
+    bottom:0 !important;
+    z-index:60 !important;
+    width:min(300px,84vw) !important;
+    height:100dvh !important;
+    transform:translateX(-105%);
+    transition:transform .22s ease;
+    box-shadow:20px 0 50px rgba(8,28,45,.18);
+  }
+
+  .personal-sidebar.is-mobile-open{
+    transform:translateX(0);
+  }
+
+  .personal-sidebar.is-collapsed{
+    width:min(300px,84vw) !important;
+  }
+
+  .personal-sidebar.is-collapsed .personal-sidebar-link-text,
+  .personal-sidebar.is-collapsed .personal-sidebar-section-label,
+  .personal-sidebar.is-collapsed .personal-sidebar-heading,
+  .personal-sidebar.is-collapsed .personal-sidebar-subtitle,
+  .personal-sidebar.is-collapsed .personal-sidebar-copy,
+  .personal-sidebar.is-collapsed .personal-sidebar-meta,
+  .personal-sidebar.is-collapsed .personal-sidebar-note{
+    opacity:1 !important;
+    width:auto !important;
+    max-width:none !important;
+    overflow:visible !important;
+    pointer-events:auto !important;
+  }
+
+  .personal-sidebar.is-collapsed .personal-sidebar-link{
+    justify-content:flex-start !important;
+  }
+
+  .personal-sidebar-toggle{
+    display:none !important;
+  }
+
+  .personal-mobile-overlay{
+    display:block;
+    position:fixed;
+    inset:0;
+    z-index:50;
+    border:0;
+    padding:0;
+    margin:0;
+    background:rgba(6,24,39,.38);
+    backdrop-filter:blur(2px);
+    cursor:pointer;
+  }
+
+  .personal-content{
+    padding:16px !important;
+    padding-bottom:32px !important;
+  }
+
+  .personal-dashboard{
+    gap:16px;
+  }
+
+  .personal-dashboard-hero{
+    min-height:auto;
+    grid-template-columns:1fr;
+    gap:20px;
+    padding:24px 20px;
+    border-radius:22px;
+  }
+
+  .personal-dashboard-hero-copy h1{
+    font-size:2.45rem;
+  }
+
+  .personal-dashboard-hero-copy p{
+    font-size:15px;
+  }
+
+  .personal-dashboard-hero-brand{
+    display:none;
+  }
+
+  .personal-dashboard-grid{
+    grid-template-columns:1fr;
+    gap:12px;
+  }
+
+  .personal-dashboard-card,
+  .personal-dashboard-card-wide{
+    grid-column:auto;
+    min-height:auto;
+    padding:18px;
+    border-radius:18px;
+  }
+
+  .personal-dashboard-card-icon{
+    width:46px;
+    height:46px;
+    border-radius:13px;
+  }
+
+  .personal-dashboard-card h2{
+    font-size:19px;
+  }
+
+  .personal-dashboard-card p{
+    font-size:14px;
+  }
+
+  .personal-dashboard-security{
+    border-radius:18px;
+    padding:17px;
+  }
+
+}
+
+
+/* ============================================================
+   EXTRA SMALL
+   ============================================================ */
+
+@media(max-width:430px){
+
+  .personal-content{
+    padding:12px !important;
+  }
+
+  .personal-dashboard-hero{
+    padding:20px 16px;
+  }
+
+  .personal-dashboard-hero-copy h1{
+    font-size:2.1rem;
+  }
+
+  .personal-dashboard-card{
+    grid-template-columns:44px minmax(0,1fr);
+    gap:13px;
+    padding:16px;
+  }
+
+  .personal-dashboard-card-icon{
+    width:44px;
+    height:44px;
+  }
+
+  .personal-dashboard-card h2{
+    font-size:18px;
+  }
+
+  .personal-dashboard-security{
+    padding:15px;
+  }
+
+}
+
+/* BESTEMD_PERSONAL_DASHBOARD_V3_END */
