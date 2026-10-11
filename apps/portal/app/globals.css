@@ -9789,3 +9789,464 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_PERSONAL_DASHBOARD_V3_END */
+
+
+/* BESTEMD_PERSONAL_CHROME_V4_START */
+
+/* ----------------------------------------------------------
+   DESKTOP SHELL
+   ---------------------------------------------------------- */
+
+.personal-app-shell{
+  grid-template-columns:260px minmax(0,1fr) !important;
+  min-height:100vh;
+  background:#f3f7fa;
+}
+
+.personal-sidebar{
+  width:260px !important;
+  padding:20px 16px !important;
+  background:
+    linear-gradient(
+      180deg,
+      #0c4265 0%,
+      #0b3958 100%
+    ) !important;
+  box-shadow:
+    10px 0 30px
+    rgba(5,31,51,.08);
+}
+
+.personal-sidebar.is-collapsed{
+  width:86px !important;
+}
+
+.personal-sidebar-brand{
+  height:68px;
+  padding:0 0 18px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:10px !important;
+  border-bottom:
+    1px solid rgba(255,255,255,.12);
+}
+
+.personal-sidebar-toggle{
+  position:static !important;
+  width:42px !important;
+  height:42px !important;
+  flex:0 0 42px;
+}
+
+.personal-sidebar-brandmark{
+  height:52px;
+  min-width:118px;
+  max-width:150px;
+  padding:7px 11px;
+  display:flex;
+  align-items:center;
+  background:#ffffff;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:
+    0 8px 20px
+    rgba(3,26,43,.14);
+}
+
+.personal-sidebar-brandmark img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+
+.personal-sidebar.is-collapsed
+.personal-sidebar-brandmark{
+  display:none;
+}
+
+.personal-navigation{
+  margin-top:18px !important;
+  gap:5px !important;
+}
+
+.personal-navigation button{
+  min-height:45px;
+  padding:0 12px !important;
+  border-radius:11px !important;
+  gap:12px !important;
+  font-size:14px;
+}
+
+.personal-navigation button.active{
+  background:#216b92 !important;
+}
+
+.personal-navigation button:hover{
+  background:
+    rgba(255,255,255,.09);
+}
+
+.personal-navigation button svg{
+  width:18px !important;
+  height:18px !important;
+}
+
+.personal-sidebar-footer{
+  padding-top:14px !important;
+}
+
+.personal-switch-environment{
+  min-height:44px;
+  padding:0 12px !important;
+}
+
+
+/* ----------------------------------------------------------
+   TOPBAR
+   ---------------------------------------------------------- */
+
+.personal-app-main{
+  min-width:0;
+  width:100%;
+}
+
+.personal-topbar{
+  position:sticky;
+  top:0;
+  z-index:30;
+  min-height:76px;
+  padding:0 28px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:20px;
+  background:
+    rgba(255,255,255,.94) !important;
+  border-bottom:
+    1px solid #dce7ee;
+  box-shadow:
+    0 4px 16px
+    rgba(11,49,76,.04);
+  backdrop-filter:blur(14px);
+}
+
+.personal-topbar-left{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+
+.personal-topbar-title{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+
+.personal-topbar-title span{
+  color:#718699;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.personal-topbar-title strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#173b58;
+  font-size:17px;
+}
+
+.personal-topbar-actions{
+  flex:none;
+  display:flex !important;
+  align-items:center;
+  gap:10px !important;
+}
+
+.personal-topbar-switch{
+  height:42px;
+  padding:0 16px;
+  display:inline-flex;
+  align-items:center;
+  border:1px solid #d8e4ec;
+  border-radius:12px;
+  color:#214861;
+  background:#ffffff;
+  text-decoration:none;
+  font-size:14px;
+  font-weight:700;
+}
+
+.personal-topbar-actions button{
+  min-height:42px;
+  border-radius:12px !important;
+}
+
+.personal-content{
+  width:100%;
+  max-width:1280px;
+  margin:0 auto;
+  padding:28px !important;
+}
+
+
+/* ----------------------------------------------------------
+   DOCUMENT UPLOAD
+   ---------------------------------------------------------- */
+
+.personal-upload-card{
+  padding:20px;
+  display:grid;
+  grid-template-columns:
+    minmax(0,1fr)
+    auto;
+  gap:18px;
+  align-items:center;
+  border:1px solid #cfe0ea;
+  border-radius:20px;
+  background:
+    linear-gradient(
+      135deg,
+      #f8fcff,
+      #edf7fc
+    );
+}
+
+.personal-upload-copy strong{
+  display:block;
+  margin-bottom:5px;
+  color:#143a57;
+  font-size:17px;
+}
+
+.personal-upload-copy p{
+  max-width:650px;
+  margin:0;
+  color:#617b8e;
+  line-height:1.55;
+}
+
+.personal-upload-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.personal-file-input{
+  position:absolute;
+  width:1px;
+  height:1px;
+  opacity:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+.personal-file-picker{
+  min-width:170px;
+  max-width:260px;
+  height:44px;
+  padding:0 14px;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  border:1px solid #cedde7;
+  border-radius:12px;
+  background:#ffffff;
+  color:#37566c;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:700;
+}
+
+.personal-upload-button{
+  height:44px;
+  padding:0 17px;
+  border:0;
+  border-radius:12px;
+  background:
+    linear-gradient(
+      135deg,
+      #0b4d79,
+      #086b9f
+    );
+  color:#ffffff;
+  cursor:pointer;
+  font-size:14px;
+  font-weight:800;
+  box-shadow:
+    0 9px 18px
+    rgba(10,86,132,.16);
+}
+
+.personal-upload-button:disabled{
+  opacity:.48;
+  cursor:not-allowed;
+  box-shadow:none;
+}
+
+.personal-upload-success{
+  grid-column:1 / -1;
+  padding:10px 12px;
+  border-radius:10px;
+  background:#edf8f1;
+  color:#276745;
+  font-size:14px;
+  font-weight:700;
+}
+
+
+/* ----------------------------------------------------------
+   TABLET
+   ---------------------------------------------------------- */
+
+@media(max-width:1050px){
+
+  .personal-app-shell{
+    grid-template-columns:86px minmax(0,1fr) !important;
+  }
+
+  .personal-sidebar{
+    width:86px !important;
+    padding:
+      18px
+      10px !important;
+  }
+
+  .personal-sidebar-brand{
+    justify-content:center !important;
+  }
+
+  .personal-sidebar-brandmark{
+    display:none;
+  }
+
+  .personal-navigation button{
+    justify-content:center;
+  }
+
+  .personal-navigation button span{
+    display:none;
+  }
+
+  .personal-switch-environment span{
+    display:none;
+  }
+
+  .personal-switch-environment{
+    justify-content:center;
+  }
+
+  .personal-upload-card{
+    grid-template-columns:1fr;
+  }
+
+  .personal-upload-actions{
+    justify-content:flex-start;
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   MOBILE
+   ---------------------------------------------------------- */
+
+@media(max-width:760px){
+
+  .personal-app-shell{
+    display:block !important;
+  }
+
+  .personal-sidebar{
+    width:min(310px,86vw) !important;
+    padding:
+      18px 15px
+      24px !important;
+  }
+
+  .personal-sidebar-brand{
+    justify-content:flex-start !important;
+  }
+
+  .personal-sidebar-brandmark{
+    display:flex !important;
+  }
+
+  .personal-navigation button{
+    justify-content:flex-start !important;
+  }
+
+  .personal-navigation button span{
+    display:inline !important;
+  }
+
+  .personal-switch-environment{
+    justify-content:flex-start !important;
+  }
+
+  .personal-switch-environment span{
+    display:inline !important;
+  }
+
+  .personal-topbar{
+    min-height:68px;
+    padding:0 14px !important;
+  }
+
+  .personal-topbar-title span{
+    display:none;
+  }
+
+  .personal-topbar-title strong{
+    font-size:15px;
+  }
+
+  .personal-topbar-switch{
+    display:none;
+  }
+
+  .personal-topbar-actions{
+    gap:6px !important;
+  }
+
+  .personal-topbar-actions button{
+    min-height:40px;
+    padding:
+      0 12px !important;
+    font-size:13px;
+  }
+
+  .personal-content{
+    padding:15px !important;
+  }
+
+  .personal-upload-card{
+    padding:16px;
+    border-radius:17px;
+  }
+
+  .personal-upload-actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .personal-file-picker{
+    max-width:none;
+    width:100%;
+  }
+
+  .personal-upload-button{
+    width:100%;
+  }
+
+}
+
+/* BESTEMD_PERSONAL_CHROME_V4_END */

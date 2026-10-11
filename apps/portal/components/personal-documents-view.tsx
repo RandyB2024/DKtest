@@ -153,6 +153,21 @@ export function PersonalDocumentsView() {
   ] = useState("");
 
   const [
+    uploadFile,
+    setUploadFile,
+  ] = useState<File | null>(null);
+
+  const [
+    uploading,
+    setUploading,
+  ] = useState(false);
+
+  const [
+    uploadMessage,
+    setUploadMessage,
+  ] = useState("");
+
+  const [
     selectedArchiveGroup,
     setSelectedArchiveGroup,
   ] = useState<
@@ -349,6 +364,82 @@ export function PersonalDocumentsView() {
       items,
       scope,
     ]);
+
+  async function uploadDocument() {
+    if (!uploadFile) {
+      setError(
+        "Kies eerst een document.",
+      );
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+    setUploadMessage("");
+
+    try {
+      const form =
+        new FormData();
+
+      form.append(
+        "file",
+        uploadFile,
+      );
+
+      const response =
+        await fetch(
+          "/api/personal/documents/upload",
+          {
+            method: "POST",
+            body: form,
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          "Uploaden is niet gelukt.",
+        );
+      }
+
+      setUploadFile(null);
+
+      const input =
+        document.getElementById(
+          "personal-document-upload",
+        ) as HTMLInputElement | null;
+
+      if (input) {
+        input.value = "";
+      }
+
+      setUploadMessage(
+        "Document toegevoegd aan jouw inbox.",
+      );
+
+      setScope(
+        "inbox",
+      );
+
+      await loadDocuments(
+        "inbox",
+      );
+
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Uploaden is niet gelukt.",
+      );
+
+    } finally {
+      setUploading(false);
+    }
+  }
+
 
   async function openDocument(
     item: PersonalDocumentItem,
@@ -623,6 +714,77 @@ export function PersonalDocumentsView() {
           )}
         </div>
       ) : null}
+
+      <section className="personal-upload-card">
+
+        <div className="personal-upload-copy">
+          <strong>
+            Document toevoegen
+          </strong>
+
+          <p>
+            Upload een document naar jouw persoonlijke inbox.
+            Na verwerking wordt het automatisch in de juiste
+            map in het archief geplaatst.
+          </p>
+        </div>
+
+        <div className="personal-upload-actions">
+
+          <label
+            className="personal-file-picker"
+            htmlFor="personal-document-upload"
+          >
+            {uploadFile
+              ? uploadFile.name
+              : "Kies document"}
+          </label>
+
+          <input
+            id="personal-document-upload"
+            className="personal-file-input"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+            onChange={(event) => {
+              setUploadFile(
+                event.target.files?.[0] ??
+                null,
+              );
+
+              setUploadMessage("");
+              setError("");
+            }}
+          />
+
+          <button
+            type="button"
+            className="personal-upload-button"
+            disabled={
+              !uploadFile ||
+              uploading
+            }
+            onClick={
+              uploadDocument
+            }
+          >
+            {uploading
+              ? "Uploaden..."
+              : "Upload document"}
+          </button>
+
+        </div>
+
+        {uploadMessage ? (
+          <div
+            className="personal-upload-success"
+            role="status"
+          >
+            {uploadMessage}
+          </div>
+        ) : null}
+
+      </section>
+
 
       {error ? (
         <div className="personal-inline-error">

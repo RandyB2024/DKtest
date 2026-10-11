@@ -111,7 +111,7 @@ export async function GET(
       } =
         await client.storage
           .from(
-            "documents",
+            "personal-documents",
           )
           .createSignedUrl(
             document.storage_path,

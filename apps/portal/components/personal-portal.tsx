@@ -468,10 +468,15 @@ export default function PersonalPortal({
       <aside className={`personal-sidebar${personalSidebarCollapsed ? " is-collapsed" : ""}${personalMobileMenuOpen ? " is-mobile-open" : ""}`}>
 
         <div className="personal-sidebar-brand">
+
           <button
             type="button"
             className="personal-sidebar-toggle"
-            aria-label={personalSidebarCollapsed ? "Menubalk uitklappen" : "Menubalk inklappen"}
+            aria-label={
+              personalSidebarCollapsed
+                ? "Menubalk uitklappen"
+                : "Menubalk inklappen"
+            }
             aria-pressed={personalSidebarCollapsed}
             onClick={() =>
               setPersonalSidebarCollapsed(
@@ -484,14 +489,12 @@ export default function PersonalPortal({
             <span />
           </button>
 
-          <img className="personal-sidebar-logo"
-            src="/mijn-bestemming-logo.png"
-            alt="Mijn Bestemming"
-          />
-
-          <span>
-            Persoonlijk
-          </span>
+          <div className="personal-sidebar-brandmark">
+            <img
+              src="/mijn-bestemming-logo.png"
+              alt="Mijn Bestemming"
+            />
+          </div>
 
         </div>
 
@@ -561,27 +564,33 @@ export default function PersonalPortal({
 
         <header className="personal-topbar">
 
-          <button
-            type="button"
-            className="personal-mobile-menu-button"
-            aria-label="Menu openen"
-            onClick={() =>
-              setPersonalMobileMenuOpen(true)
-            }
-          >
-            <span />
-            <span />
-            <span />
-          </button>
+          <div className="personal-topbar-left">
 
-          <div>
-            <span className="personal-area-label">
-              Mijn Bestemming
-            </span>
+            <button
+              type="button"
+              className="personal-mobile-menu-button"
+              aria-label="Menu openen"
+              onClick={() =>
+                setPersonalMobileMenuOpen(true)
+              }
+            >
+              <span />
+              <span />
+              <span />
+            </button>
 
-            <strong>
-              {displayName}
-            </strong>
+            <div className="personal-topbar-title">
+
+              <span>
+                Mijn Bestemming
+              </span>
+
+              <strong>
+                {displayName}
+              </strong>
+
+            </div>
+
           </div>
 
 
@@ -589,7 +598,7 @@ export default function PersonalPortal({
 
             <a
               href="/"
-              className="btn"
+              className="personal-topbar-switch"
             >
               Andere omgeving
             </a>
