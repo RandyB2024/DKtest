@@ -8882,3 +8882,142 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_LIFEPLAN_COACHING_END */
+
+
+/* BESTEMD_PERSONAL_SIDEBAR_POLISH_START */
+
+.personal-sidebar{
+  position:sticky;
+  top:0;
+  align-self:start;
+  height:100vh;
+  overflow:hidden;
+  width:280px;
+  transition:
+    width .22s ease,
+    padding .22s ease,
+    box-shadow .22s ease;
+}
+
+.personal-sidebar.is-collapsed{
+  width:96px;
+}
+
+.personal-sidebar-brand{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.personal-sidebar-logo{
+  width:72px;
+  height:72px;
+  object-fit:cover;
+  object-position:left center;
+  background:#ffffff;
+  border-radius:18px;
+  padding:10px;
+  box-shadow:0 14px 34px rgba(9, 37, 63, .14);
+  flex:0 0 auto;
+}
+
+.personal-sidebar.is-collapsed .personal-sidebar-logo{
+  width:56px;
+  height:56px;
+  border-radius:16px;
+  padding:8px;
+}
+
+.personal-sidebar-toggle{
+  display:inline-flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap:4px;
+  width:42px;
+  height:42px;
+  border:none;
+  border-radius:12px;
+  background:rgba(255,255,255,.12);
+  cursor:pointer;
+  transition:background .2s ease, transform .2s ease;
+  flex:0 0 auto;
+}
+
+.personal-sidebar-toggle:hover{
+  background:rgba(255,255,255,.18);
+}
+
+.personal-sidebar-toggle span{
+  display:block;
+  width:18px;
+  height:2px;
+  border-radius:999px;
+  background:rgba(255,255,255,.95);
+}
+
+.personal-sidebar-link-text{
+  white-space:nowrap;
+  transition:opacity .18s ease, width .18s ease;
+}
+
+.personal-sidebar.is-collapsed .personal-sidebar-link{
+  justify-content:center;
+  padding-left:0;
+  padding-right:0;
+}
+
+.personal-sidebar.is-collapsed .personal-sidebar-link svg{
+  margin-right:0 !important;
+}
+
+.personal-sidebar.is-collapsed .personal-sidebar-link-text,
+.personal-sidebar.is-collapsed .personal-sidebar-section-label,
+.personal-sidebar.is-collapsed .personal-sidebar-heading,
+.personal-sidebar.is-collapsed .personal-sidebar-subtitle,
+.personal-sidebar.is-collapsed .personal-sidebar-copy,
+.personal-sidebar.is-collapsed .personal-sidebar-footer,
+.personal-sidebar.is-collapsed .personal-sidebar-meta,
+.personal-sidebar.is-collapsed .personal-sidebar-note{
+  opacity:0;
+  width:0;
+  max-width:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+
+.personal-sidebar.is-collapsed .personal-sidebar-brand{
+  justify-content:center;
+}
+
+.personal-sidebar.is-collapsed .personal-sidebar-toggle{
+  position:absolute;
+  top:18px;
+  right:10px;
+  width:32px;
+  height:32px;
+  border-radius:10px;
+}
+
+.personal-sidebar.is-collapsed .personal-sidebar-toggle span{
+  width:14px;
+}
+
+@media (max-width: 1100px){
+  .personal-sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    z-index:40;
+    width:280px;
+    transform:translateX(0);
+  }
+
+  .personal-sidebar.is-collapsed{
+    transform:translateX(calc(-100% + 84px));
+    width:280px;
+  }
+}
+
+/* BESTEMD_PERSONAL_SIDEBAR_POLISH_END */

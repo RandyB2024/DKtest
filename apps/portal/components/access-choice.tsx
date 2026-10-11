@@ -36,12 +36,12 @@ export default function AccessChoice() {
           <div className="bestemd-choice-title">
 
             <h1>
-              Waar wilt u naartoe?
+              Waar wil jij naartoe?
             </h1>
 
             <p>
               Kies de omgeving die het beste past
-              bij uw doel en situatie.
+              bij jouw doel en situatie.
             </p>
 
           </div>
@@ -51,7 +51,7 @@ export default function AccessChoice() {
 
         <section
           className="bestemd-choice-grid"
-          aria-label="Kies uw Bestemd omgeving"
+          aria-label="Kies jouw Bestemd omgeving"
         >
 
           <a
@@ -87,7 +87,7 @@ export default function AccessChoice() {
 
 
             <p className="bestemd-choice-description">
-              Uw persoonlijke omgeving voor
+              Jouw persoonlijke omgeving voor
               levensplanning, Mijn ABC,
               inkomstenbelasting, vermogen,
               coaching en persoonlijke documenten.
@@ -140,7 +140,7 @@ export default function AccessChoice() {
 
 
             <p className="bestemd-choice-description">
-              Uw zakelijke omgeving voor
+              Jouw zakelijke omgeving voor
               administratie, bankieren, facturatie,
               documenten, belastingen, rapportages
               en communicatie.

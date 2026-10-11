@@ -114,7 +114,7 @@ export default function PersonalEntry() {
           setState({
             kind: "error",
             message:
-              "Geen verbinding. Uw persoonlijke gegevens zijn niet offline beschikbaar.",
+              "Geen verbinding. Jouw persoonlijke gegevens zijn niet offline beschikbaar.",
           });
 
         } finally {

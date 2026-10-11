@@ -72,6 +72,8 @@ type Props = {
 export default function PersonalPortal({
   displayName,
 }: Props) {
+  const [personalSidebarCollapsed, setPersonalSidebarCollapsed] = useState(false);
+
   const [
     view,
     setView,
@@ -95,9 +97,9 @@ export default function PersonalPortal({
           </h1>
 
           <p>
-            Uw persoonlijke omgeving voor
+            Jouw persoonlijke omgeving voor
             levensplanning, financiële rust
-            en uw toekomstige bestemming.
+            en jouw toekomstige bestemming.
           </p>
 
         </section>
@@ -122,8 +124,8 @@ export default function PersonalPortal({
               </h2>
 
               <p>
-                Waar staat u nu,
-                waar wilt u naartoe
+                Waar staat jij nu,
+                waar wilt jij naartoe
                 en wat is daarvoor nodig?
               </p>
             </span>
@@ -222,7 +224,7 @@ export default function PersonalPortal({
               </h2>
 
               <p>
-                Uw persoonlijke
+                Jouw persoonlijke
                 verzekeringen en
                 belangrijke aandachtspunten.
               </p>
@@ -247,7 +249,7 @@ export default function PersonalPortal({
               </h2>
 
               <p>
-                Status van uw persoonlijke
+                Status van jouw persoonlijke
                 aangifte en wat er nog
                 nodig is.
               </p>
@@ -297,7 +299,7 @@ export default function PersonalPortal({
               Mijn Onderneming. Zakelijke
               medewerkers of assistenten
               krijgen hierdoor geen toegang
-              tot uw persoonlijke gegevens.
+              tot jouw persoonlijke gegevens.
             </p>
           </div>
 
@@ -334,7 +336,7 @@ export default function PersonalPortal({
       "Mijn ABC"
     ) {
       description =
-        "Hier wordt uw persoonlijke financiële planning opgebouwd rond A: evenwicht, B: buffers en C: creatie van waarde.";
+        "Hier wordt jouw persoonlijke financiële planning opgebouwd rond A: evenwicht, B: buffers en C: creatie van waarde.";
     }
 
     if (
@@ -350,7 +352,7 @@ export default function PersonalPortal({
       "Mijn verzekeringen"
     ) {
       description =
-        "Hier komt uw persoonlijke verzekeringsoverzicht en de koppeling met advies via Bestemd en Klaas Vis.";
+        "Hier komt jouw persoonlijke verzekeringsoverzicht en de koppeling met advies via Bestemd en Klaas Vis.";
     }
 
     if (
@@ -406,7 +408,7 @@ export default function PersonalPortal({
               al actief. De inhoud wordt nu
               stap voor stap toegevoegd zonder
               de zakelijke administratie te
-              vermengen met uw persoonlijke
+              vermengen met jouw persoonlijke
               omgeving.
             </p>
           </div>
@@ -421,11 +423,26 @@ export default function PersonalPortal({
   return (
     <div className="personal-app-shell">
 
-      <aside className="personal-sidebar">
+      <aside className={`personal-sidebar${personalSidebarCollapsed ? " is-collapsed" : ""}`}>
 
         <div className="personal-sidebar-brand">
+          <button
+            type="button"
+            className="personal-sidebar-toggle"
+            aria-label={personalSidebarCollapsed ? "Menubalk uitklappen" : "Menubalk inklappen"}
+            aria-pressed={personalSidebarCollapsed}
+            onClick={() =>
+              setPersonalSidebarCollapsed(
+                (current) => !current,
+              )
+            }
+          >
+            <span />
+            <span />
+            <span />
+          </button>
 
-          <img
+          <img className="personal-sidebar-logo"
             src="/mijn-bestemming-logo.png"
             alt="Mijn Bestemming"
           />
