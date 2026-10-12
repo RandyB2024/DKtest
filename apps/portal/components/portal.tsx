@@ -353,7 +353,7 @@ if (view === "Documenten") {
             item={item}
             onBack={() =>
               setView(
-                "Afnemers",
+                "Klanten",
               )
             }
           />
