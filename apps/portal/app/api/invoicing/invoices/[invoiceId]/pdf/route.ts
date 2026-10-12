@@ -16,11 +16,6 @@ import {
   portalApi,
 } from "@/lib/portal-api";
 
-import {
-  ensureFinalInvoicePdf,
-} from "@/lib/invoicing/final-invoice-pdf";
-
-
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -354,70 +349,16 @@ export async function GET(
 
 
       /*
-       * Definitieve factuur:
-       * uitsluitend immutable snapshot/PDF.
-       * Nooit opnieuw vanuit actuele
-       * bedrijfs- of debiteurgegevens.
+       * Concept en definitief gebruiken bewust dezelfde
+       * bewezen PDF-renderer.
+       *
+       * De status bepaalt verderop alleen:
+       * - CONCEPT-watermerk ja/nee
+       * - concept- of definitieve bestandsnaam
+       *
+       * Bekijken/downloaden is daarmee niet afhankelijk van
+       * service-role, invoice-pdfs storage of pdf_storage_path.
        */
-      if (
-        invoice.document_status !==
-        "draft"
-      ) {
-        let finalPdf;
-
-        try {
-          finalPdf =
-            await ensureFinalInvoicePdf(
-              client,
-              organizationId,
-              invoiceId,
-            );
-        } catch (pdfError) {
-          console.error(
-            "final invoice pdf retrieval failed",
-            {
-              invoiceId,
-              pdfError,
-            },
-          );
-
-          throw new AccessError(
-            503,
-            "De definitieve factuur-PDF kan tijdelijk niet worden geopend.",
-          );
-        }
-
-
-        const download =
-          url.searchParams.get(
-            "download",
-          ) === "1";
-
-
-        return new Response(
-          pdfResponseBody(
-            finalPdf.bytes,
-          ),
-          {
-            status:
-              200,
-
-            headers: {
-              "content-type":
-                "application/pdf",
-
-              "content-disposition":
-                `${download ? "attachment" : "inline"}; filename="${finalPdf.filename}"`,
-
-              "cache-control":
-                "private, no-store, max-age=0",
-
-              "x-content-type-options":
-                "nosniff",
-            },
-          },
-        );
-      }
 
 
       const {
