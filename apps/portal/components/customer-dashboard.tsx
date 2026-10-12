@@ -1077,7 +1077,7 @@ export default function CustomerDashboard({
         />
 
         <MetricCard
-          title="Afnemers"
+          title="Klanten"
           value={
             receivablesValue
           }
@@ -1092,8 +1092,8 @@ export default function CustomerDashboard({
           }
           onClick={() =>
             go(
-              "Afnemers",
-              "afnemers",
+              "Klanten",
+              "klanten",
             )
           }
         />

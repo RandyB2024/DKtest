@@ -11132,3 +11132,56 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_PERSONAL_WEALTH_END */
+
+
+/* BESTEMD_RELATIONS_V1_START */
+
+.relations-view{
+  display:grid;
+  gap:18px;
+}
+
+.relations-tabs{
+  display:flex;
+  width:max-content;
+  max-width:100%;
+  gap:5px;
+  padding:5px;
+  border:1px solid #d9e4eb;
+  border-radius:15px;
+  background:#eef5f8;
+}
+
+.relations-tabs button{
+  min-height:42px;
+  padding:0 18px;
+  border:0;
+  border-radius:11px;
+  background:transparent;
+  color:#31566e;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+}
+
+.relations-tabs button.active{
+  background:#fff;
+  color:#074f7c;
+  box-shadow:0 5px 14px rgba(14,54,80,.10);
+}
+
+@media(max-width:600px){
+  .relations-tabs{
+    width:100%;
+  }
+
+  .relations-tabs button{
+    flex:1;
+    justify-content:center;
+    padding:0 12px;
+  }
+}
+
+/* BESTEMD_RELATIONS_V1_END */

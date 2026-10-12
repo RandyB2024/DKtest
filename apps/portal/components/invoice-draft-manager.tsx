@@ -14,7 +14,6 @@ import {
   Pencil,
   Plus,
   ReceiptText,
-  Trash2,
   X,
 } from "lucide-react";
 
@@ -783,80 +782,6 @@ export default function InvoiceDraftManager({
   }
 
 
-  async function deleteDraft(
-    draft: Draft,
-  ) {
-    if (
-      context.organizationId ===
-      "all"
-    ) {
-      return;
-    }
-
-
-    if (
-      !window.confirm(
-        "Conceptfactuur verwijderen?",
-      )
-    ) {
-      return;
-    }
-
-
-    setBusy(true);
-    setError("");
-
-
-    try {
-      const response =
-        await fetch(
-          "/api/invoicing/invoices",
-          {
-            method: "POST",
-
-            headers: {
-              "content-type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-                action:
-                  "delete",
-
-                organizationId:
-                  context.organizationId,
-
-                invoiceId:
-                  draft.id,
-              }),
-          },
-        );
-
-
-      const result =
-        (await response.json()) as ApiResponse;
-
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ||
-          "Conceptfactuur kon niet worden verwijderd.",
-        );
-      }
-
-
-      await load();
-    } catch (caught) {
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : "Conceptfactuur kon niet worden verwijderd.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
 
 
   if (
@@ -1001,20 +926,6 @@ export default function InvoiceDraftManager({
 
                   <button
                     type="button"
-                    className="btn primary"
-                    disabled={busy}
-                    onClick={() =>
-                      finalizeDraft(
-                        draft,
-                      )
-                    }
-                  >
-                    <CheckCircle2 size={14} />
-                    Definitief maken
-                  </button>
-
-                  <button
-                    type="button"
                     className="btn"
                     disabled={busy}
                     onClick={() =>
@@ -1029,16 +940,16 @@ export default function InvoiceDraftManager({
 
                   <button
                     type="button"
-                    className="btn"
+                    className="btn primary"
                     disabled={busy}
                     onClick={() =>
-                      deleteDraft(
+                      finalizeDraft(
                         draft,
                       )
                     }
                   >
-                    <Trash2 size={14} />
-                    Verwijderen
+                    <CheckCircle2 size={14} />
+                    Definitief maken
                   </button>
                 </div>
               </article>
@@ -1313,9 +1224,6 @@ export default function InvoiceDraftManager({
                           )
                         }
                       >
-                        <Trash2
-                          size={16}
-                        />
                       </button>
 
                     </div>

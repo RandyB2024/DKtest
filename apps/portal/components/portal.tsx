@@ -10,10 +10,7 @@ import {
   Car,
   ChartNoAxesCombined,
   ClipboardCheck,
-  Compass,
-  FileText,
   FolderOpen,
-  Landmark,
   LayoutDashboard,
   MessagesSquare,
   MoreHorizontal,
@@ -21,6 +18,7 @@ import {
   ChevronRight,
   Settings,
   Umbrella,
+  Users,
   WalletCards,
 } from "lucide-react";
 
@@ -32,21 +30,14 @@ import InstallApp from "./install-app";
 import InvoiceDetailView from "./invoice-detail-view";
 import Logout from "./logout";
 import PasskeySettings from "./passkey-settings";
-import PayablesView from "./payables-view";
-import PersonalDashboard from "./personal-dashboard";
-import ReceivablesView from "./receivables-view";
+import RelationsView from "./relations-view";
 import DocumentsView from "./documents-view";
 import CommunicationView from "./communication-view";
-
-const personalNav = [
-  ["Mijn Bestemming", Compass],
-] as const;
 
 const businessNav = [
   ["Dashboard", LayoutDashboard],
   ["Bankieren", WalletCards],
-  ["Afnemers", FileText],
-  ["Leveranciers", Landmark],
+  ["Relaties", Users],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
   ["Agenda", CalendarDays],
@@ -57,10 +48,8 @@ const businessNav = [
   ["Instellingen", Settings],
 ] as const;
 
-const nav = [
-  ...personalNav,
-  ...businessNav,
-] as const;
+const nav =
+  businessNav;
 
 export default function Portal({
   context,
@@ -74,7 +63,7 @@ export default function Portal({
   onRefresh: () => Promise<void>;
 }) {
   const [view, setView] =
-    useState("Mijn Bestemming");
+    useState("Dashboard");
 
   const [
     mobileMoreOpen,
@@ -257,74 +246,6 @@ export default function Portal({
     ) : null;
 
   function renderView() {
-    if (view === "Mijn Bestemming") {
-      return (
-        <PersonalDashboard
-          displayName={
-            context.profile.display_name
-          }
-          onGo={setView}
-        />
-      );
-    }
-
-    if (
-      view === "Mijn levensplan" ||
-      view === "Mijn ABC" ||
-      view === "Mijn vermogen" ||
-      view === "Inkomstenbelasting" ||
-      view === "Mijn verzekeringen" ||
-      view === "Mijn documenten"
-    ) {
-      return (
-        <>
-          <div className="heading">
-            <div>
-              <span className="personal-kicker">
-                Mijn Bestemming
-              </span>
-
-              <h1>{view}</h1>
-
-              <p>
-                Dit onderdeel wordt opgebouwd vanuit
-                uw persoonlijke financiële situatie.
-              </p>
-            </div>
-          </div>
-
-          <section className="card personal-placeholder">
-            <h2>
-              {view}
-            </h2>
-
-            <p>
-              Hier komen alleen gegevens te staan
-              die bij uw persoonlijke omgeving horen.
-              Er worden geen gegevens van andere
-              klanten of ondernemingen getoond.
-            </p>
-
-            <p>
-              De volgende ontwikkelfase koppelt dit
-              onderdeel aan de juiste beveiligde
-              gegevensbron.
-            </p>
-
-            <button
-              type="button"
-              className="btn"
-              onClick={() =>
-                setView("Mijn Bestemming")
-              }
-            >
-              Terug naar Mijn Bestemming
-            </button>
-          </section>
-        </>
-      );
-    }
-
     if (view === "Dashboard") {
       return (
         <CustomerDashboard
@@ -349,26 +270,21 @@ export default function Portal({
       );
     }
 
-    if (view === "Afnemers") {
+    if (
+      view === "Relaties" ||
+      view === "Klanten" ||
+      view === "Leveranciers"
+    ) {
       return (
-        <ReceivablesView
+        <RelationsView
           context={context}
-          organization={
-            organization
-          }
+          organization={organization}
           onGo={setView}
-        />
-      );
-    }
-
-    if (view === "Leveranciers") {
-      return (
-        <PayablesView
-          context={context}
-          organization={
-            organization
+          initialTab={
+            view === "Leveranciers"
+              ? "suppliers"
+              : "customers"
           }
-          onGo={setView}
         />
       );
     }
@@ -417,7 +333,7 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Afnemers",
+                  "Klanten",
                 )
               }
             >
@@ -460,7 +376,7 @@ if (view === "Documenten") {
               className="btn"
               onClick={() =>
                 setView(
-                  "Afnemers",
+                  "Klanten",
                 )
               }
             >
@@ -744,61 +660,34 @@ if (view === "Documenten") {
           className="nav portal-grouped-nav"
           aria-label="Hoofdnavigatie"
         >
-          <div className="portal-nav-section">
-            <span className="portal-nav-label">
-              Persoonlijk
-            </span>
+          {businessNav.map(
+            ([label, Icon]) => (
+              <button
+                key={label}
+                className={
+                  view === label ||
+                  (
+                    label === "Relaties" &&
+                    (
+                      view === "Klanten" ||
+                      view === "Leveranciers"
+                    )
+                  )
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setView(label)
+                }
+              >
+                <Icon />
 
-            {personalNav.map(
-              ([label, Icon]) => (
-                <button
-                  key={label}
-                  className={
-                    view === label
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() =>
-                    setView(label)
-                  }
-                >
-                  <Icon />
-
-                  <span>
-                    {label}
-                  </span>
-                </button>
-              ),
-            )}
-          </div>
-
-          <div className="portal-nav-section">
-            <span className="portal-nav-label">
-              Mijn onderneming
-            </span>
-
-            {businessNav.map(
-              ([label, Icon]) => (
-                <button
-                  key={label}
-                  className={
-                    view === label
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() =>
-                    setView(label)
-                  }
-                >
-                  <Icon />
-
-                  <span>
-                    {label}
-                  </span>
-                </button>
-              ),
-            )}
-          </div>
+                <span>
+                  {label}
+                </span>
+              </button>
+            ),
+          )}
         </nav>
 
       </aside>
@@ -932,7 +821,7 @@ if (view === "Documenten") {
                 </strong>
 
                 <small>
-                  Mijn Bestemming
+                  Mijn Onderneming
                 </small>
               </div>
 
