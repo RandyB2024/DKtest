@@ -10492,3 +10492,327 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_CHOICE_BENEFITS_END */
+
+
+/* BESTEMD_PERSONAL_ABC_START */
+
+.personal-abc-page{
+  display:grid;
+  gap:24px;
+}
+
+.personal-abc-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:20px;
+}
+
+.personal-abc-heading h1{
+  margin:7px 0 9px;
+  color:#103754;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(2.4rem,4vw,3.8rem);
+  line-height:1;
+}
+
+.personal-abc-heading p{
+  margin:0;
+  color:#61798a;
+  font-size:16px;
+}
+
+.personal-abc-save{
+  min-height:46px;
+  padding:0 18px;
+  border:0;
+  border-radius:13px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  background:#0b5685;
+  color:#fff;
+  font-weight:800;
+  cursor:pointer;
+  box-shadow:0 10px 22px rgba(8,80,126,.17);
+}
+
+.personal-abc-save svg{
+  width:18px;
+}
+
+.personal-abc-summary{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;
+}
+
+.personal-abc-summary article{
+  padding:20px;
+  border:1px solid #d9e4eb;
+  border-radius:19px;
+  background:#fff;
+  box-shadow:0 9px 24px rgba(9,35,58,.05);
+  display:grid;
+  gap:5px;
+}
+
+.personal-abc-summary span,
+.personal-abc-summary small{
+  color:#697f90;
+}
+
+.personal-abc-summary strong{
+  color:#123b58;
+  font-size:25px;
+}
+
+.personal-abc-summary strong.is-negative{
+  color:#a64135;
+}
+
+.personal-abc-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+  align-items:start;
+}
+
+.personal-abc-card{
+  padding:22px;
+  border:1px solid #d8e3ea;
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 13px 30px rgba(8,34,56,.06);
+  display:grid;
+  gap:22px;
+}
+
+.personal-abc-card-head{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+}
+
+.personal-abc-letter{
+  width:48px;
+  height:48px;
+  flex:none;
+  border-radius:15px;
+  display:grid;
+  place-items:center;
+  background:#eaf5fb;
+  color:#0a669d;
+  font-size:21px;
+  font-weight:900;
+}
+
+.personal-abc-card-head span{
+  display:block;
+  margin-bottom:4px;
+  color:#618098;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+
+.personal-abc-card-head h2{
+  margin:0;
+  color:#153a55;
+  font-size:20px;
+  line-height:1.3;
+}
+
+.personal-abc-fields{
+  display:grid;
+  gap:14px;
+}
+
+.personal-money-input{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  border:1px solid #d7e2e9;
+  border-radius:12px;
+  background:#fff;
+  overflow:hidden;
+}
+
+.personal-money-input > span{
+  padding-left:13px;
+  color:#627a8c;
+  font-weight:700;
+}
+
+.personal-money-input input{
+  width:100%;
+  border:0 !important;
+  box-shadow:none !important;
+}
+
+.personal-abc-result{
+  padding:15px;
+  border-radius:15px;
+  background:#f0f7fb;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.personal-abc-result svg{
+  width:22px;
+  color:#176693;
+}
+
+.personal-abc-result div{
+  display:grid;
+  gap:2px;
+}
+
+.personal-abc-result span{
+  color:#667e90;
+  font-size:12px;
+}
+
+.personal-abc-result strong{
+  color:#153a55;
+  font-size:21px;
+}
+
+.personal-progress{
+  display:grid;
+  gap:8px;
+}
+
+.personal-progress > div{
+  display:flex;
+  justify-content:space-between;
+  color:#577287;
+  font-size:13px;
+  font-weight:700;
+}
+
+.personal-progress progress{
+  width:100%;
+  height:10px;
+  border:0;
+  border-radius:99px;
+  overflow:hidden;
+}
+
+.personal-progress progress::-webkit-progress-bar{
+  background:#e9f0f4;
+  border-radius:99px;
+}
+
+.personal-progress progress::-webkit-progress-value{
+  background:#1575a8;
+  border-radius:99px;
+}
+
+.personal-progress small{
+  color:#718698;
+}
+
+.personal-abc-flow{
+  padding:20px 24px;
+  border:1px solid #d8e3eb;
+  border-radius:22px;
+  background:#f8fbfd;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:28px;
+}
+
+.personal-abc-flow > div{
+  display:grid;
+  justify-items:center;
+  gap:4px;
+  min-width:120px;
+}
+
+.personal-abc-flow svg{
+  width:24px;
+  color:#176b99;
+}
+
+.personal-abc-flow strong{
+  color:#143b59;
+  font-size:22px;
+}
+
+.personal-abc-flow span{
+  color:#687f91;
+  font-size:13px;
+}
+
+.personal-abc-flow > svg{
+  color:#9db0be;
+}
+
+.personal-abc-notes{
+  padding:22px;
+  border:1px solid #d8e3eb;
+  border-radius:22px;
+  background:#fff;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  gap:15px;
+}
+
+.personal-abc-notes > svg{
+  width:24px;
+  color:#116a99;
+}
+
+.personal-abc-notes textarea{
+  min-height:110px;
+}
+
+@media(max-width:1050px){
+
+  .personal-abc-grid{
+    grid-template-columns:1fr;
+  }
+
+}
+
+@media(max-width:760px){
+
+  .personal-abc-heading{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .personal-abc-save{
+    width:100%;
+    justify-content:center;
+  }
+
+  .personal-abc-summary{
+    grid-template-columns:1fr;
+  }
+
+  .personal-abc-card{
+    padding:18px;
+    border-radius:20px;
+  }
+
+  .personal-abc-flow{
+    flex-direction:column;
+    gap:13px;
+  }
+
+  .personal-abc-flow > svg{
+    transform:rotate(90deg);
+  }
+
+  .personal-abc-notes{
+    grid-template-columns:1fr;
+  }
+
+}
+
+/* BESTEMD_PERSONAL_ABC_END */
