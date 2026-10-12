@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useCallback,
@@ -396,7 +396,9 @@ export function PersonalDocumentsView() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+        };
 
       if (!response.ok) {
         throw new Error(

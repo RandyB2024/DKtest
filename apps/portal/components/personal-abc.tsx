@@ -228,7 +228,10 @@ export default function PersonalAbc() {
         );
 
       const body =
-        await response.json();
+        await response.json() as
+          AbcData & {
+            error?: string;
+          };
 
       if (!response.ok) {
         throw new Error(
@@ -312,7 +315,10 @@ export default function PersonalAbc() {
         );
 
       const body =
-        await response.json();
+        await response.json() as
+          AbcData & {
+            error?: string;
+          };
 
       if (!response.ok) {
         throw new Error(

@@ -77,7 +77,10 @@ export default function PersonalCoaching() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+          entries?: Entry[];
+        };
 
       if (!response.ok) {
         throw new Error(
@@ -170,7 +173,10 @@ export default function PersonalCoaching() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+          entries?: Entry[];
+        };
 
       if (!response.ok) {
         throw new Error(
@@ -211,7 +217,7 @@ export default function PersonalCoaching() {
   ) {
     if (
       !window.confirm(
-        "Wilt u dit coachingmoment verwijderen?",
+        "Wil je dit coachingmoment verwijderen?",
       )
     ) {
       return;
@@ -243,7 +249,10 @@ export default function PersonalCoaching() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+          entries?: Entry[];
+        };
 
       if (!response.ok) {
         throw new Error(

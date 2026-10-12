@@ -99,7 +99,11 @@ export default function PersonalLifePlan() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+          plan?: Plan;
+          goals?: Goal[];
+        };
 
       if (!response.ok) {
         throw new Error(
@@ -165,7 +169,11 @@ export default function PersonalLifePlan() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+          plan?: Plan;
+          goals?: Goal[];
+        };
 
       if (!response.ok) {
         throw new Error(
@@ -180,7 +188,7 @@ export default function PersonalLifePlan() {
       );
 
       setMessage(
-        "Uw levensplan is opgeslagen.",
+        "Jouw levensplan is opgeslagen.",
       );
 
     } catch (caught) {
@@ -250,7 +258,11 @@ export default function PersonalLifePlan() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+          plan?: Plan;
+          goals?: Goal[];
+        };
 
       if (!response.ok) {
         throw new Error(
@@ -287,7 +299,7 @@ export default function PersonalLifePlan() {
   ) {
     if (
       !window.confirm(
-        "Wilt u dit doel verwijderen?",
+        "Wil je dit doel verwijderen?",
       )
     ) {
       return;
@@ -319,7 +331,11 @@ export default function PersonalLifePlan() {
         );
 
       const data =
-        await response.json();
+        await response.json() as {
+          error?: string;
+          plan?: Plan;
+          goals?: Goal[];
+        };
 
       if (!response.ok) {
         throw new Error(

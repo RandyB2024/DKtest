@@ -326,20 +326,7 @@ export async function GET(
               "sales_invoices",
             )
             .select(
-              [
-                "id",
-                "organization_id",
-                "invoice_number",
-                "invoice_kind",
-                "document_status",
-                "payment_status",
-                "invoice_date",
-                "total_cents",
-                "paid_cents",
-                "pdf_storage_path",
-                "created_at",
-                "finalized_at",
-              ].join(","),
+              "id,organization_id,invoice_number,invoice_kind,document_status,payment_status,invoice_date,total_cents,paid_cents,pdf_storage_path,created_at,finalized_at",
             )
             .eq(
               "organization_id",

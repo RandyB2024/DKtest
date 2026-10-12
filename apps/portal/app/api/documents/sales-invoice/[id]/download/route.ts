@@ -1,4 +1,4 @@
-﻿import {
+import {
   AccessError,
   requireAal2,
   requireOrganization,
@@ -70,15 +70,7 @@ export async function GET(
             "sales_invoices",
           )
           .select(
-            [
-              "id",
-              "organization_id",
-              "invoice_number",
-              "invoice_kind",
-              "document_status",
-              "payment_status",
-              "pdf_storage_path",
-            ].join(","),
+            "id,organization_id,invoice_number,invoice_kind,document_status,payment_status,pdf_storage_path",
           )
           .eq(
             "id",

@@ -344,7 +344,10 @@ export default function PersonalWealth() {
         );
 
       const body =
-        await response.json();
+        await response.json() as
+          WealthResponse & {
+            error?: string;
+          };
 
       if (!response.ok) {
         throw new Error(
@@ -523,7 +526,9 @@ export default function PersonalWealth() {
         );
 
       const body =
-        await response.json();
+        await response.json() as {
+          error?: string;
+        };
 
       if (!response.ok) {
         throw new Error(
@@ -593,7 +598,9 @@ export default function PersonalWealth() {
         );
 
       const body =
-        await response.json();
+        await response.json() as {
+          error?: string;
+        };
 
       if (!response.ok) {
         throw new Error(

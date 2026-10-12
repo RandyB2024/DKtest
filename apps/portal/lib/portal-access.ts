@@ -45,8 +45,18 @@ export async function requirePortalIdentity(client: SupabaseClient): Promise<Por
   return { profile, memberships: memberships.filter(m => organizations.some(o => o.id === m.organization_id)), organizations, aal2 };
 }
 
-export function requireAal2(identity: PortalIdentity) {
-  if (!identity.aal2) throw new AccessError(403, "Bevestig eerst uw identiteit met tweestapsverificatie.", "MFA_REQUIRED");
+export function requireAal2(
+  identity: {
+    aal2: boolean;
+  },
+) {
+  if (!identity.aal2) {
+    throw new AccessError(
+      403,
+      "Bevestig eerst jouw identiteit met tweestapsverificatie.",
+      "MFA_REQUIRED",
+    );
+  }
 }
 export function requireOrganization(identity: PortalIdentity, id: unknown, allowAll = false): string {
   if (typeof id !== "string" || !(identity.organizations.some(o => o.id === id) || (allowAll && id === "all" && identity.organizations.length > 1))) {
