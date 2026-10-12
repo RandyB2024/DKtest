@@ -82,12 +82,11 @@ export default function AccessChoice() {
             </div>
 
 
-            <p className="bestemd-choice-description">
-              Jouw persoonlijke omgeving voor
-              levensplanning, Mijn ABC,
-              inkomstenbelasting, vermogen,
-              coaching en persoonlijke documenten.
-            </p>
+            <div className="bestemd-choice-benefits">
+              <span>Levensplanning &amp; coaching</span>
+              <span>Mijn ABC &amp; vermogen</span>
+              <span>Inkomstenbelasting &amp; persoonlijke documenten</span>
+            </div>
 
 
             <span className="bestemd-choice-action">
@@ -135,12 +134,11 @@ export default function AccessChoice() {
             </div>
 
 
-            <p className="bestemd-choice-description">
-              Jouw zakelijke omgeving voor
-              administratie, bankieren, facturatie,
-              documenten, belastingen, rapportages
-              en communicatie.
-            </p>
+            <div className="bestemd-choice-benefits">
+              <span>Administratie &amp; bankieren</span>
+              <span>Facturatie &amp; documenten</span>
+              <span>Belastingen, rapportages &amp; communicatie</span>
+            </div>
 
 
             <span className="bestemd-choice-action">

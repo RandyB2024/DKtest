@@ -10448,3 +10448,47 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_PERSONAL_SIDEBAR_TUNE_END */
+
+
+/* BESTEMD_CHOICE_BENEFITS_START */
+
+.bestemd-choice-benefits{
+  position:relative;
+  z-index:1;
+  display:grid;
+  gap:11px;
+  margin:26px 0 30px;
+}
+
+.bestemd-choice-benefits span{
+  position:relative;
+  padding-left:24px;
+  color:#5f7890;
+  font-size:16px;
+  line-height:1.5;
+}
+
+.bestemd-choice-benefits span::before{
+  content:"";
+  position:absolute;
+  left:2px;
+  top:.6em;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#2d7ea8;
+  box-shadow:0 0 0 5px rgba(45,126,168,.10);
+}
+
+@media(max-width:600px){
+  .bestemd-choice-benefits{
+    margin:20px 0 24px;
+    gap:9px;
+  }
+
+  .bestemd-choice-benefits span{
+    font-size:15px;
+  }
+}
+
+/* BESTEMD_CHOICE_BENEFITS_END */
