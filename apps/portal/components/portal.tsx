@@ -7,7 +7,7 @@ import {
 
 import {
   CalendarDays,
-  Car,
+  Boxes,
   ChartNoAxesCombined,
   ClipboardCheck,
   FolderOpen,
@@ -28,6 +28,7 @@ import BankingView from "./banking-view";
 import CustomerDashboard from "./customer-dashboard";
 import InstallApp from "./install-app";
 import InvoiceDetailView from "./invoice-detail-view";
+import InventoryView from "./inventory-view";
 import Logout from "./logout";
 import PasskeySettings from "./passkey-settings";
 import RelationsView from "./relations-view";
@@ -43,7 +44,7 @@ const businessNav = [
   ["Agenda", CalendarDays],
   ["Rapportages", ChartNoAxesCombined],
   ["Aangiften", ClipboardCheck],
-  ["Voertuigen", Car],
+  ["Inventaris", Boxes],
   ["Verzekeringen", Umbrella],
   ["Instellingen", Settings],
 ] as const;
@@ -470,6 +471,17 @@ if (view === "Documenten") {
           </section>
         );
       }
+    }
+
+    if (
+      view === "Inventaris"
+    ) {
+      return (
+        <InventoryView
+          context={context}
+          organization={organization}
+        />
+      );
     }
 
     if (

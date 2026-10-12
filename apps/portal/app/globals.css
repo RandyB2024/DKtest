@@ -11185,3 +11185,504 @@ button.personal-start-card:hover{
 }
 
 /* BESTEMD_RELATIONS_V1_END */
+
+
+/* BESTEMD_INVENTORY_V1_START */
+
+.inventory-page{
+  display:grid;
+  gap:22px;
+}
+
+.inventory-header{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:22px;
+}
+
+.inventory-header h1{
+  margin:4px 0 8px;
+  color:var(--bestemd-navy);
+  font-size:clamp(1.9rem,3vw,2.6rem);
+  letter-spacing:-.04em;
+}
+
+.inventory-header p{
+  margin:0;
+  color:#687f90;
+  line-height:1.6;
+}
+
+.inventory-eyebrow{
+  display:block;
+  color:#0789a5;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.inventory-add-button{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  min-height:44px;
+  white-space:nowrap;
+}
+
+.inventory-summary{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+}
+
+.inventory-summary-card{
+  min-height:142px;
+  padding:20px;
+  display:flex;
+  align-items:flex-start;
+  gap:15px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:17px;
+  box-shadow:0 7px 24px rgba(8,47,73,.045);
+}
+
+.inventory-summary-icon{
+  width:43px;
+  height:43px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:#eaf7f9;
+  color:#0789a5;
+}
+
+.inventory-summary-icon svg{
+  width:20px;
+  height:20px;
+}
+
+.inventory-attention-icon{
+  background:#fff4df;
+  color:#a87312;
+}
+
+.inventory-summary-card span{
+  display:block;
+  color:#687f90;
+  font-size:.82rem;
+}
+
+.inventory-summary-card strong{
+  display:block;
+  margin:5px 0 3px;
+  color:var(--bestemd-navy);
+  font-size:1.65rem;
+}
+
+.inventory-summary-card small{
+  color:#8294a1;
+  line-height:1.35;
+}
+
+.inventory-main-card{
+  padding:0;
+  overflow:hidden;
+}
+
+.inventory-section-head{
+  display:flex;
+  justify-content:space-between;
+  gap:18px;
+  padding:22px 22px 16px;
+}
+
+.inventory-section-head h2{
+  margin:0 0 5px;
+  color:var(--bestemd-navy);
+}
+
+.inventory-section-head p{
+  margin:0;
+  color:#758995;
+}
+
+.inventory-category-tabs{
+  display:flex;
+  gap:5px;
+  padding:0 22px 17px;
+  overflow-x:auto;
+}
+
+.inventory-category-tabs button{
+  min-height:39px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:0 13px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background:#f3f7f9;
+  color:#557184;
+  font-weight:700;
+  white-space:nowrap;
+  cursor:pointer;
+}
+
+.inventory-category-tabs button:hover{
+  background:#eaf3f6;
+}
+
+.inventory-category-tabs button.active{
+  background:#e5f6f8;
+  border-color:#bce7eb;
+  color:#087d99;
+}
+
+.inventory-toolbar{
+  padding:16px 22px;
+  border-top:1px solid #edf2f5;
+  border-bottom:1px solid #edf2f5;
+  background:#fafcfd;
+}
+
+.inventory-search{
+  width:min(100%,560px);
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:0 12px;
+  min-height:43px;
+  background:#fff;
+  border:1px solid #d6e2e8;
+  border-radius:11px;
+  color:#78909e;
+}
+
+.inventory-search input{
+  width:100%;
+  min-width:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#17354b;
+  font:inherit;
+}
+
+.inventory-table-head{
+  display:grid;
+  grid-template-columns:
+    minmax(220px,2fr)
+    minmax(130px,1fr)
+    minmax(110px,.8fr)
+    minmax(110px,.8fr)
+    minmax(100px,.7fr)
+    40px;
+  gap:12px;
+  padding:11px 22px;
+  background:#f7fafb;
+  border-bottom:1px solid #edf2f5;
+  color:#718693;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.inventory-empty{
+  min-height:270px;
+  padding:48px 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.inventory-empty-icon{
+  width:58px;
+  height:58px;
+  margin-bottom:15px;
+  display:grid;
+  place-items:center;
+  border-radius:17px;
+  background:#eef7f9;
+  color:#178da5;
+}
+
+.inventory-empty-icon svg{
+  width:27px;
+  height:27px;
+}
+
+.inventory-empty strong{
+  color:var(--bestemd-navy);
+  font-size:1.05rem;
+}
+
+.inventory-empty p{
+  max-width:530px;
+  margin:8px auto 0;
+  color:#718693;
+  line-height:1.55;
+}
+
+.inventory-empty small{
+  margin-top:13px;
+  color:#8798a4;
+}
+
+.inventory-bottom-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:16px;
+}
+
+.inventory-info-card{
+  display:flex;
+  gap:15px;
+  align-items:flex-start;
+}
+
+.inventory-info-icon{
+  width:42px;
+  height:42px;
+  flex:none;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:#edf7f9;
+  color:#1489a0;
+}
+
+.inventory-info-icon svg{
+  width:19px;
+  height:19px;
+}
+
+.inventory-info-card h2{
+  margin:2px 0 7px;
+  color:var(--bestemd-navy);
+}
+
+.inventory-info-card p{
+  margin:0;
+  color:#718693;
+  line-height:1.55;
+  font-size:.9rem;
+}
+
+@media(max-width:1100px){
+  .inventory-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .inventory-bottom-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+@media(max-width:760px){
+  .inventory-header{
+    align-items:stretch;
+    flex-direction:column;
+  }
+
+  .inventory-add-button{
+    width:100%;
+    justify-content:center;
+  }
+
+  .inventory-summary{
+    grid-template-columns:1fr 1fr;
+  }
+
+  .inventory-table-head{
+    display:none;
+  }
+
+  .inventory-category-tabs{
+    padding-left:16px;
+    padding-right:16px;
+  }
+
+  .inventory-toolbar{
+    padding:14px 16px;
+  }
+}
+
+@media(max-width:520px){
+  .inventory-summary{
+    grid-template-columns:1fr;
+  }
+
+  .inventory-summary-card{
+    min-height:auto;
+  }
+}
+
+/* BESTEMD_INVENTORY_V1_END */
+
+
+/* BESTEMD_INVENTORY_FUNCTIONAL_V1 */
+
+.inventory-list{
+  display:grid;
+}
+
+.inventory-row{
+  display:grid;
+  grid-template-columns:
+    minmax(250px,2fr)
+    minmax(120px,.8fr)
+    minmax(120px,.8fr)
+    auto;
+  gap:18px;
+  align-items:center;
+  padding:18px 22px;
+  border-bottom:1px solid #edf2f5;
+}
+
+.inventory-row:last-child{
+  border-bottom:0;
+}
+
+.inventory-row small,
+.inventory-row span{
+  display:block;
+  color:#758995;
+}
+
+.inventory-row strong{
+  display:block;
+  margin:4px 0;
+  color:var(--bestemd-navy);
+}
+
+.inventory-modal-backdrop{
+  position:fixed;
+  z-index:70;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:rgba(8,34,52,.42);
+  backdrop-filter:blur(4px);
+}
+
+.inventory-modal{
+  width:min(900px,100%);
+  max-height:90vh;
+  overflow:auto;
+  background:#fff;
+  border-radius:20px;
+  box-shadow:0 24px 70px rgba(8,34,52,.24);
+}
+
+.inventory-modal-head{
+  position:sticky;
+  top:0;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:20px 22px;
+  background:#fff;
+  border-bottom:1px solid #e7eef2;
+}
+
+.inventory-modal-head small{
+  color:#0789a5;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+.inventory-modal-head h2{
+  margin:4px 0 0;
+}
+
+.inventory-form{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  padding:22px;
+}
+
+.inventory-form label{
+  display:grid;
+  gap:7px;
+  color:#284b61;
+  font-size:.88rem;
+  font-weight:700;
+}
+
+.inventory-form input,
+.inventory-form select,
+.inventory-form textarea{
+  min-width:0;
+  padding:11px 12px;
+  border:1px solid #d5e1e8;
+  border-radius:10px;
+  background:#fff;
+  color:#17354b;
+  font:inherit;
+}
+
+.inventory-form textarea{
+  min-height:105px;
+  resize:vertical;
+}
+
+.inventory-form-wide{
+  grid-column:1/-1;
+}
+
+.inventory-form-actions{
+  grid-column:1/-1;
+  display:flex;
+  justify-content:flex-end;
+  gap:9px;
+  padding-top:7px;
+}
+
+@media(max-width:700px){
+  .inventory-row{
+    grid-template-columns:1fr 1fr;
+    padding:16px;
+  }
+
+  .inventory-row > div:first-child{
+    grid-column:1/-1;
+  }
+
+  .inventory-form{
+    grid-template-columns:1fr;
+    padding:16px;
+  }
+
+  .inventory-form-wide,
+  .inventory-form-actions{
+    grid-column:auto;
+  }
+
+  .inventory-form-actions{
+    flex-direction:column-reverse;
+  }
+
+  .inventory-form-actions .btn{
+    width:100%;
+  }
+}
+
+/* BESTEMD PROFIT LOSS CARD */
+.customer-kpi-value-profit{
+  color:#17834f !important;
+}
+
+.customer-kpi-value-loss{
+  color:#c93636 !important;
+}

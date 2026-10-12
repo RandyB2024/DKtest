@@ -58,6 +58,7 @@ type MetricCardProps = {
   icon: ReactNode;
   onClick?: () => void;
   loading?: boolean;
+  valueClassName?: string;
 };
 
 type OpenPositions = {
@@ -233,6 +234,7 @@ function MetricCard({
   icon,
   onClick,
   loading = false,
+  valueClassName,
 }: MetricCardProps) {
   return (
     <button
@@ -248,7 +250,11 @@ function MetricCard({
         </span>
       </div>
 
-      <strong>
+      <strong
+        className={
+          valueClassName
+        }
+      >
         {loading
           ? "Laden..."
           : value}
@@ -856,6 +862,17 @@ export default function CustomerDashboard({
           )
         : "Nog geen gegevens";
 
+  const resultIsLoss =
+    Boolean(
+      periodSummary &&
+      periodSummary.resultCents < 0,
+    );
+
+  const resultTitle =
+    resultIsLoss
+      ? "Verlies"
+      : "Winst";
+
   const costsValue =
     context.organizationId ===
     "all"
@@ -1059,8 +1076,13 @@ export default function CustomerDashboard({
         />
 
         <MetricCard
-          title="Resultaat"
+          title={resultTitle}
           value={resultValue}
+          valueClassName={
+            resultIsLoss
+              ? "customer-kpi-value-loss"
+              : "customer-kpi-value-profit"
+          }
           subtitle={resultSubtitle}
           icon={<WalletCards />}
           loading={
