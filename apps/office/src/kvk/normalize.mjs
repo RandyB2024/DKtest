@@ -1,40 +1,381 @@
 import { OfficeError } from '../auth/supabase.mjs';
-const fail=()=>{throw new OfficeError(503,'KVK_RESPONSE','KvK-gegevens zijn niet volledig te controleren. Probeer het later opnieuw.');};
-const text=(v,max=200)=>v===undefined||v===null?null:typeof v==='string'&&v.trim().length<=max?v.trim()||null:fail();
-const array=v=>v===undefined?[]:Array.isArray(v)&&v.length<=1000?v:fail();
-const active=v=>v===true||v==='Ja'||v==='true'?'active':v===false||v==='Nee'||v==='false'?'inactive':'unknown';
-function address(v){
-  if(!v)return null;
-  if(v.indAfgeschermd==='Ja'||v.IndAfgeschermd==='Ja'||v.indAfgeschermd===true)return {shielded:true};
-  const result={};
-  for(const k of ['volledigAdres','straatnaam','huisnummer','huisletter','huisnummerToevoeging','toevoegingAdres','postcode','postbusnummer','plaats','straatHuisnummer','postcodeWoonplaats','regio','land']){
-    if(v[k]!==undefined)result[k]=text(typeof v[k]==='number'?String(v[k]):v[k],300);
+
+const fail = () => {
+  throw new OfficeError(
+    503,
+    'KVK_RESPONSE',
+    'KvK-gegevens zijn niet volledig te controleren. Probeer het later opnieuw.'
+  );
+};
+
+const text = (
+  value,
+  max = 200,
+) => {
+  if (
+    value === undefined ||
+    value === null
+  ) {
+    return null;
   }
-  return result;
+
+  if (
+    typeof value !==
+      'string'
+  ) {
+    fail();
+  }
+
+  const result =
+    value.trim();
+
+  if (
+    result.length >
+    max
+  ) {
+    fail();
+  }
+
+  return result ||
+    null;
+};
+
+function address(
+  value,
+) {
+  if (!value) {
+    return null;
+  }
+
+  if (
+    typeof value !==
+      'object' ||
+    Array.isArray(value)
+  ) {
+    fail();
+  }
+
+  const result = {};
+
+  if (
+    value.street !==
+      undefined
+  ) {
+    result.straatnaam =
+      text(
+        value.street,
+        300,
+      );
+  }
+
+  if (
+    value.houseNumber !==
+      undefined &&
+    value.houseNumber !==
+      null
+  ) {
+    result.huisnummer =
+      text(
+        String(
+          value.houseNumber,
+        ),
+        30,
+      );
+  }
+
+  if (
+    value.postalCode !==
+      undefined
+  ) {
+    result.postcode =
+      text(
+        value.postalCode,
+        30,
+      );
+  }
+
+  if (
+    value.city !==
+      undefined
+  ) {
+    result.plaats =
+      text(
+        value.city,
+        200,
+      );
+  }
+
+  if (
+    value.country !==
+      undefined
+  ) {
+    result.land =
+      text(
+        value.country,
+        100,
+      );
+  }
+
+  return Object.keys(
+    result,
+  ).length
+    ? result
+    : null;
 }
-export function normalizeSearch(raw,page=1){
-  if(!raw||!Array.isArray(raw.resultaten))fail();
-  const results=raw.resultaten.slice(0,10).map(r=>{
-    if(!/^\d{8}$/.test(r.kvkNummer??''))fail();
-    return {kvkNumber:r.kvkNummer,name:text(r.naam),type:text(r.type),status:active(r.actief),city:text(r.adres?.binnenlandsAdres?.plaats??r.adres?.buitenlandsAdres?.postcodeWoonplaats)};
-  });
-  return {results,page,hasMore:page<10&&Number.isSafeInteger(raw.totaal)&&raw.totaal>page*10};
+
+export function normalizeSearch(
+  raw,
+  requestedPage = 1,
+) {
+  if (
+    !raw ||
+    !Array.isArray(
+      raw.results,
+    )
+  ) {
+    fail();
+  }
+
+  const page =
+    Number.isSafeInteger(
+      Number(raw.page),
+    )
+      ? Number(
+          raw.page,
+        )
+      : Number(
+          requestedPage,
+        );
+
+  const pageSize =
+    Number.isSafeInteger(
+      Number(
+        raw.pageSize,
+      ),
+    )
+      ? Number(
+          raw.pageSize,
+        )
+      : 10;
+
+  const total =
+    Number.isSafeInteger(
+      Number(raw.total),
+    )
+      ? Number(
+          raw.total,
+        )
+      : raw.results.length;
+
+  const results =
+    raw.results
+      .slice(
+        0,
+        10,
+      )
+      .map(
+        (
+          company,
+        ) => {
+          if (
+            !company ||
+            !/^\d{8}$/.test(
+              company.kvkNumber ??
+                '',
+            )
+          ) {
+            fail();
+          }
+
+          return {
+            kvkNumber:
+              company.kvkNumber,
+
+            name:
+              text(
+                company.name,
+              ),
+
+            type:
+              'rechtspersoon',
+
+            status:
+              company.isActive ===
+                true
+                ? 'active'
+                : company.isActive ===
+                    false
+                  ? 'inactive'
+                  : 'unknown',
+
+            city:
+              text(
+                company.city ??
+                  company.address
+                    ?.city,
+              ),
+          };
+        },
+      );
+
+  return {
+    results,
+
+    page,
+
+    hasMore:
+      page < 10 &&
+      total >
+        page *
+          pageSize,
+  };
 }
-function date(v){if(v===undefined||v===null||v==='')return null;if(typeof v!=='string'||!/^\d{8}(?:\d{6})?$/.test(v))fail();return v;}
-export function normalizeBasis(raw,number,search) {
-  if(!raw||raw.kvkNummer!==number)fail();
-  const h=raw._embedded?.hoofdvestiging??{},owner=raw._embedded?.eigenaar??{},branches=raw._embedded?.vestigingen??{};
-  const names=array(raw.handelsnamen??h.handelsnamen).map(n=>text(n.naam)).filter(Boolean);
-  const candidates=search.results.filter(r=>r.kvkNumber===number&&['hoofdvestiging','rechtspersoon'].includes(r.type));
-  let status=candidates.some(r=>r.status==='active')?'active':candidates.length&&candidates.every(r=>r.status==='inactive')?'inactive':'unknown';
-  if(raw.materieleRegistratie?.datumEinde||owner.datumUitschrijving)status='inactive';
-  const addresses=array(h.adressen??owner.adressen);
-  const branch=h.vestigingsnummer??null;if(branch!==null&&!/^\d{12}$/.test(branch))fail();
-  const count=branches.totaalAantalVestigingen??null;if(count!==null&&(!Number.isSafeInteger(count)||count<0))fail();
-  const name=text(h.eersteHandelsnaam??raw.eersteHandelsnaam??names[0]??raw.naam);if(!name)fail();
-  return {kvkNumber:number,name,legalName:text(raw.statutaireNaam),tradeNames:[...new Set(names)],legalForm:text(owner.rechtsvorm),status,
-    registeredAt:date(raw.formeleRegistratiedatum),startedAt:date(raw.materieleRegistratie?.datumAanvang),
-    visitAddress:address(addresses.find(a=>a.type==='bezoekadres')),postalAddress:address(addresses.find(a=>a.type==='correspondentieadres')),
-    mainBranchNumber:branch,branchCount:count,
-    activities:array(raw.sbiActiviteiten??h.sbiActiviteiten).map(a=>({code:text(a.sbiCode,10),description:text(a.sbiOmschrijving,500),primary:a.indHoofdactiviteit==='Ja'}))};
+
+export function normalizeLookup(
+  raw,
+  number,
+) {
+  if (
+    !raw ||
+    raw.kvkNumber !==
+      number
+  ) {
+    fail();
+  }
+
+  const name =
+    text(
+      raw.name,
+    );
+
+  if (!name) {
+    fail();
+  }
+
+  const tradeNames =
+    raw.tradingNames ===
+      undefined
+      ? []
+      : Array.isArray(
+          raw.tradingNames,
+        )
+        ? raw.tradingNames
+            .slice(
+              0,
+              100,
+            )
+            .map(
+              (
+                value,
+              ) =>
+                text(
+                  value,
+                ),
+            )
+            .filter(
+              Boolean,
+            )
+        : fail();
+
+  const activities =
+    raw.activities ===
+      undefined
+      ? []
+      : Array.isArray(
+          raw.activities,
+        )
+        ? raw.activities
+            .slice(
+              0,
+              100,
+            )
+            .map(
+              (
+                activity,
+              ) => {
+                if (
+                  !activity ||
+                  typeof activity !==
+                    'object'
+                ) {
+                  fail();
+                }
+
+                return {
+                  code:
+                    text(
+                      activity.sbiCode,
+                      10,
+                    ),
+
+                  description:
+                    text(
+                      activity.description,
+                      500,
+                    ),
+
+                  primary:
+                    activity.isMain ===
+                      true,
+                };
+              },
+            )
+        : fail();
+
+  return {
+    kvkNumber:
+      number,
+
+    name,
+
+    legalName:
+      text(
+        raw.legalName,
+      ),
+
+    tradeNames,
+
+    legalForm:
+      text(
+        raw.legalForm,
+      ),
+
+    status:
+      raw.isActive ===
+        true
+        ? 'active'
+        : raw.isActive ===
+            false
+          ? 'inactive'
+          : 'unknown',
+
+    registeredAt:
+      text(
+        raw.registrationDate,
+        40,
+      ),
+
+    startedAt:
+      null,
+
+    visitAddress:
+      address(
+        raw.address,
+      ),
+
+    postalAddress:
+      null,
+
+    mainBranchNumber:
+      null,
+
+    branchCount:
+      Number.isSafeInteger(
+        raw.branchCount,
+      )
+        ? raw.branchCount
+        : null,
+
+    activities,
+  };
 }

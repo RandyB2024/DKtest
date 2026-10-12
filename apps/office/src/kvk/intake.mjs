@@ -1,7 +1,7 @@
 import {validateProfile} from '../../public/profile-fields.js';
 import {OfficeError} from '../auth/supabase.mjs';
 import {createKvkClient,searchInput,kvkNumber,invalid} from './client.mjs';
-import {normalizeSearch,normalizeBasis} from './normalize.mjs';
+import {normalizeSearch,normalizeLookup} from './normalize.mjs';
 export const manualFields=['relationshipName','vatId','taxNumber','iban','email','phone','contactPerson','fiscalChoices','services'];
 export function manualInput(input){
   if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(k=>!manualFields.includes(k)))throw invalid();
@@ -14,13 +14,12 @@ export function manualInput(input){
   return out;
 }
 async function profile(kvk,number){
-  // Only the documented basis/search endpoints; never follow provider links.
-  const basis=await kvk.basis(number);
-  const query=searchInput(new URLSearchParams({kvkNumber:number}));
-  // Main/legal registrations carry company status; branch-only results cannot grant active status.
-  query.append('type','hoofdvestiging');query.append('type','rechtspersoon');
-  const search=normalizeSearch(await kvk.search(query));
-  return normalizeBasis(basis,number,search);
+  // KVKBase enriched lookup is the authoritative intake source.
+  // Never follow provider links and never expose the provider API key.
+  return normalizeLookup(
+    await kvk.lookup(number),
+    number
+  );
 }
 export async function kvkRoute(req,url,client,user,config,readBody,transport){
   const search=url.pathname==='/api/kvk/search'&&req.method==='GET';
