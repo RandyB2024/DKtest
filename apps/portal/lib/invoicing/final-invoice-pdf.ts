@@ -1157,50 +1157,77 @@ export async function ensureFinalInvoicePdf(
   }
 
 
-  const admin =
-    adminClient();
-
-
   const filename =
     `${safeFilename(
       `factuur-${invoice.invoice_number}`,
     )}.pdf`;
 
 
-  if (
-    invoice.pdf_storage_path
-  ) {
-    const {
-      data,
-      error,
-    } =
-      await admin.storage
-        .from(
-          "invoice-pdfs",
-        )
-        .download(
-          invoice.pdf_storage_path,
-        );
+  const path =
+    `${organizationId}/${invoiceId}/${filename}`;
+
+
+  /*
+   * Eerst proberen een reeds opgeslagen immutable PDF
+   * terug te geven.
+   *
+   * Als Storage of de service-role tijdelijk niet beschikbaar
+   * is, mag dat het bekijken/downloaden niet blokkeren.
+   */
+  try {
+    const admin =
+      adminClient();
 
     if (
-      !error &&
-      data
+      invoice.pdf_storage_path
     ) {
-      return {
-        bytes:
-          new Uint8Array(
-            await data.arrayBuffer(),
-          ),
+      const {
+        data,
+        error,
+      } =
+        await admin.storage
+          .from(
+            "invoice-pdfs",
+          )
+          .download(
+            invoice.pdf_storage_path,
+          );
 
-        path:
-          invoice.pdf_storage_path,
+      if (
+        !error &&
+        data
+      ) {
+        return {
+          bytes:
+            new Uint8Array(
+              await data.arrayBuffer(),
+            ),
 
-        filename,
-      };
+          path:
+            invoice.pdf_storage_path,
+
+          filename,
+        };
+      }
     }
+  } catch (storageReadError) {
+    console.error(
+      "final invoice stored pdf lookup failed",
+      {
+        invoiceId,
+        storageReadError,
+      },
+    );
   }
 
 
+  /*
+   * De definitieve PDF wordt uitsluitend opgebouwd
+   * uit de immutable factuursnapshot.
+   *
+   * Hierdoor blijft de inhoud exact gelijk, ook als
+   * klant-, bedrijfs- of factuurgegevens later wijzigen.
+   */
   const {
     data:
       payload,
@@ -1223,6 +1250,17 @@ export async function ensureFinalInvoicePdf(
     payloadError ||
     !payload
   ) {
+    console.error(
+      "final invoice snapshot lookup failed",
+      {
+        invoiceId,
+        code:
+          payloadError?.code,
+        message:
+          payloadError?.message,
+      },
+    );
+
     throw new Error(
       "Historische factuurgegevens konden niet worden geladen.",
     );
@@ -1239,133 +1277,167 @@ export async function ensureFinalInvoicePdf(
     );
 
 
-  const path =
-    `${organizationId}/${invoiceId}/${filename}`;
+  /*
+   * Opslaan in de private bucket is gewenst,
+   * maar mag het bekijken/downloaden niet blokkeren.
+   *
+   * De immutable snapshot blijft de bron van waarheid.
+   */
+  try {
+    const admin =
+      adminClient();
 
-
-  const {
-    error:
-      uploadError,
-  } =
-    await admin.storage
-      .from(
-        "invoice-pdfs",
-      )
-      .upload(
-        path,
-        bytes,
-        {
-          contentType:
-            "application/pdf",
-
-          cacheControl:
-            "31536000",
-
-          upsert:
-            false,
-        },
-      );
-
-
-  if (uploadError) {
-    /*
-     * Mogelijke retry/race:
-     * als het object al bestaat,
-     * gebruiken we exact dat bestand.
-     */
     const {
-      data:
-        existing,
       error:
-        existingError,
+        uploadError,
     } =
       await admin.storage
         .from(
           "invoice-pdfs",
         )
-        .download(
+        .upload(
           path,
+          bytes,
+          {
+            contentType:
+              "application/pdf",
+
+            cacheControl:
+              "31536000",
+
+            upsert:
+              false,
+          },
         );
 
-    if (
-      existingError ||
-      !existing
-    ) {
-      throw new Error(
-        "Definitieve factuur-PDF kon niet worden opgeslagen.",
+
+    if (uploadError) {
+      /*
+       * Een bestaand bestand is prima.
+       * Bijvoorbeeld bij twee gelijktijdige requests.
+       */
+      const {
+        data:
+          existing,
+        error:
+          existingError,
+      } =
+        await admin.storage
+          .from(
+            "invoice-pdfs",
+          )
+          .download(
+            path,
+          );
+
+
+      if (
+        !existingError &&
+        existing
+      ) {
+        const existingBytes =
+          new Uint8Array(
+            await existing.arrayBuffer(),
+          );
+
+
+        await admin
+          .from(
+            "sales_invoices",
+          )
+          .update({
+            pdf_storage_path:
+              path,
+          })
+          .eq(
+            "id",
+            invoiceId,
+          )
+          .eq(
+            "organization_id",
+            organizationId,
+          )
+          .is(
+            "pdf_storage_path",
+            null,
+          );
+
+
+        return {
+          bytes:
+            existingBytes,
+
+          path,
+
+          filename,
+        };
+      }
+
+
+      console.error(
+        "final invoice pdf storage upload failed",
+        {
+          invoiceId,
+          message:
+            uploadError.message,
+        },
       );
+    } else {
+      const {
+        error:
+          updateError,
+      } =
+        await admin
+          .from(
+            "sales_invoices",
+          )
+          .update({
+            pdf_storage_path:
+              path,
+          })
+          .eq(
+            "id",
+            invoiceId,
+          )
+          .eq(
+            "organization_id",
+            organizationId,
+          )
+          .is(
+            "pdf_storage_path",
+            null,
+          );
+
+
+      if (updateError) {
+        console.error(
+          "final invoice pdf path update failed",
+          {
+            invoiceId,
+            message:
+              updateError.message,
+          },
+        );
+      }
     }
 
-    const existingBytes =
-      new Uint8Array(
-        await existing.arrayBuffer(),
-      );
-
-    await admin
-      .from(
-        "sales_invoices",
-      )
-      .update({
-        pdf_storage_path:
-          path,
-      })
-      .eq(
-        "id",
+  } catch (storageWriteError) {
+    console.error(
+      "final invoice pdf persistence failed",
+      {
         invoiceId,
-      )
-      .eq(
-        "organization_id",
-        organizationId,
-      )
-      .is(
-        "pdf_storage_path",
-        null,
-      );
-
-    return {
-      bytes:
-        existingBytes,
-
-      path,
-
-      filename,
-    };
-  }
-
-
-  const {
-    error:
-      updateError,
-  } =
-    await admin
-      .from(
-        "sales_invoices",
-      )
-      .update({
-        pdf_storage_path:
-          path,
-      })
-      .eq(
-        "id",
-        invoiceId,
-      )
-      .eq(
-        "organization_id",
-        organizationId,
-      )
-      .is(
-        "pdf_storage_path",
-        null,
-      );
-
-
-  if (updateError) {
-    throw new Error(
-      "Definitieve PDF is opgeslagen, maar kon niet aan de factuur worden gekoppeld.",
+        storageWriteError,
+      },
     );
   }
 
 
+  /*
+   * Belangrijk:
+   * zelfs wanneer persistente opslag mislukt,
+   * kan de definitieve factuur gewoon worden bekeken
+   * en gedownload uit de immutable snapshot.
+   */
   return {
     bytes,
     path,
