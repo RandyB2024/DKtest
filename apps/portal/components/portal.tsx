@@ -7,6 +7,7 @@ import {
 
 import {
   CalendarDays,
+  CalendarClock,
   Boxes,
   ChartNoAxesCombined,
   ClipboardCheck,
@@ -471,6 +472,62 @@ if (view === "Documenten") {
           </section>
         );
       }
+    }
+
+    if (
+      view === "Agenda"
+    ) {
+      return (
+        <>
+          <div className="heading">
+            <div>
+              <h1>Agenda</h1>
+
+              <p>
+                Plan eenvoudig een gesprek met Bestemd.
+              </p>
+            </div>
+          </div>
+
+          <section className="appointment-booking-card">
+            <div className="appointment-booking-icon">
+              <CalendarClock />
+            </div>
+
+            <div className="appointment-booking-copy">
+              <span className="appointment-booking-label">
+                AFSPRAAK PLANNEN
+              </span>
+
+              <h2>
+                Plan een gesprek
+              </h2>
+
+              <p>
+                Kies zelf een datum en tijd die voor jou uitkomt.
+                De beschikbare momenten worden direct vanuit
+                onze agenda getoond.
+              </p>
+
+              <div className="appointment-booking-meta">
+                <span>30 minuten</span>
+                <span>Online afspraak</span>
+                <span>Direct bevestigd</span>
+              </div>
+
+              <a
+                href="https://tidycal.com/neyan63009/30-minute-meeting"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="appointment-booking-button"
+              >
+                <CalendarDays />
+                Plan een gesprek
+              </a>
+            </div>
+          </section>
+        </>
+      );
     }
 
     if (

@@ -818,3 +818,145 @@
   font-size: 12px;
   line-height: 1.4;
 }
+
+/* ============================================================
+   AGENDA / TIDYCAL
+   ============================================================ */
+
+.appointment-booking-card {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding: 30px;
+  border: 1px solid rgba(116, 145, 171, 0.22);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.98),
+      rgba(242,247,251,0.94)
+    );
+  box-shadow:
+    0 18px 45px rgba(26, 55, 83, 0.08);
+}
+
+.appointment-booking-icon {
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #0c416f,
+      #1b6aa5
+    );
+  color: #ffffff;
+  box-shadow:
+    0 12px 24px rgba(12, 65, 111, 0.2);
+}
+
+.appointment-booking-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.appointment-booking-copy {
+  max-width: 680px;
+}
+
+.appointment-booking-label {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #6b8298;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.appointment-booking-copy h2 {
+  margin: 0;
+  color: #0c2f4e;
+  font-size: 27px;
+  letter-spacing: -0.02em;
+}
+
+.appointment-booking-copy p {
+  margin: 10px 0 0;
+  color: #5d7489;
+  line-height: 1.6;
+}
+
+.appointment-booking-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.appointment-booking-meta span {
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: #edf4f9;
+  color: #4a6984;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.appointment-booking-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 22px;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: 11px;
+  background:
+    linear-gradient(
+      135deg,
+      #0c416f,
+      #075b98
+    );
+  color: #ffffff;
+  font-weight: 750;
+  text-decoration: none;
+  box-shadow:
+    0 10px 22px rgba(12, 65, 111, 0.18);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.appointment-booking-button:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 14px 28px rgba(12, 65, 111, 0.24);
+}
+
+.appointment-booking-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 640px) {
+  .appointment-booking-card {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+
+  .appointment-booking-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .appointment-booking-copy h2 {
+    font-size: 23px;
+  }
+
+  .appointment-booking-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
