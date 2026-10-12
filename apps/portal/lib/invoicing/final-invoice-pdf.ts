@@ -1222,53 +1222,69 @@ export async function ensureFinalInvoicePdf(
 
 
   /*
-   * De definitieve PDF wordt uitsluitend opgebouwd
-   * uit de immutable factuursnapshot.
+   * Definitieve PDF:
    *
-   * Hierdoor blijft de inhoud exact gelijk, ook als
-   * klant-, bedrijfs- of factuurgegevens later wijzigen.
+   * De portal-route heeft vóór deze functie al gecontroleerd:
+   * - gebruiker is ingelogd
+   * - verse MFA/AAL2
+   * - toegang tot organizationId
+   *
+   * De immutable snapshot zelf wordt daarom server-side
+   * gelezen. Hierdoor is PDF-generatie niet afhankelijk van
+   * een tweede klant-RPC/RLS/MFA-controle.
    */
+  const admin =
+    adminClient();
+
+
   const {
     data:
-      payload,
+      snapshotRow,
     error:
-      payloadError,
+      snapshotError,
   } =
-    await client.rpc(
-      "get_customer_invoice_pdf_payload",
-      {
-        p_organization_id:
-          organizationId,
-
-        p_invoice_id:
-          invoiceId,
-      },
-    );
+    await admin
+      .from(
+        "sales_invoice_snapshots",
+      )
+      .select(
+        "snapshot",
+      )
+      .eq(
+        "invoice_id",
+        invoiceId,
+      )
+      .eq(
+        "organization_id",
+        organizationId,
+      )
+      .maybeSingle();
 
 
   if (
-    payloadError ||
-    !payload
+    snapshotError ||
+    !snapshotRow?.snapshot
   ) {
     console.error(
       "final invoice snapshot lookup failed",
       {
         invoiceId,
+        organizationId,
         code:
-          payloadError?.code,
+          snapshotError?.code,
         message:
-          payloadError?.message,
+          snapshotError?.message,
       },
     );
 
     throw new Error(
-      "Historische factuurgegevens konden niet worden geladen.",
+      "De definitieve factuursnapshot ontbreekt.",
     );
   }
 
 
   const snapshot =
-    payload as InvoiceSnapshot;
+    snapshotRow.snapshot as InvoiceSnapshot;
 
 
   const bytes =
@@ -1284,9 +1300,6 @@ export async function ensureFinalInvoicePdf(
    * De immutable snapshot blijft de bron van waarheid.
    */
   try {
-    const admin =
-      adminClient();
-
     const {
       error:
         uploadError,
