@@ -4,15 +4,42 @@ import {enhanceIntakeForm,intakeLabels} from './intake-form.js';
 // Only normalized public company data in memory. No credentials or local storage.
 export function openKvkIntake(api,onCreated){
   if(document.querySelector('[data-kvk-intake]'))return ()=>{};
-  const dialog=document.createElement('dialog');dialog.className='customer-dialog';
+  const dialog=document.createElement('dialog');
+  dialog.className='customer-dialog kvk-intake-dialog';
   dialog.dataset.kvkIntake='true';
   const heading=document.createElement('h2'),content=document.createElement('div'),status=document.createElement('p'),close=document.createElement('button');
-  status.setAttribute('role','status');close.textContent='Annuleren';close.type='button';
+  status.setAttribute('role','status');
+  status.className='kvk-status-line';
+
+  close.textContent='Annuleren';
+  close.type='button';
+  close.className='kvk-cancel-button';
   dialog.append(heading,content,status,close);(document.querySelector('#view')??document.body).append(dialog);
   let busy=false,company,environment,manual={},intake={};
   const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
-  const button=(label,action,parent=content)=>{const b=node('button',label);b.type='button';b.onclick=action;parent.append(b);return b;};
-  const field=(parent,label,name,value='',max=200)=>{const l=node('label',label),input=node(max>200?'textarea':'input');input.name=name;input.value=value;input.maxLength=max;l.append(input);parent.append(l);return input;};
+  const button=(label,action,parent=content)=>{
+    const b=node('button',label);
+    b.type='button';
+    b.className='kvk-button';
+    b.onclick=action;
+    parent.append(b);
+    return b;
+  };
+  const field=(parent,label,name,value='',max=200)=>{
+    const l=node('label',label);
+    l.className='kvk-field';
+
+    const input=node(max>200?'textarea':'input');
+    input.name=name;
+    input.value=value;
+    input.maxLength=max;
+    input.className='kvk-input';
+
+    l.append(input);
+    parent.append(l);
+
+    return input;
+  };
   const lock=value=>{busy=value;dialog.querySelectorAll('button,input,textarea,select').forEach(n=>{n.disabled=value;});};
   async function run(action){if(busy)return;lock(true);status.textContent='Bezig…';try{await action();}catch(e){status.textContent=e.message||'Geen bevestiging ontvangen. Controleer het klantoverzicht voordat u opnieuw aanmaakt.';}finally{lock(false);}}
   close.onclick=()=>{if(!busy)dialog.close();};dialog.oncancel=e=>{if(busy)e.preventDefault();};dialog.onclose=()=>dialog.remove();
@@ -28,15 +55,103 @@ export function openKvkIntake(api,onCreated){
     screen(1,'Onderneming zoeken');const form=node('form');content.append(form);
     const number=field(form,'Exact KvK-nummer (acht cijfers)','number','',8);number.inputMode='numeric';number.pattern='[0-9]{8}';
     const name=field(form,'Of bedrijfsnaam','name','',120),city=field(form,'Plaats (optioneel bij bedrijfsnaam)','city','',80);
-    const submit=node('button','Zoeken');submit.type='submit';form.append(submit);const results=node('div');content.append(results);
+    const submit=node('button','Zoeken');
+    submit.type='submit';
+    submit.className='kvk-search-button';
+    form.append(submit);
+
+    const results=node('div');
+    results.className='kvk-results';
+    content.append(results);
     async function search(page){
       const q=new URLSearchParams({page:String(page)});
       if(number.value.trim()){q.set('kvkNumber',number.value.trim());if(name.value.trim()||city.value.trim())throw new Error('Zoek op KvK-nummer óf op naam met eventueel plaats.');}
       else {q.set('name',name.value.trim());if(city.value.trim())q.set('city',city.value.trim());}
       const data=await api('/api/kvk/search?'+q);results.replaceChildren();status.textContent=data.results.length?'Kies één onderneming.':'Geen resultaten gevonden. Pas uw zoekopdracht aan.';
-      for(const r of data.results)button(`${r.name??'Naam ontbreekt'} · ${r.kvkNumber} · ${r.city??''} · ${r.status==='active'?'actief':r.status==='inactive'?'uitgeschreven':'status onbekend'}`,()=>run(async()=>{
-        const detail=await api('/api/kvk/organizations/'+r.kvkNumber);company=detail.company;environment=detail.environment;manual={};intake={};preview();
-      }),results);
+      for(const r of data.results){
+        const card=node('button');
+        card.type='button';
+        card.className='kvk-result-card';
+
+        const radio=node('span');
+        radio.className='kvk-result-radio';
+
+        const body=node('span');
+        body.className='kvk-result-body';
+
+        const title=node(
+          'span',
+          r.name ?? 'Naam ontbreekt'
+        );
+        title.className='kvk-result-title';
+
+        const meta=node('span');
+        meta.className='kvk-result-meta';
+
+        const kvk=node(
+          'span',
+          `KvK ${r.kvkNumber}`
+        );
+
+        const city=node(
+          'span',
+          r.city ?? 'Plaats onbekend'
+        );
+
+        meta.append(
+          kvk,
+          city
+        );
+
+        const badge=node(
+          'span',
+          r.status==='active'
+            ? 'actief'
+            : r.status==='inactive'
+              ? 'uitgeschreven'
+              : 'status onbekend'
+        );
+
+        badge.className=
+          `kvk-status-badge ${
+            r.status==='active'
+              ? 'is-active'
+              : r.status==='inactive'
+                ? 'is-inactive'
+                : 'is-unknown'
+          }`;
+
+        body.append(
+          title,
+          meta
+        );
+
+        card.append(
+          radio,
+          body,
+          badge
+        );
+
+        card.onclick=()=>run(async()=>{
+          const detail=
+            await api(
+              '/api/kvk/organizations/'+r.kvkNumber
+            );
+
+          company=
+            detail.company;
+
+          environment=
+            detail.environment;
+
+          manual={};
+          intake={};
+
+          preview();
+        });
+
+        results.append(card);
+      }
       if(page>1)button('Vorige pagina',()=>run(()=>search(page-1)),results);
       if(data.hasMore)button('Volgende pagina',()=>run(()=>search(page+1)),results);
     }
