@@ -23,6 +23,7 @@ import Logout from "./logout";
 import PersonalLifePlan from "./personal-life-plan";
 import PersonalCoaching from "./personal-coaching";
 import PersonalAbc from "./personal-abc";
+import PersonalWealth from "./personal-wealth";
 import { PersonalDocumentsView } from "./personal-documents-view";
 
 
@@ -621,7 +622,9 @@ export default function PersonalPortal({
                 ? <PersonalCoaching />
                 : view === "Mijn ABC"
                   ? <PersonalAbc />
-                  : view === "Mijn documenten"
+                  : view === "Mijn vermogen"
+                    ? <PersonalWealth />
+                    : view === "Mijn documenten"
                   ? <PersonalDocumentsView />
                   : renderPlaceholder(
                     view,
