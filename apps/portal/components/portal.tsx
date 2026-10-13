@@ -484,48 +484,163 @@ if (view === "Documenten") {
               <h1>Agenda</h1>
 
               <p>
-                Plan eenvoudig een gesprek met Bestemd.
+                Plan een gesprek voor inzicht,
+                vragen of de volgende stap in jouw onderneming.
               </p>
             </div>
           </div>
 
-          <section className="appointment-booking-card">
-            <div className="appointment-booking-icon">
-              <CalendarClock />
-            </div>
+          <section className="bestemd-calendar-shell">
+            <div className="bestemd-calendar-intro">
+              <div>
+                <span className="bestemd-calendar-label">
+                  AFSPRAAK PLANNEN
+                </span>
 
-            <div className="appointment-booking-copy">
-              <span className="appointment-booking-label">
-                AFSPRAAK PLANNEN
-              </span>
+                <h2>
+                  Kies jouw moment
+                </h2>
 
-              <h2>
-                Plan een gesprek
-              </h2>
-
-              <p>
-                Kies zelf een datum en tijd die voor jou uitkomt.
-                De beschikbare momenten worden direct vanuit
-                onze agenda getoond.
-              </p>
-
-              <div className="appointment-booking-meta">
-                <span>30 minuten</span>
-                <span>Online afspraak</span>
-                <span>Direct bevestigd</span>
+                <p>
+                  Kies hieronder zelf een datum en tijd.
+                  Je blijft gewoon binnen Mijn Onderneming.
+                </p>
               </div>
 
-              <a
-                href="https://tidycal.com/neyan63009/30-minute-meeting"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="appointment-booking-button"
-              >
-                <CalendarDays />
-                Plan een gesprek
-              </a>
+              <div className="bestemd-calendar-info">
+                <span>30 minuten</span>
+                <span>Direct bevestigd</span>
+              </div>
             </div>
+
+            <div
+              className="bestemd-cal-embed"
+              data-cal-link="bestemd/afspraak"
+            />
           </section>
+
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function (C, A, L) {
+                  let p = function (a, ar) {
+                    a.q.push(ar);
+                  };
+
+                  let d = C.document;
+
+                  C.Cal =
+                    C.Cal ||
+                    function () {
+                      let cal = C.Cal;
+                      let ar = arguments;
+
+                      if (!cal.loaded) {
+                        cal.ns = {};
+                        cal.q = cal.q || [];
+
+                        d.head.appendChild(
+                          d.createElement("script")
+                        ).src =
+                          A;
+
+                        cal.loaded = true;
+                      }
+
+                      if (ar[0] === L) {
+                        const api =
+                          function () {
+                            p(api, arguments);
+                          };
+
+                        const namespace =
+                          ar[1];
+
+                        api.q =
+                          api.q || [];
+
+                        if (
+                          typeof namespace === "string"
+                        ) {
+                          cal.ns[namespace] =
+                            cal.ns[namespace] ||
+                            api;
+
+                          p(
+                            cal.ns[namespace],
+                            ar
+                          );
+
+                          p(
+                            cal,
+                            [
+                              "initNamespace",
+                              namespace
+                            ]
+                          );
+                        } else {
+                          p(
+                            cal,
+                            ar
+                          );
+                        }
+
+                        return;
+                      }
+
+                      p(
+                        cal,
+                        ar
+                      );
+                    };
+                })(
+                  window,
+                  "https://app.cal.com/embed/embed.js",
+                  "init"
+                );
+
+                Cal(
+                  "init",
+                  "bestemd-afspraak",
+                  {
+                    origin:
+                      "https://cal.com"
+                  }
+                );
+
+                Cal.ns[
+                  "bestemd-afspraak"
+                ](
+                  "inline",
+                  {
+                    elementOrSelector:
+                      ".bestemd-cal-embed",
+
+                    config: {
+                      layout:
+                        "month_view"
+                    },
+
+                    calLink:
+                      "bestemd/afspraak"
+                  }
+                );
+
+                Cal.ns[
+                  "bestemd-afspraak"
+                ](
+                  "ui",
+                  {
+                    hideEventTypeDetails:
+                      false,
+
+                    layout:
+                      "month_view"
+                  }
+                );
+              `,
+            }}
+          />
         </>
       );
     }

@@ -960,3 +960,110 @@
     justify-content: center;
   }
 }
+
+
+/* ============================================================
+   BESTEMD CAL.COM INLINE AGENDA
+   ============================================================ */
+
+.bestemd-calendar-shell {
+  overflow: hidden;
+  border: 1px solid rgba(116, 145, 171, 0.22);
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow:
+    0 18px 45px rgba(26, 55, 83, 0.08);
+}
+
+.bestemd-calendar-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px 30px 22px;
+  border-bottom: 1px solid #e4ebf1;
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #f6f9fc
+    );
+}
+
+.bestemd-calendar-label {
+  display: inline-block;
+  margin-bottom: 7px;
+  color: #688098;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+}
+
+.bestemd-calendar-intro h2 {
+  margin: 0;
+  color: #0c2f4e;
+  font-size: 27px;
+  letter-spacing: -0.02em;
+}
+
+.bestemd-calendar-intro p {
+  max-width: 600px;
+  margin: 9px 0 0;
+  color: #62798e;
+  line-height: 1.55;
+}
+
+.bestemd-calendar-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.bestemd-calendar-info span {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #edf4f9;
+  color: #4d6c86;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.bestemd-cal-embed {
+  width: 100%;
+  min-height: 720px;
+  padding: 10px 12px 20px;
+  background: #ffffff;
+}
+
+.bestemd-cal-embed iframe {
+  width: 100% !important;
+  min-height: 700px !important;
+  border: 0 !important;
+  border-radius: 14px;
+}
+
+@media (max-width: 700px) {
+  .bestemd-calendar-intro {
+    flex-direction: column;
+    padding: 22px 20px 18px;
+  }
+
+  .bestemd-calendar-info {
+    justify-content: flex-start;
+  }
+
+  .bestemd-calendar-intro h2 {
+    font-size: 23px;
+  }
+
+  .bestemd-cal-embed {
+    min-height: 760px;
+    padding: 6px;
+  }
+
+  .bestemd-cal-embed iframe {
+    min-height: 740px !important;
+  }
+}
