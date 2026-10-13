@@ -2,7 +2,7 @@ const CALCOM_BASE_URL =
   "https://api.cal.com/v2";
 
 const CALCOM_API_VERSION =
-  "2024-08-13";
+  "2026-02-25";
 
 
 function getApiKey() {

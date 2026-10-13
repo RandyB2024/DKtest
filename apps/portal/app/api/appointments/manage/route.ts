@@ -1,4 +1,4 @@
-﻿import {
+import {
   calcomRequest,
 } from "@/lib/calcom";
 
@@ -163,14 +163,14 @@ export async function POST(
           await calcomRequest(
             `/bookings/${encodeURIComponent(
               body.uid,
-            )}`,
+            )}/decline`,
             {
               method:
-                "DELETE",
+                "POST",
 
               body:
                 JSON.stringify({
-                  cancellationReason:
+                  reason:
                     "Geannuleerd via Mijn Onderneming",
                 }),
             },
