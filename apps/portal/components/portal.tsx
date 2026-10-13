@@ -8,6 +8,7 @@ import {
 
 import {
   CalendarDays,
+  Compass,
   CalendarClock,
   Boxes,
   ChartNoAxesCombined,
@@ -41,6 +42,7 @@ import PasskeySettings from "./passkey-settings";
 import RelationsView from "./relations-view";
 import DocumentsView from "./documents-view";
 import CommunicationView from "./communication-view";
+import WizeView from "./wize-view";
 
 const businessNav = [
   ["Dashboard", LayoutDashboard],
@@ -48,6 +50,7 @@ const businessNav = [
   ["Relaties", Users],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
+  ["Wize", Compass],
   ["Afspraken", CalendarDays],
   ["Rapportages", ChartNoAxesCombined],
   ["Aangiften", ClipboardCheck],
@@ -455,6 +458,16 @@ if (view === "Documenten") {
       return (
         <CommunicationView
           context={context}
+        />
+      );
+    }
+
+    if (view === "Wize") {
+      return (
+        <WizeView
+          context={context}
+          organization={organization}
+          onGo={setView}
         />
       );
     }
