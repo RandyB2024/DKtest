@@ -680,6 +680,44 @@ async function loadAppointmentContext(
   }
 
 
+  /*
+   * Administratieve event-engine.
+   *
+   * Detecteert o.a. uitgaande bankbetalingen waarvoor
+   * nog een bon/factuur of definitieve verwerking ontbreekt.
+   *
+   * Dit gebeurt vóór wize_get_active_events, zodat een nieuw
+   * signaal direct in dezelfde Wize-response zichtbaar is.
+   */
+  const {
+    error:
+      bankDocumentEventError,
+  } =
+    await client.rpc(
+      "wize_detect_bank_document_events",
+      {
+        p_organization_id:
+          organizationId,
+      },
+    );
+
+
+  if (
+    bankDocumentEventError
+  ) {
+    console.error(
+      "Wize bank/document event detection failed",
+      {
+        organizationId,
+
+        message:
+          bankDocumentEventError
+            .message,
+      },
+    );
+  }
+
+
   const {
     data:
       activeEventResponse,
@@ -1423,7 +1461,11 @@ export async function GET(
                 `event-${event.id}`,
 
               type:
-                "attention",
+                event
+                  .eventType ===
+                "bank_document_missing"
+                  ? "missing_document"
+                  : "attention",
 
               message:
                 event
@@ -1434,16 +1476,35 @@ export async function GET(
                   .eventType ===
                 "appointment_due"
                   ? "Afspraken"
-                  : null,
+                  : event
+                      .eventType ===
+                    "bank_document_missing"
+                    ? "Documenten"
+                    : null,
 
               actionLabel:
                 event
                   .eventType ===
                 "appointment_due"
                   ? "Afspraak plannen"
-                  : null,
+                  : event
+                      .eventType ===
+                    "bank_document_missing"
+                    ? "Bon of factuur uploaden"
+                    : null,
             }),
           );
+
+      const hasPersistentBankDocumentSignal =
+        appointments
+          .activeEvents
+          .some(
+            event =>
+              event
+                .eventType ===
+              "bank_document_missing",
+          );
+
 
       const liveAppointmentSignal =
         appointments
@@ -1514,6 +1575,13 @@ export async function GET(
             ...eventSignals,
             ...buildProactiveSignals(
               context,
+            ).filter(
+              signal =>
+                !(
+                  hasPersistentBankDocumentSignal &&
+                  signal.type ===
+                    "missing_document"
+                ),
             ),
           ].slice(
             0,
