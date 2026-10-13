@@ -51,7 +51,6 @@ const businessNav = [
   ["Relaties", Users],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
-  ["Wize", Compass],
   ["Afspraken", CalendarDays],
   ["Rapportages", ChartNoAxesCombined],
   ["Aangiften", ClipboardCheck],
