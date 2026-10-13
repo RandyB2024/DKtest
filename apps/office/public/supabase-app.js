@@ -234,10 +234,23 @@ async function renderRoute() {
     } else if (path === '/communication') {
       header('Communicatie');
       html = '<div id="office-communication"></div>';
+    } else if (path === '/wize') {
+      header('Wize Beheer');
+
+      const data =
+        await api(
+          '/api/clients'
+        );
+
+      recordData =
+        data;
+
+      html =
+        '<div id="office-wize-admin"></div>';
     } else if (path === '/settings') {
       header('Instellingen');html='<section class="panel" id="passkey-settings"></section>';
     } else {
-      const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/banking':'Bankieren','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/settings':'Instellingen' };
+      const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/banking':'Bankieren','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/wize':'Wize Beheer','/settings':'Instellingen' };
       header(titles[path] || 'Office');
       html = `<section class="panel empty"><p class="eyebrow">Fase 1 · Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
     }
@@ -272,6 +285,24 @@ async function renderRoute() {
       }else if(path==='/communication'){
         const {mountOfficeCommunication}=await import('/communication.js');
         if(activeGeneration===generation&&currentUser)await mountOfficeCommunication($('#office-communication'),api,currentUser);
+      }else if(path==='/wize'){
+        const {
+          mountWizeAdmin
+        } =
+          await import(
+            '/wize-admin.js'
+          );
+
+        if(
+          activeGeneration===generation
+          &&currentUser
+        ){
+          await mountWizeAdmin(
+            $('#office-wize-admin'),
+            api,
+            recordData
+          );
+        }
       }else customerControls(path, recordData);
       if(path==='/dashboard'){const {mountTasks}=await import('/tasks.js');if(activeGeneration===generation&&currentUser)await Promise.all([mountTasks($('#tasks-today'),api,{bucket:'today'}),mountTasks($('#tasks-overdue'),api,{bucket:'overdue'})]);}
       if(

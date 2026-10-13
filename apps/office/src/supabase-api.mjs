@@ -14,6 +14,7 @@ import { invoicingSettingsRoute } from './invoicing-settings.mjs';
 import { creditInvoiceRoute } from './credit-invoices.mjs';
 import { paidInvoiceDocumentsRoute } from './paid-invoice-documents.mjs';
 import { creditorsRoute } from './creditors.mjs';
+import { wizeAdminRoute } from './wize-admin.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -683,6 +684,24 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+
+    const wizeAdmin =
+      await wizeAdminRoute(
+        req,
+        url,
+        client,
+        user,
+        body
+      );
+
+    if (wizeAdmin) {
+      return sendJson(
+        res,
+        wizeAdmin.status,
+        wizeAdmin.data
+      );
+    }
+
 
     const paymentMonitoring =
       await paymentMonitoringRoute(

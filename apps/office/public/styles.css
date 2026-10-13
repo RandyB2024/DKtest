@@ -3400,3 +3400,291 @@ body.sidebar-collapsed #logout::after{
 }
 
 /* BESTEMD_OFFICE_SIDEBAR_CLEANUP_END */
+
+
+/* BESTEMD WIZE ADMIN V1 */
+
+.wize-admin{
+  display:grid;
+  gap:18px;
+}
+
+.wize-admin-hero{
+  display:flex;
+  justify-content:space-between;
+  gap:24px;
+  padding:24px;
+  border:1px solid #dfe8ee;
+  border-radius:20px;
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff,
+      #ffffff
+    );
+}
+
+.wize-admin-hero h2{
+  margin:
+    4px 0 8px;
+  color:#173d59;
+}
+
+.wize-admin-hero p{
+  max-width:720px;
+  margin:0;
+  color:#657f8f;
+  line-height:1.55;
+}
+
+.wize-admin-shield{
+  width:260px;
+  flex:none;
+  padding:16px;
+  border:1px solid #d3e5f3;
+  border-radius:15px;
+  background:#edf6ff;
+}
+
+.wize-admin-shield strong,
+.wize-admin-shield span{
+  display:block;
+}
+
+.wize-admin-shield strong{
+  color:#205e89;
+  margin-bottom:6px;
+}
+
+.wize-admin-shield span{
+  color:#5c7586;
+  font-size:.82rem;
+  line-height:1.45;
+}
+
+.wize-admin-section-head{
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
+  margin-bottom:16px;
+}
+
+.wize-admin-section-head h3{
+  margin:
+    4px 0 5px;
+  color:#173d59;
+}
+
+.wize-admin-section-head p{
+  margin:0;
+  color:#718694;
+  font-size:.86rem;
+}
+
+.wize-admin-company select{
+  width:min(520px,100%);
+}
+
+.wize-admin-status{
+  min-height:20px;
+  color:#34765a;
+  font-size:.82rem;
+}
+
+.wize-admin-error{
+  min-height:20px;
+  color:#a84d42;
+  font-size:.82rem;
+}
+
+.wize-security-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+  gap:12px;
+}
+
+.wize-security-grid article{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px;
+  border:1px solid #e3eaee;
+  border-radius:12px;
+  background:#fafcfd;
+}
+
+.wize-security-grid strong{
+  color:#37596d;
+  font-size:.82rem;
+}
+
+.wize-security-grid span{
+  flex:none;
+  color:#34765a;
+  font-size:.75rem;
+  font-weight:700;
+}
+
+.wize-capability-list{
+  display:grid;
+  gap:8px;
+}
+
+.wize-capability{
+  display:grid;
+  grid-template-columns:
+    22px 1fr;
+  gap:11px;
+  align-items:flex-start;
+  padding:13px;
+  border:1px solid #e0e8ed;
+  border-radius:12px;
+  background:#fff;
+  cursor:pointer;
+}
+
+.wize-capability.risky{
+  border-color:#eadfd6;
+  background:#fffaf6;
+}
+
+.wize-capability input{
+  margin-top:3px;
+}
+
+.wize-capability strong,
+.wize-capability small{
+  display:block;
+}
+
+.wize-capability strong{
+  color:#294f68;
+  margin-bottom:3px;
+}
+
+.wize-capability small{
+  color:#758a98;
+  line-height:1.4;
+}
+
+.wize-rule-list{
+  display:grid;
+  gap:10px;
+}
+
+.wize-rule-card{
+  padding:14px;
+  border:1px solid #e1e9ed;
+  border-radius:13px;
+  background:#fbfcfd;
+}
+
+.wize-rule-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:15px;
+}
+
+.wize-rule-top strong{
+  display:block;
+  margin-top:4px;
+  color:#294f68;
+}
+
+.wize-rule-category{
+  color:#6b8493;
+  font-size:.66rem;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+
+.wize-rule-mode{
+  padding:
+    4px 8px;
+  border-radius:999px;
+  background:#eef4f7;
+  color:#527083;
+  font-size:.65rem;
+  font-weight:800;
+  text-transform:uppercase;
+}
+
+.wize-rule-mode.deny{
+  background:#fff0ed;
+  color:#a14c42;
+}
+
+.wize-rule-mode.override{
+  background:#fff7e5;
+  color:#8c6b26;
+}
+
+.wize-rule-card p{
+  margin:
+    10px 0 8px;
+  color:#536f80;
+  line-height:1.5;
+}
+
+.wize-rule-card small{
+  color:#91a0a8;
+}
+
+.wize-rule-form{
+  display:grid;
+  gap:14px;
+}
+
+.wize-rule-form-grid{
+  display:grid;
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+  gap:12px;
+}
+
+.wize-rule-form textarea{
+  resize:vertical;
+}
+
+.wize-inline-check{
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+
+.wize-inline-check input{
+  width:auto;
+}
+
+@media(max-width:800px){
+
+  .wize-admin-hero{
+    display:block;
+  }
+
+  .wize-admin-shield{
+    width:auto;
+    margin-top:18px;
+  }
+
+  .wize-security-grid,
+  .wize-rule-form-grid{
+    grid-template-columns:1fr;
+  }
+
+}
