@@ -203,86 +203,44 @@ export default function AppointmentsView({
   );
 
 
-  async function cancelAppointment() {
+  function cancelAppointment() {
 
-    if (
-      !appointment ||
-      busy
-    ) {
+    if (!appointment) {
       return;
     }
 
 
-    const confirmed =
-      window.confirm(
-        "Weet je zeker dat je deze afspraak wilt annuleren?",
+    const url =
+      new URL(
+        `https://cal.com/booking/${encodeURIComponent(
+          appointment.uid,
+        )}`,
       );
 
 
-    if (!confirmed) {
-      return;
-    }
+    url.searchParams.set(
+      "cancel",
+      "true",
+    );
 
 
-    setBusy(true);
-    setError("");
+    url.searchParams.set(
+      "allRemainingBookings",
+      "false",
+    );
 
 
-    try {
-      const response =
-        await fetch(
-          "/api/appointments/manage",
-          {
-            method:
-              "POST",
-
-            headers: {
-              "content-type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify({
-                uid:
-                  appointment.uid,
-
-                action:
-                  "cancel",
-              }),
-          },
-        );
+    url.searchParams.set(
+      "cancelledBy",
+      context.profile.email,
+    );
 
 
-      const data =
-        (await response.json()) as
-          ManageAppointmentResponse;
-
-
-      if (!response.ok) {
-        throw new Error(
-          data.error ??
-          "Annuleren is niet gelukt.",
-        );
-      }
-
-
-      setAppointment(null);
-
-      setCalendarUrl(
-        createBookingUrl(),
-      );
-
-    } catch (caught) {
-
-      setError(
-        caught instanceof Error
-          ? caught.message
-          : "Annuleren is niet gelukt.",
-      );
-
-    } finally {
-      setBusy(false);
-    }
+    window.open(
+      url.toString(),
+      "_blank",
+      "noopener,noreferrer",
+    );
   }
 
 
