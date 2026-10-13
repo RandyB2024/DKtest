@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -15,6 +16,10 @@ import {
   LayoutDashboard,
   MessagesSquare,
   MoreHorizontal,
+  Plus,
+  Camera,
+  Image,
+  FileUp,
   ChevronLeft,
   ChevronRight,
   Settings,
@@ -72,6 +77,31 @@ export default function Portal({
     mobileMoreOpen,
     setMobileMoreOpen,
   ] = useState(false);
+
+  const [
+    mobileUploadOpen,
+    setMobileUploadOpen,
+  ] = useState(false);
+
+  const [
+    mobileUploading,
+    setMobileUploading,
+  ] = useState(false);
+
+  const cameraInputRef =
+    useRef<HTMLInputElement | null>(
+      null,
+    );
+
+  const galleryInputRef =
+    useRef<HTMLInputElement | null>(
+      null,
+    );
+
+  const fileUploadInputRef =
+    useRef<HTMLInputElement | null>(
+      null,
+    );
 
   const [
     sidebarCollapsed,
@@ -142,6 +172,126 @@ export default function Portal({
 
   const [busy, setBusy] =
     useState(false);
+
+  async function uploadMobileDocument(
+    file: File,
+  ) {
+    if (
+      context.organizationId ===
+      "all"
+    ) {
+      setMobileUploadOpen(false);
+      setError(
+        "Selecteer eerst één onderneming voordat je een document uploadt.",
+      );
+      return;
+    }
+
+    const acceptedTypes =
+      new Set([
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+      ]);
+
+    if (
+      !acceptedTypes.has(
+        file.type,
+      )
+    ) {
+      setError(
+        "Alleen PDF-, JPG- en PNG-bestanden zijn toegestaan.",
+      );
+      return;
+    }
+
+    if (
+      file.size >
+      50 * 1024 * 1024
+    ) {
+      setError(
+        "Een document mag maximaal 50 MB groot zijn.",
+      );
+      return;
+    }
+
+    setMobileUploading(true);
+    setError("");
+
+    try {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "organizationId",
+        context.organizationId,
+      );
+
+      formData.append(
+        "file",
+        file,
+      );
+
+      const response =
+        await fetch(
+          "/api/documents",
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+      const data =
+        (await response.json()) as {
+          error?: string;
+        };
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Uploaden is niet gelukt.",
+        );
+      }
+
+      setMobileUploadOpen(false);
+      setMobileMoreOpen(false);
+
+      setView(
+        "Documenten",
+      );
+    } catch (
+      caughtError
+    ) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Uploaden is niet gelukt.",
+      );
+    } finally {
+      setMobileUploading(false);
+
+      if (
+        cameraInputRef.current
+      ) {
+        cameraInputRef.current.value =
+          "";
+      }
+
+      if (
+        galleryInputRef.current
+      ) {
+        galleryInputRef.current.value =
+          "";
+      }
+
+      if (
+        fileUploadInputRef.current
+      ) {
+        fileUploadInputRef.current.value =
+          "";
+      }
+    }
+  }
 
   const organization =
     context.organizations.find(
@@ -779,11 +929,12 @@ if (view === "Documenten") {
         aria-label="Mobiele navigatie"
       >
         {nav
-          .slice(0, 4)
+          .slice(0, 2)
           .map(
             ([label, Icon]) => (
               <button
                 key={label}
+                type="button"
                 className={
                   view === label
                     ? "active"
@@ -792,6 +943,56 @@ if (view === "Documenten") {
                 onClick={() => {
                   setView(label);
                   setMobileMoreOpen(false);
+                  setMobileUploadOpen(false);
+                }}
+              >
+                <Icon />
+
+                <span>
+                  {label}
+                </span>
+              </button>
+            ),
+          )}
+
+        <button
+          type="button"
+          className="mobile-upload-fab"
+          onClick={() => {
+            setMobileUploadOpen(
+              true,
+            );
+            setMobileMoreOpen(
+              false,
+            );
+          }}
+          aria-label="Document toevoegen"
+        >
+          <span className="mobile-upload-fab-circle">
+            <Plus />
+          </span>
+
+          <span className="mobile-upload-fab-label">
+            Upload
+          </span>
+        </button>
+
+        {nav
+          .slice(2, 3)
+          .map(
+            ([label, Icon]) => (
+              <button
+                key={label}
+                type="button"
+                className={
+                  view === label
+                    ? "active"
+                    : ""
+                }
+                onClick={() => {
+                  setView(label);
+                  setMobileMoreOpen(false);
+                  setMobileUploadOpen(false);
                 }}
               >
                 <Icon />
@@ -810,11 +1011,15 @@ if (view === "Documenten") {
               ? "active"
               : ""
           }
-          onClick={() =>
+          onClick={() => {
             setMobileMoreOpen(
               (open) => !open,
-            )
-          }
+            );
+
+            setMobileUploadOpen(
+              false,
+            );
+          }}
           aria-expanded={
             mobileMoreOpen
           }
@@ -824,6 +1029,180 @@ if (view === "Documenten") {
           <span>Meer</span>
         </button>
       </nav>
+
+      {mobileUploadOpen && (
+        <div
+          className="mobile-more-backdrop mobile-upload-backdrop"
+          onClick={() =>
+            setMobileUploadOpen(
+              false,
+            )
+          }
+        >
+          <section
+            className="mobile-upload-sheet"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <div className="mobile-more-head">
+              <div>
+                <strong>
+                  Document toevoegen
+                </strong>
+
+                <small>
+                  Bon, factuur of ander document
+                </small>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMobileUploadOpen(
+                    false,
+                  )
+                }
+                aria-label="Uploadmenu sluiten"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mobile-upload-options">
+              <button
+                type="button"
+                disabled={
+                  mobileUploading
+                }
+                onClick={() =>
+                  cameraInputRef.current?.click()
+                }
+              >
+                <span className="mobile-upload-option-icon">
+                  <Camera />
+                </span>
+
+                <span>
+                  <strong>
+                    Foto maken
+                  </strong>
+
+                  <small>
+                    Gebruik de camera
+                  </small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  mobileUploading
+                }
+                onClick={() =>
+                  galleryInputRef.current?.click()
+                }
+              >
+                <span className="mobile-upload-option-icon">
+                  <Image />
+                </span>
+
+                <span>
+                  <strong>
+                    Fotogalerij
+                  </strong>
+
+                  <small>
+                    Kies een bestaande foto
+                  </small>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  mobileUploading
+                }
+                onClick={() =>
+                  fileUploadInputRef.current?.click()
+                }
+              >
+                <span className="mobile-upload-option-icon">
+                  <FileUp />
+                </span>
+
+                <span>
+                  <strong>
+                    Bestand uploaden
+                  </strong>
+
+                  <small>
+                    PDF, JPG of PNG
+                  </small>
+                </span>
+              </button>
+            </div>
+
+            {mobileUploading && (
+              <div className="mobile-upload-progress">
+                Document wordt veilig geüpload...
+              </div>
+            )}
+
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={(event) => {
+                const file =
+                  event.target.files?.[0];
+
+                if (file) {
+                  void uploadMobileDocument(
+                    file,
+                  );
+                }
+              }}
+            />
+
+            <input
+              ref={galleryInputRef}
+              type="file"
+              accept="image/jpeg,image/png"
+              hidden
+              onChange={(event) => {
+                const file =
+                  event.target.files?.[0];
+
+                if (file) {
+                  void uploadMobileDocument(
+                    file,
+                  );
+                }
+              }}
+            />
+
+            <input
+              ref={fileUploadInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              hidden
+              onChange={(event) => {
+                const file =
+                  event.target.files?.[0];
+
+                if (file) {
+                  void uploadMobileDocument(
+                    file,
+                  );
+                }
+              }}
+            />
+          </section>
+        </div>
+      )}
 
       {mobileMoreOpen && (
         <div
@@ -864,7 +1243,7 @@ if (view === "Documenten") {
 
             <div className="mobile-more-grid">
               {nav
-                .slice(4)
+                .slice(3)
                 .map(
                   ([label, Icon]) => (
                     <button

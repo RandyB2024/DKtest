@@ -11686,3 +11686,205 @@ button.personal-start-card:hover{
 .customer-kpi-value-loss{
   color:#c93636 !important;
 }
+
+
+/* BESTEMD MOBILE CENTRAL UPLOAD V1 */
+
+@media(max-width:700px){
+
+  .mobile-nav{
+    overflow:visible;
+  }
+
+  .mobile-nav .mobile-upload-fab{
+    position:relative;
+
+    min-height:52px;
+
+    display:grid;
+    justify-items:center;
+    align-content:end;
+
+    gap:1px;
+
+    overflow:visible;
+  }
+
+  .mobile-upload-fab-circle{
+    position:absolute;
+
+    top:-27px;
+    left:50%;
+
+    width:58px;
+    height:58px;
+
+    display:grid;
+    place-items:center;
+
+    transform:
+      translateX(-50%);
+
+    border-radius:50%;
+
+    background:#2563eb;
+
+    color:#fff;
+
+    border:
+      5px solid #fff;
+
+    box-shadow:
+      0 8px 22px
+      rgba(37,99,235,.34);
+
+    transition:
+      transform .15s ease,
+      box-shadow .15s ease;
+  }
+
+  .mobile-upload-fab:active
+  .mobile-upload-fab-circle{
+    transform:
+      translateX(-50%)
+      scale(.94);
+
+    box-shadow:
+      0 5px 14px
+      rgba(37,99,235,.28);
+  }
+
+  .mobile-upload-fab-circle svg{
+    width:27px;
+    height:27px;
+
+    stroke-width:2.5;
+  }
+
+  .mobile-upload-fab-label{
+    margin-top:28px;
+
+    color:#2563eb;
+
+    font-size:10px;
+    font-weight:700;
+  }
+
+  .mobile-upload-sheet{
+    width:100%;
+
+    padding:
+      20px;
+
+    border-radius:
+      24px;
+
+    background:#fff;
+
+    box-shadow:
+      0 20px 60px
+      rgba(8,47,73,.2);
+  }
+
+  .mobile-upload-options{
+    display:grid;
+
+    gap:10px;
+  }
+
+  .mobile-upload-options > button{
+    width:100%;
+
+    display:grid;
+    grid-template-columns:
+      48px 1fr;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:
+      13px 14px;
+
+    border:
+      1px solid #e2eaf0;
+
+    border-radius:
+      15px;
+
+    background:#f9fbfc;
+
+    color:#173d59;
+
+    text-align:left;
+
+    cursor:pointer;
+  }
+
+  .mobile-upload-options > button:active{
+    background:#eef6fa;
+  }
+
+  .mobile-upload-options > button:disabled{
+    opacity:.55;
+    cursor:wait;
+  }
+
+  .mobile-upload-option-icon{
+    width:46px;
+    height:46px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:
+      13px;
+
+    background:#eaf2ff;
+
+    color:#2563eb;
+  }
+
+  .mobile-upload-option-icon svg{
+    width:22px;
+    height:22px;
+  }
+
+  .mobile-upload-options strong,
+  .mobile-upload-options small{
+    display:block;
+  }
+
+  .mobile-upload-options strong{
+    color:#153a56;
+
+    font-size:.9rem;
+  }
+
+  .mobile-upload-options small{
+    margin-top:3px;
+
+    color:#778c9a;
+
+    font-size:.72rem;
+  }
+
+  .mobile-upload-progress{
+    margin-top:12px;
+
+    padding:11px 12px;
+
+    border-radius:11px;
+
+    background:#edf4ff;
+
+    color:#2457a7;
+
+    font-size:.75rem;
+    font-weight:650;
+
+    text-align:center;
+  }
+
+}
+
