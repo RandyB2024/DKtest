@@ -46,6 +46,9 @@ type WizeMessage = {
 type ProactiveSignal = {
   id: string;
 
+  eventId?:
+    string;
+
   type:
     | "missing_document"
     | "attention";
@@ -281,6 +284,63 @@ export default function WizeChatPanel({
               ...proactive,
             ],
           );
+
+
+          /*
+           * Alleen persistente Wize-events worden gemarkeerd.
+           * Dit gebeurt pas nadat ze daadwerkelijk aan de klant
+           * zijn toegevoegd aan het geopende chatvenster.
+           */
+          const eventIds =
+            (
+              data
+                .proactiveSignals ??
+              []
+            )
+              .map(
+                signal =>
+                  signal.eventId,
+              )
+              .filter(
+                (
+                  eventId,
+                ): eventId is string =>
+                  Boolean(
+                    eventId,
+                  ),
+              );
+
+
+          void Promise.allSettled(
+            eventIds.map(
+              eventId =>
+                fetch(
+                  "/api/wize",
+                  {
+                    method:
+                      "POST",
+
+                    headers: {
+                      "content-type":
+                        "application/json",
+                    },
+
+                    body:
+                      JSON.stringify({
+                        action:
+                          "markEventAsked",
+
+                        organizationId:
+                          context
+                            .organizationId,
+
+                        eventId,
+                      }),
+                  },
+                ),
+            ),
+          );
+
 
           setLoadedOrganizationId(
             context

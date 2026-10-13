@@ -1460,6 +1460,9 @@ export async function GET(
               id:
                 `event-${event.id}`,
 
+              eventId:
+                event.id,
+
               type:
                 event
                   .eventType ===
@@ -1637,6 +1640,100 @@ export async function POST(
           "string"
           ? input.action
           : "ask";
+
+
+      if (
+        action ===
+        "markEventAsked"
+      ) {
+        const eventId =
+          requiredString(
+            input.eventId,
+            "Wize-signaal",
+            100,
+          );
+
+
+        const {
+          data:
+            activeEventResponse,
+          error:
+            activeEventError,
+        } =
+          await client.rpc(
+            "wize_get_active_events",
+            {
+              p_organization_id:
+                organizationId,
+            },
+          );
+
+
+        if (activeEventError) {
+          throw new AccessError(
+            503,
+            "Wize kon het signaal niet bijwerken.",
+          );
+        }
+
+
+        const activeEvents =
+          (
+            activeEventResponse as {
+              events?: Array<{
+                id?: string;
+              }>;
+            } | null
+          )
+            ?.events ??
+          [];
+
+
+        const belongsToSelectedOrganization =
+          activeEvents.some(
+            event =>
+              event.id ===
+              eventId,
+          );
+
+
+        if (
+          !belongsToSelectedOrganization
+        ) {
+          throw new AccessError(
+            403,
+            "Geen toegang tot dit Wize-signaal.",
+          );
+        }
+
+
+        const {
+          error:
+            markError,
+        } =
+          await client.rpc(
+            "wize_mark_event_asked",
+            {
+              p_event_id:
+                eventId,
+            },
+          );
+
+
+        if (markError) {
+          throw new AccessError(
+            503,
+            "Wize kon het signaal niet bijwerken.",
+          );
+        }
+
+
+        return Response.json(
+          {
+            ok: true,
+          },
+        );
+      }
 
 
       if (
