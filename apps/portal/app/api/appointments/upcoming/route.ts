@@ -18,11 +18,6 @@ type CalBooking = {
   end?: string | null;
   status?: string | null;
 
-  attendees?: Array<{
-    email?: string | null;
-    name?: string | null;
-  }>;
-
   meetingUrl?: string | null;
 
   eventType?: {
@@ -31,18 +26,40 @@ type CalBooking = {
 };
 
 
-function email(
-  value:
-    | string
-    | null
-    | undefined,
+type CalBookingsResponse = {
+  status?: string;
+
+  data?:
+    | CalBooking[]
+    | {
+        bookings?: CalBooking[];
+      };
+};
+
+
+function extractBookings(
+  response: CalBookingsResponse,
 ) {
-  return (
-    value ??
-    ""
-  )
-    .trim()
-    .toLowerCase();
+  if (
+    Array.isArray(
+      response.data,
+    )
+  ) {
+    return response.data;
+  }
+
+  if (
+    response.data &&
+    typeof response.data ===
+      "object" &&
+    Array.isArray(
+      response.data.bookings,
+    )
+  ) {
+    return response.data.bookings;
+  }
+
+  return [];
 }
 
 
@@ -60,43 +77,56 @@ export async function GET(
 
 
       try {
+
+        const query =
+          new URLSearchParams();
+
+
+        query.set(
+          "attendeeEmail",
+          identity.email,
+        );
+
+
+        query.set(
+          "afterStart",
+          new Date().toISOString(),
+        );
+
+
         const response =
           await calcomRequest(
-            "/bookings",
-          ) as {
-            data?: CalBooking[];
-          };
+            `/bookings?${query.toString()}`,
+          ) as CalBookingsResponse;
 
 
-        const items =
-          Array.isArray(
-            response?.data,
-          )
-            ? response.data
-            : [];
-
-
-        const now =
-          Date.now();
+        const bookings =
+          extractBookings(
+            response,
+          );
 
 
         const appointment =
-          items
+          bookings
             .filter(
-              item => {
+              booking => {
+
+                if (!booking.start) {
+                  return false;
+                }
+
+
                 const start =
-                  item.start
-                    ? Date.parse(
-                        item.start,
-                      )
-                    : NaN;
+                  Date.parse(
+                    booking.start,
+                  );
 
 
                 if (
                   !Number.isFinite(
                     start,
                   ) ||
-                  start <= now
+                  start <= Date.now()
                 ) {
                   return false;
                 }
@@ -104,35 +134,17 @@ export async function GET(
 
                 const status =
                   (
-                    item.status ??
+                    booking.status ??
                     ""
                   ).toLowerCase();
 
 
-                if (
-                  [
-                    "cancelled",
-                    "canceled",
-                    "rejected",
-                  ].includes(
-                    status,
-                  )
-                ) {
-                  return false;
-                }
-
-
-                return (
-                  item.attendees ??
-                  []
-                ).some(
-                  attendee =>
-                    email(
-                      attendee.email,
-                    ) ===
-                    email(
-                      identity.email,
-                    ),
+                return ![
+                  "cancelled",
+                  "canceled",
+                  "rejected",
+                ].includes(
+                  status,
                 );
               },
             )
