@@ -1102,3 +1102,201 @@
     height: 900px;
   }
 }
+
+
+/* ============================================================
+   VOLGENDE AFSPRAAK
+   ============================================================ */
+
+.customer-next-appointment {
+  display: grid;
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    auto;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding: 20px 22px;
+  border: 1px solid rgba(111, 143, 175, 0.24);
+  border-radius: 18px;
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #f4f8fb
+    );
+  box-shadow:
+    0 12px 30px rgba(23, 50, 77, 0.06);
+}
+
+.customer-next-appointment-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #eaf1f7;
+  color: #2f5d8a;
+}
+
+.customer-next-appointment-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.customer-next-appointment-copy h2 {
+  margin: 4px 0 3px;
+  color: #17324d;
+  font-size: 18px;
+}
+
+.customer-next-appointment-copy p {
+  margin: 0;
+  color: #6b7c8c;
+  line-height: 1.5;
+}
+
+.customer-next-appointment-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 10px;
+  background: #2f5d8a;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.customer-next-appointment-action:hover {
+  background: #244d73;
+}
+
+.customer-next-appointment-action svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 700px) {
+  .customer-next-appointment {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr);
+  }
+
+  .customer-next-appointment-action {
+    grid-column:
+      1 / -1;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+
+/* ============================================================
+   AFSPRAAK BEHEREN
+   ============================================================ */
+
+.appointment-current-card {
+  display: grid;
+  grid-template-columns:
+    auto
+    minmax(0, 1fr)
+    auto;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  border: 1px solid #dce6ef;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow:
+    0 12px 30px rgba(23, 50, 77, 0.06);
+}
+
+.appointment-current-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #eaf1f7;
+  color: #2f5d8a;
+}
+
+.appointment-current-icon svg {
+  width: 25px;
+  height: 25px;
+}
+
+.appointment-current-copy h2 {
+  margin: 4px 0 4px;
+  color: #17324d;
+  font-size: 18px;
+}
+
+.appointment-current-copy p {
+  margin: 0;
+  color: #6b7c8c;
+}
+
+.appointment-current-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.appointment-current-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid #c8d8e7;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #2f5d8a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.appointment-current-actions button:hover {
+  background: #eef4f9;
+}
+
+.appointment-current-actions button.danger {
+  border-color: #ead3d3;
+  color: #a65a5a;
+}
+
+.appointment-current-actions button.danger:hover {
+  background: #f9eeee;
+}
+
+.appointment-current-actions svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 760px) {
+  .appointment-current-card {
+    grid-template-columns:
+      auto
+      minmax(0, 1fr);
+  }
+
+  .appointment-current-actions {
+    grid-column:
+      1 / -1;
+    width: 100%;
+  }
+
+  .appointment-current-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}

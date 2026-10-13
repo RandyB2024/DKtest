@@ -25,6 +25,7 @@ import {
 
 import type { PortalContext } from "@/lib/portal-access";
 
+import AppointmentsView from "./appointments-view";
 import BankingView from "./banking-view";
 import CustomerDashboard from "./customer-dashboard";
 import InstallApp from "./install-app";
@@ -478,44 +479,7 @@ if (view === "Documenten") {
       view === "Afspraken"
     ) {
       return (
-        <>
-          <div className="heading">
-            <div>
-              <h1>Afspraken</h1>
-
-            </div>
-          </div>
-
-          <section className="bestemd-calendar-shell">
-            <div className="bestemd-calendar-intro">
-              <div>
-                <span className="bestemd-calendar-label">
-                  AFSPRAAK PLANNEN
-                </span>
-
-                <h2>
-                  Kies jouw moment
-                </h2>
-
-                <p>
-                  Kies hieronder een beschikbare
-                  datum en tijd voor jouw gesprek.
-                </p>
-              </div>
-
-            </div>
-
-            <div className="bestemd-cal-frame-wrap">
-              <iframe
-                src="https://cal.com/bestemd/afspraak?embed=true"
-                title="Plan een afspraak met Bestemd"
-                className="bestemd-cal-frame"
-                allow="camera; microphone; fullscreen"
-                loading="eager"
-              />
-            </div>
-          </section>
-        </>
+        <AppointmentsView />
       );
     }
 

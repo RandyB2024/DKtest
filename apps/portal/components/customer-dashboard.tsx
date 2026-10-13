@@ -75,6 +75,19 @@ type OpenPositions = {
   };
 };
 
+type UpcomingAppointment = {
+  uid: string;
+  title: string;
+  start: string;
+  end: string | null;
+  status: string | null;
+  meetingUrl: string | null;
+};
+
+type UpcomingAppointmentResponse = {
+  appointment: UpcomingAppointment | null;
+};
+
 type DocumentsResponse = {
   items: Array<{
     id: string;
@@ -335,6 +348,20 @@ export default function CustomerDashboard({
     useState<PeriodSeries | null>(
       null,
     );
+
+  const [
+    upcomingAppointment,
+    setUpcomingAppointment,
+  ] =
+    useState<UpcomingAppointment | null>(
+      null,
+    );
+
+  const [
+    appointmentLoading,
+    setAppointmentLoading,
+  ] =
+    useState(true);
 
   const [
     documentInboxCount,
@@ -751,6 +778,67 @@ export default function CustomerDashboard({
   useEffect(() => {
     let cancelled = false;
 
+    async function loadUpcomingAppointment() {
+      setAppointmentLoading(true);
+
+      try {
+        const response =
+          await fetch(
+            "/api/appointments/upcoming",
+            {
+              method: "GET",
+              cache: "no-store",
+            },
+          );
+
+        const data =
+          (await response.json()) as
+            UpcomingAppointmentResponse & {
+              error?: string;
+            };
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ??
+            "Afspraak kon niet worden geladen.",
+          );
+        }
+
+        if (!cancelled) {
+          setUpcomingAppointment(
+            data.appointment,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Upcoming appointment failed",
+          error,
+        );
+
+        if (!cancelled) {
+          setUpcomingAppointment(
+            null,
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setAppointmentLoading(
+            false,
+          );
+        }
+      }
+    }
+
+    void loadUpcomingAppointment();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
     async function loadDocumentInbox() {
       if (
         context.organizationId ===
@@ -1055,6 +1143,114 @@ export default function CustomerDashboard({
           {periodSeriesError}
         </div>
       )}
+
+      <section className="customer-next-appointment">
+        <div className="customer-next-appointment-icon">
+          <CalendarDays />
+        </div>
+
+        <div className="customer-next-appointment-copy">
+          <span className="customer-section-label">
+            Volgende afspraak
+          </span>
+
+          {appointmentLoading ? (
+            <>
+              <h2>
+                Afspraak laden...
+              </h2>
+
+              <p>
+                Jouw planning wordt opgehaald.
+              </p>
+            </>
+          ) : upcomingAppointment ? (
+            <>
+              <h2>
+                {new Intl.DateTimeFormat(
+                  "nl-NL",
+                  {
+                    weekday:
+                      "long",
+                    day:
+                      "numeric",
+                    month:
+                      "long",
+                  },
+                ).format(
+                  new Date(
+                    upcomingAppointment.start,
+                  ),
+                )}
+              </h2>
+
+              <p>
+                {new Intl.DateTimeFormat(
+                  "nl-NL",
+                  {
+                    hour:
+                      "2-digit",
+                    minute:
+                      "2-digit",
+                  },
+                ).format(
+                  new Date(
+                    upcomingAppointment.start,
+                  ),
+                )}
+
+                {upcomingAppointment.end
+                  ? ` – ${new Intl.DateTimeFormat(
+                      "nl-NL",
+                      {
+                        hour:
+                          "2-digit",
+                        minute:
+                          "2-digit",
+                      },
+                    ).format(
+                      new Date(
+                        upcomingAppointment.end,
+                      ),
+                    )}`
+                  : ""}
+
+                {" · "}
+
+                {upcomingAppointment.title}
+              </p>
+            </>
+          ) : (
+            <>
+              <h2>
+                Nog geen afspraak gepland
+              </h2>
+
+              <p>
+                Plan een gesprek wanneer het jou
+                uitkomt.
+              </p>
+            </>
+          )}
+        </div>
+
+        <button
+          type="button"
+          className="customer-next-appointment-action"
+          onClick={() =>
+            go(
+              "Afspraken",
+              "nieuwe-afspraak",
+            )
+          }
+        >
+          {upcomingAppointment
+            ? "Bekijk afspraak"
+            : "Afspraak maken"}
+
+          <ArrowRight />
+        </button>
+      </section>
 
       <section className="customer-kpi-grid">
         <MetricCard
@@ -1767,21 +1963,21 @@ export default function CustomerDashboard({
               type="button"
               onClick={() =>
                 go(
-                  "Rapportages",
-                  "rapport",
+                  "Afspraken",
+                  "nieuwe-afspraak",
                 )
               }
             >
-              <ChartNoAxesCombined />
+              <CalendarDays />
 
               <span>
                 <b>
-                  Rapport bekijken
+                  Afspraak maken
                 </b>
 
                 <small>
-                  Financiële stand
-                  bekijken
+                  Plan een gesprek
+                  met Bestemd
                 </small>
               </span>
             </button>
