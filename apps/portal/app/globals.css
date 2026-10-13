@@ -13122,3 +13122,498 @@ button.personal-start-card:hover{
 
 }
 
+
+/* ==========================================================
+   BESTEMD AFSPRAKENPROGRAMMA V2
+   ========================================================== */
+
+.appointment-program-card{
+  width:100%;
+  margin:0 0 24px;
+  padding:28px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.99),
+      rgba(248,252,253,.98)
+    );
+
+  border:1px solid #dce7ec;
+  border-radius:20px;
+
+  box-shadow:
+    0 10px 30px rgba(8,47,73,.055);
+
+  overflow:hidden;
+}
+
+
+/* BOVENSTE DEEL */
+
+.appointment-program-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+
+  gap:28px;
+
+  padding-bottom:22px;
+
+  border-bottom:
+    1px solid #e8eef2;
+}
+
+.appointment-program-heading > div{
+  min-width:0;
+}
+
+.appointment-program-heading
+.customer-section-label{
+  display:block;
+
+  margin-bottom:7px;
+
+  color:#0b7898;
+
+  font-size:.7rem;
+  font-weight:800;
+
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.appointment-program-heading h2{
+  margin:0 0 9px;
+
+  color:#082f49;
+
+  font-size:
+    clamp(
+      1.3rem,
+      2vw,
+      1.65rem
+    );
+
+  font-weight:760;
+  line-height:1.2;
+
+  letter-spacing:-.025em;
+}
+
+.appointment-program-heading p{
+  max-width:760px;
+
+  margin:0;
+
+  color:#647b8b;
+
+  font-size:.92rem;
+  line-height:1.6;
+}
+
+
+/* RONDE SCORE */
+
+.appointment-program-score{
+  flex:0 0 auto;
+
+  width:82px;
+  height:82px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #e8f8fa,
+      #f6fcfd
+    );
+
+  border:
+    1px solid #cfeaed;
+
+  color:#086f8e;
+
+  font-size:1.35rem;
+  font-weight:800;
+
+  box-shadow:
+    inset 0 0 0 6px
+    rgba(32,201,215,.06);
+}
+
+
+/* STATISTIEKEN */
+
+.appointment-program-stats{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0,1fr)
+    );
+
+  gap:12px;
+
+  margin-top:20px;
+}
+
+.appointment-program-stats > div{
+  position:relative;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:14px;
+
+  min-height:74px;
+
+  padding:
+    15px
+    17px;
+
+  background:#f7fafc;
+
+  border:
+    1px solid #e4ebef;
+
+  border-radius:14px;
+}
+
+.appointment-program-stats > div::before{
+  content:"";
+
+  width:4px;
+  align-self:stretch;
+
+  border-radius:8px;
+
+  background:#20c9d7;
+}
+
+.appointment-program-stats span{
+  margin-right:auto;
+
+  color:#6c8190;
+
+  font-size:.76rem;
+  font-weight:700;
+
+  letter-spacing:.04em;
+
+  text-transform:uppercase;
+}
+
+.appointment-program-stats strong{
+  color:#082f49;
+
+  font-size:1.55rem;
+  line-height:1;
+
+  font-weight:800;
+}
+
+
+/* VOLGENDE GESPREK */
+
+.appointment-program-next{
+  display:grid;
+
+  grid-template-columns:
+    48px
+    minmax(0,1fr);
+
+  gap:16px;
+
+  align-items:center;
+
+  margin-top:16px;
+
+  padding:
+    18px
+    20px;
+
+  border:
+    1px solid #d9e8ec;
+
+  border-radius:15px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #effafa,
+      #f9fcfd 75%
+    );
+}
+
+.appointment-program-next > svg{
+  width:48px;
+  height:48px;
+
+  padding:13px;
+
+  border-radius:13px;
+
+  background:#fff;
+
+  color:#0788a5;
+
+  border:
+    1px solid #d5e9ed;
+
+  box-shadow:
+    0 4px 12px
+    rgba(8,47,73,.05);
+}
+
+.appointment-program-next > div{
+  min-width:0;
+
+  display:grid;
+
+  gap:3px;
+}
+
+.appointment-program-next span{
+  color:#748896;
+
+  font-size:.69rem;
+  font-weight:800;
+
+  letter-spacing:.1em;
+
+  text-transform:uppercase;
+}
+
+.appointment-program-next strong{
+  display:block;
+
+  color:#082f49;
+
+  font-size:1rem;
+  font-weight:750;
+
+  line-height:1.4;
+}
+
+.appointment-program-next small{
+  display:block;
+
+  margin-top:2px;
+
+  color:#647b8b;
+
+  font-size:.84rem;
+  line-height:1.5;
+}
+
+
+/* HUIDIGE AFSPRAAK */
+
+.appointment-current-card{
+  width:100%;
+
+  display:grid;
+
+  grid-template-columns:
+    52px
+    minmax(0,1fr)
+    auto;
+
+  align-items:center;
+
+  gap:18px;
+
+  margin-bottom:24px;
+
+  padding:20px 22px;
+
+  background:#fff;
+
+  border:
+    1px solid #dce6ec;
+
+  border-radius:18px;
+
+  box-shadow:
+    0 7px 22px
+    rgba(8,47,73,.045);
+}
+
+.appointment-current-icon{
+  width:52px;
+  height:52px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:14px;
+
+  background:#edf9fa;
+
+  color:#0788a5;
+}
+
+.appointment-current-icon svg{
+  width:23px;
+  height:23px;
+}
+
+.appointment-current-copy{
+  min-width:0;
+}
+
+.appointment-current-copy
+.customer-section-label{
+  display:block;
+
+  margin-bottom:4px;
+
+  color:#738997;
+
+  font-size:.68rem;
+  font-weight:800;
+
+  letter-spacing:.09em;
+
+  text-transform:uppercase;
+}
+
+.appointment-current-copy h2{
+  margin:0 0 4px;
+
+  color:#082f49;
+
+  font-size:1.18rem;
+}
+
+.appointment-current-copy p{
+  margin:0;
+
+  color:#667d8c;
+
+  font-size:.9rem;
+}
+
+.appointment-current-actions{
+  display:flex;
+
+  gap:8px;
+
+  align-items:center;
+}
+
+.appointment-current-actions button{
+  display:inline-flex;
+
+  align-items:center;
+  justify-content:center;
+
+  gap:7px;
+
+  min-height:40px;
+
+  padding:
+    0 13px;
+
+  border:
+    1px solid #d7e2e8;
+
+  border-radius:10px;
+
+  background:#fff;
+
+  color:#23475f;
+
+  font-size:.82rem;
+  font-weight:700;
+
+  cursor:pointer;
+}
+
+.appointment-current-actions button:hover{
+  background:#f4f8fa;
+}
+
+.appointment-current-actions button.danger{
+  color:#a33e3e;
+}
+
+.appointment-current-actions svg{
+  width:15px;
+  height:15px;
+}
+
+
+/* MOBIEL */
+
+@media(max-width:700px){
+
+  .appointment-program-card{
+    padding:20px;
+    border-radius:17px;
+  }
+
+  .appointment-program-heading{
+    gap:14px;
+  }
+
+  .appointment-program-score{
+    width:64px;
+    height:64px;
+
+    font-size:1rem;
+  }
+
+  .appointment-program-heading p{
+    font-size:.85rem;
+  }
+
+  .appointment-program-stats{
+    grid-template-columns:1fr;
+  }
+
+  .appointment-program-stats > div{
+    min-height:58px;
+  }
+
+  .appointment-program-next{
+    grid-template-columns:
+      42px
+      minmax(0,1fr);
+
+    padding:15px;
+  }
+
+  .appointment-program-next > svg{
+    width:42px;
+    height:42px;
+
+    padding:11px;
+  }
+
+  .appointment-current-card{
+    grid-template-columns:
+      46px
+      minmax(0,1fr);
+
+    padding:17px;
+  }
+
+  .appointment-current-actions{
+    grid-column:1/-1;
+
+    width:100%;
+  }
+
+  .appointment-current-actions button{
+    flex:1;
+  }
+
+}
