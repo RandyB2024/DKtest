@@ -985,19 +985,10 @@ export default function CustomerDashboard({
       : period;
 
   const revenueSubtitle =
-    periodSummary
-      ? `${periodRange} · ${periodSummary.salesInvoiceCount} verkoopfactuur${
-          periodSummary.salesInvoiceCount ===
-          1
-            ? ""
-            : "en"
-        }`
-      : `Omzet binnen deze ${period.toLowerCase()}`;
+    "";
 
   const resultSubtitle =
-    periodSummary
-      ? `Kosten ${costsValue} · ${periodRange}`
-      : "Omzet minus kosten binnen dezelfde periode";
+    "";
 
   const receivablesValue =
     context.organizationId ===
