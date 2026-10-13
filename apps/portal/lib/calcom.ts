@@ -86,3 +86,20 @@ export async function calcomRequest(
 
   return data;
 }
+
+export function getCalcomSyncKey() {
+  const key =
+    process.env
+      .CALCOM_SYNC_RPC_KEY;
+
+  if (
+    !key ||
+    key.length < 32
+  ) {
+    throw new Error(
+      "CALCOM_SYNC_RPC_KEY ontbreekt.",
+    );
+  }
+
+  return key;
+}

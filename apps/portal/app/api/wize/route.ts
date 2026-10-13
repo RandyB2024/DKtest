@@ -7,6 +7,7 @@ import {
 
 import {
   calcomRequest,
+  getCalcomSyncKey,
 } from "@/lib/calcom";
 
 import {
@@ -375,6 +376,104 @@ function extractCalBookings(
 }
 
 
+
+function normalizeCalBookingStatus(
+  booking: WizeCalBooking,
+) {
+  const rawStatus =
+    (
+      booking.status ??
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    [
+      "cancelled",
+      "canceled",
+      "rejected",
+    ].includes(
+      rawStatus,
+    )
+  ) {
+    return "cancelled";
+  }
+
+  if (
+    booking.start &&
+    Date.parse(
+      booking.start,
+    ) < Date.now()
+  ) {
+    return "completed";
+  }
+
+  return "planned";
+}
+
+
+async function syncCalBooking(
+  client: any,
+  organizationId: string,
+  booking: WizeCalBooking,
+) {
+  if (
+    !booking.uid ||
+    !booking.start ||
+    !booking.end
+  ) {
+    return null;
+  }
+
+  const {
+    data,
+    error,
+  } =
+    await client.rpc(
+      "wize_sync_calcom_booking",
+      {
+        p_organization_id:
+          organizationId,
+
+        p_calcom_uid:
+          booking.uid,
+
+        p_starts_at:
+          booking.start,
+
+        p_ends_at:
+          booking.end,
+
+        p_status:
+          normalizeCalBookingStatus(
+            booking,
+          ),
+
+        p_sync_key:
+          getCalcomSyncKey(),
+      },
+    );
+
+  if (error) {
+    console.error(
+      "Wize Cal.com booking sync failed",
+      {
+        organizationId,
+        bookingUid:
+          booking.uid,
+        message:
+          error.message,
+      },
+    );
+
+    return null;
+  }
+
+  return data;
+}
+
+
 async function loadAppointmentContext(
   client: any,
   organizationId: string,
@@ -394,9 +493,32 @@ async function loadAppointmentContext(
       customerEmail,
     );
 
+    const now =
+      new Date();
+
+    const currentYear =
+      Number(
+        new Intl.DateTimeFormat(
+          "en",
+          {
+            year:
+              "numeric",
+            timeZone:
+              "Europe/Amsterdam",
+          },
+        ).format(
+          now,
+        ),
+      );
+
+    const yearStart =
+      new Date(
+        `${currentYear}-01-01T00:00:00+01:00`,
+      );
+
     query.set(
       "afterStart",
-      new Date()
+      yearStart
         .toISOString(),
     );
 
@@ -405,10 +527,51 @@ async function loadAppointmentContext(
         `/bookings?${query.toString()}`,
       );
 
-    upcoming =
+    const bookings =
       extractCalBookings(
         response,
-      )
+      );
+
+    const chronologicalBookings =
+      [...bookings]
+        .filter(
+          booking =>
+            Boolean(
+              booking.uid &&
+              booking.start &&
+              booking.end,
+            ),
+        )
+        .sort(
+          (a, b) =>
+            Date.parse(
+              a.start!,
+            ) -
+            Date.parse(
+              b.start!,
+            ),
+        );
+
+
+    /*
+     * Cal.com is hier de gecontroleerde externe bron.
+     * We synchroniseren chronologisch zodat gesprek 1/2/3/4
+     * consequent wordt toegekend.
+     */
+    for (
+      const booking of
+      chronologicalBookings
+    ) {
+      await syncCalBooking(
+        client,
+        organizationId,
+        booking,
+      );
+    }
+
+
+    upcoming =
+      bookings
         .filter(
           booking => {
             if (
