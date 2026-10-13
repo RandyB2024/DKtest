@@ -479,7 +479,9 @@ if (view === "Documenten") {
       view === "Afspraken"
     ) {
       return (
-        <AppointmentsView />
+        <AppointmentsView
+          context={context}
+        />
       );
     }
 

@@ -12,6 +12,16 @@ import {
 } from "lucide-react";
 
 
+import type {
+  PortalContext,
+} from "@/lib/portal-access";
+
+
+type AppointmentsViewProps = {
+  context: PortalContext;
+};
+
+
 type Appointment = {
   uid: string;
   title: string;
@@ -68,7 +78,9 @@ const timeFormat =
   );
 
 
-export default function AppointmentsView() {
+export default function AppointmentsView({
+  context,
+}: AppointmentsViewProps) {
 
   const [
     appointment,
@@ -100,12 +112,37 @@ export default function AppointmentsView() {
     useState("");
 
 
+  function createBookingUrl() {
+    const url =
+      new URL(
+        "https://cal.com/bestemd/afspraak",
+      );
+
+    url.searchParams.set(
+      "embed",
+      "true",
+    );
+
+    url.searchParams.set(
+      "name",
+      context.profile.display_name,
+    );
+
+    url.searchParams.set(
+      "email",
+      context.profile.email,
+    );
+
+    return url.toString();
+  }
+
+
   const [
     calendarUrl,
     setCalendarUrl,
   ] =
     useState(
-      "https://cal.com/bestemd/afspraak?embed=true",
+      createBookingUrl,
     );
 
 
@@ -232,7 +269,7 @@ export default function AppointmentsView() {
       setAppointment(null);
 
       setCalendarUrl(
-        "https://cal.com/bestemd/afspraak?embed=true",
+        createBookingUrl(),
       );
 
     } catch (caught) {
