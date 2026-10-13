@@ -8,7 +8,6 @@ import {
 
 import {
   CalendarDays,
-  Compass,
   CalendarClock,
   Boxes,
   ChartNoAxesCombined,
@@ -43,7 +42,7 @@ import PasskeySettings from "./passkey-settings";
 import RelationsView from "./relations-view";
 import DocumentsView from "./documents-view";
 import CommunicationView from "./communication-view";
-import WizeView from "./wize-view";
+import WizeChatPanel from "./wize-chat-panel";
 
 const businessNav = [
   ["Dashboard", LayoutDashboard],
@@ -79,6 +78,11 @@ export default function Portal({
   const [
     mobileMoreOpen,
     setMobileMoreOpen,
+  ] = useState(false);
+
+  const [
+    wizeOpen,
+    setWizeOpen,
   ] = useState(false);
 
   const [
@@ -462,15 +466,6 @@ if (view === "Documenten") {
       );
     }
 
-    if (view === "Wize") {
-      return (
-        <WizeView
-          context={context}
-          organization={organization}
-          onGo={setView}
-        />
-      );
-    }
     if (
       view === "Factuurdetail"
     ) {
@@ -937,27 +932,60 @@ if (view === "Documenten") {
         </div>
       </main>
 
-      {view !== "Wize" && (
-        <button
-          type="button"
-          className="wize-floating-launcher"
-          onClick={() => {
-            setView("Wize");
-            setMobileMoreOpen(false);
-            setMobileUploadOpen(false);
-          }}
-          aria-label="Open Wize"
-          title="Wize"
-        >
-          <span className="wize-floating-icon">
-            <MessageCircleMore />
-          </span>
+      <button
+        type="button"
+        className={
+          wizeOpen
+            ? "wize-floating-launcher is-open"
+            : "wize-floating-launcher"
+        }
+        onClick={() => {
+          setWizeOpen(
+            (current) =>
+              !current,
+          );
 
-          <span className="wize-floating-label">
-            Wize
-          </span>
-        </button>
-      )}
+          setMobileMoreOpen(false);
+          setMobileUploadOpen(false);
+        }}
+        aria-label={
+          wizeOpen
+            ? "Wize sluiten"
+            : "Open Wize"
+        }
+        aria-expanded={
+          wizeOpen
+        }
+        title="Wize"
+      >
+        <span className="wize-floating-icon">
+          <MessageCircleMore />
+        </span>
+
+        <span className="wize-floating-label">
+          Wize
+        </span>
+      </button>
+
+      <WizeChatPanel
+        open={wizeOpen}
+        onClose={() =>
+          setWizeOpen(
+            false,
+          )
+        }
+        context={context}
+        organization={organization}
+        onGo={(nextView) => {
+          setView(
+            nextView,
+          );
+
+          setWizeOpen(
+            false,
+          );
+        }}
+      />
 
       <nav
         className="mobile-nav"

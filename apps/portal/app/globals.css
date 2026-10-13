@@ -12579,3 +12579,546 @@ button.personal-start-card:hover{
 
 }
 
+
+
+/* BESTEMD WIZE INLINE CHAT V1 */
+
+.wize-chat-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:43;
+  background:transparent;
+}
+
+.wize-chat-panel{
+  position:fixed;
+
+  right:22px;
+  bottom:88px;
+
+  z-index:44;
+
+  width:min(
+    390px,
+    calc(100vw - 32px)
+  );
+
+  height:min(
+    650px,
+    calc(100vh - 125px)
+  );
+
+  display:flex;
+  flex-direction:column;
+
+  overflow:hidden;
+
+  border:
+    1px solid
+    #dce7ed;
+
+  border-radius:
+    22px;
+
+  background:#fff;
+
+  box-shadow:
+    0 22px 65px
+    rgba(17,52,77,.2);
+
+  animation:
+    wizeChatIn
+    .18s ease-out;
+}
+
+@keyframes wizeChatIn{
+  from{
+    opacity:0;
+    transform:
+      translateY(12px)
+      scale(.98);
+  }
+
+  to{
+    opacity:1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+.wize-chat-header{
+  display:flex;
+  align-items:center;
+  justify-content:
+    space-between;
+
+  gap:12px;
+
+  padding:
+    15px 16px;
+
+  border-bottom:
+    1px solid #e6edf1;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbff,
+      #ffffff
+    );
+}
+
+.wize-chat-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.wize-chat-logo{
+  width:39px;
+  height:39px;
+
+  display:grid;
+  place-items:center;
+
+  border-radius:
+    12px;
+
+  background:
+    #edf5ff;
+
+  color:#2563eb;
+}
+
+.wize-chat-logo svg{
+  width:19px;
+  height:19px;
+}
+
+.wize-chat-brand strong,
+.wize-chat-brand small{
+  display:block;
+}
+
+.wize-chat-brand strong{
+  color:#173d59;
+  font-size:.95rem;
+}
+
+.wize-chat-brand small{
+  margin-top:2px;
+  color:#7b909e;
+  font-size:.68rem;
+}
+
+.wize-chat-close{
+  width:34px;
+  height:34px;
+
+  display:grid;
+  place-items:center;
+
+  border:0;
+  border-radius:10px;
+
+  background:#f1f5f7;
+  color:#627c8c;
+
+  cursor:pointer;
+}
+
+.wize-chat-close svg{
+  width:17px;
+  height:17px;
+}
+
+.wize-chat-company{
+  display:flex;
+  align-items:center;
+  gap:7px;
+
+  padding:
+    8px 16px;
+
+  border-bottom:
+    1px solid #eef2f4;
+
+  background:#fbfcfd;
+
+  color:#718694;
+
+  font-size:.7rem;
+}
+
+.wize-chat-company svg{
+  width:14px;
+  height:14px;
+}
+
+.wize-chat-messages{
+  flex:1;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:13px;
+
+  padding:
+    16px;
+
+  overflow-y:auto;
+
+  overscroll-behavior:
+    contain;
+}
+
+.wize-chat-message{
+  display:flex;
+  align-items:flex-start;
+
+  gap:8px;
+
+  max-width:91%;
+}
+
+.wize-chat-message.assistant{
+  align-self:flex-start;
+}
+
+.wize-chat-message.customer{
+  align-self:flex-end;
+}
+
+.wize-chat-avatar{
+  width:27px;
+  height:27px;
+
+  display:grid;
+  place-items:center;
+
+  flex:none;
+
+  border-radius:
+    9px;
+
+  background:#edf5ff;
+  color:#2563eb;
+}
+
+.wize-chat-avatar svg{
+  width:14px;
+  height:14px;
+}
+
+.wize-chat-bubble{
+  padding:
+    10px 12px;
+
+  border-radius:
+    15px;
+
+  border:
+    1px solid #e2eaee;
+
+  background:#f8fafb;
+}
+
+.wize-chat-message.assistant
+.wize-chat-bubble{
+  border-top-left-radius:
+    5px;
+}
+
+.wize-chat-message.customer
+.wize-chat-bubble{
+  border-color:
+    #d4e4f7;
+
+  border-top-right-radius:
+    5px;
+
+  background:#edf5ff;
+}
+
+.wize-chat-bubble small{
+  display:block;
+
+  margin-bottom:
+    3px;
+
+  color:#7b8f9c;
+
+  font-size:.63rem;
+  font-weight:700;
+}
+
+.wize-chat-bubble p{
+  margin:0;
+
+  color:#3c596c;
+
+  font-size:.82rem;
+  line-height:1.5;
+
+  white-space:
+    pre-wrap;
+}
+
+.wize-chat-action,
+.wize-chat-human{
+  display:inline-flex;
+  align-items:center;
+
+  gap:6px;
+
+  margin-top:9px;
+
+  padding:
+    8px 10px;
+
+  border-radius:
+    9px;
+
+  font-size:.71rem;
+  font-weight:750;
+
+  cursor:pointer;
+}
+
+.wize-chat-action{
+  border:
+    1px solid #cfe0f1;
+
+  background:#fff;
+
+  color:#24628e;
+}
+
+.wize-chat-human{
+  border:0;
+  background:#2563eb;
+  color:#fff;
+}
+
+.wize-chat-action svg,
+.wize-chat-human svg{
+  width:14px;
+  height:14px;
+}
+
+.wize-chat-suggestions{
+  display:flex;
+  gap:7px;
+
+  padding:
+    0 14px 11px;
+
+  overflow-x:auto;
+}
+
+.wize-chat-suggestions button{
+  flex:none;
+
+  padding:
+    7px 10px;
+
+  border:
+    1px solid #dbe6ec;
+
+  border-radius:
+    999px;
+
+  background:#fff;
+
+  color:#577184;
+
+  font-size:.67rem;
+
+  cursor:pointer;
+}
+
+.wize-chat-system{
+  padding:13px;
+
+  border-radius:
+    13px;
+
+  background:#f7fafc;
+
+  color:#567082;
+
+  font-size:.8rem;
+  line-height:1.5;
+}
+
+.wize-chat-system strong{
+  display:block;
+  margin-bottom:4px;
+  color:#173d59;
+}
+
+.wize-chat-system p{
+  margin:0;
+}
+
+.wize-chat-error{
+  margin:
+    0 14px 8px;
+
+  padding:
+    8px 10px;
+
+  border-radius:
+    9px;
+
+  background:#fff4e8;
+
+  color:#805322;
+
+  font-size:.7rem;
+}
+
+.wize-chat-composer{
+  display:grid;
+
+  grid-template-columns:
+    1fr 42px;
+
+  gap:8px;
+
+  padding:
+    11px 12px;
+
+  border-top:
+    1px solid #e6edf1;
+
+  background:#fbfcfd;
+}
+
+.wize-chat-composer input{
+  min-width:0;
+  height:42px;
+
+  padding:
+    0 12px;
+
+  border:
+    1px solid #d7e2e8;
+
+  border-radius:
+    11px;
+
+  background:#fff;
+
+  color:#173d59;
+
+  outline:none;
+}
+
+.wize-chat-composer input:focus{
+  border-color:#95bddf;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(37,99,235,.07);
+}
+
+.wize-chat-composer button{
+  display:grid;
+  place-items:center;
+
+  border:0;
+
+  border-radius:
+    11px;
+
+  background:#2563eb;
+
+  color:#fff;
+
+  cursor:pointer;
+}
+
+.wize-chat-composer button:disabled{
+  opacity:.42;
+  cursor:not-allowed;
+}
+
+.wize-chat-composer svg{
+  width:17px;
+  height:17px;
+}
+
+.wize-chat-footer{
+  padding:
+    0 12px 10px;
+
+  background:#fbfcfd;
+
+  color:#93a2ab;
+
+  font-size:.6rem;
+  text-align:center;
+}
+
+.wize-chat-thinking{
+  opacity:.72;
+}
+
+
+/* launcher blijft boven chat */
+
+.wize-floating-launcher.is-open{
+  opacity:0;
+  pointer-events:none;
+}
+
+
+/* ==========================================================
+   MOBIEL
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .wize-chat-backdrop{
+    background:
+      rgba(11,39,57,.18);
+
+    backdrop-filter:
+      blur(2px);
+  }
+
+  .wize-chat-panel{
+    left:8px;
+    right:8px;
+
+    bottom:
+      calc(
+        78px +
+        env(safe-area-inset-bottom)
+      );
+
+    width:auto;
+
+    height:
+      min(
+        68dvh,
+        620px
+      );
+
+    border-radius:
+      20px;
+  }
+
+  .wize-chat-messages{
+    padding:
+      14px 12px;
+  }
+
+  .wize-chat-message{
+    max-width:94%;
+  }
+
+}
+

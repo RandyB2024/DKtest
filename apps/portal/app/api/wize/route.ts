@@ -62,6 +62,15 @@ type BankResponse = {
     suggestedCount?: number;
     matchedCount?: number;
   };
+
+  items?: Array<{
+    id: string;
+    bookedAt: string;
+    amountCents: number;
+    counterpartyName: string | null;
+    description: string | null;
+    reconciliationStatus: string;
+  }>;
 };
 
 
@@ -289,6 +298,22 @@ async function loadCompanyContext(
           bank.summary
             ?.matchedCount,
         ),
+
+      unmatchedItems:
+        (
+          bank.items ??
+          []
+        )
+          .filter(
+            (item) =>
+              item
+                .reconciliationStatus !==
+              "matched",
+          )
+          .slice(
+            0,
+            5,
+          ),
     },
   };
 }
@@ -304,6 +329,169 @@ function containsAny(
         word,
       ),
   );
+}
+
+
+function buildProactiveSignals(
+  context:
+    Awaited<
+      ReturnType<
+        typeof loadCompanyContext
+      >
+    >,
+) {
+  const signals: Array<{
+    id: string;
+
+    type:
+      | "missing_document"
+      | "attention";
+
+    message: string;
+
+    action:
+      string | null;
+
+    actionLabel:
+      string | null;
+  }> = [];
+
+  const firstUnmatched =
+    context
+      .bank
+      .unmatchedItems[0];
+
+  if (
+    firstUnmatched
+  ) {
+    const amount =
+      money(
+        Math.abs(
+          numberValue(
+            firstUnmatched
+              .amountCents,
+          ),
+        ),
+      );
+
+    const party =
+      firstUnmatched
+        .counterpartyName
+        ?.trim();
+
+    const outgoing =
+      numberValue(
+        firstUnmatched
+          .amountCents,
+      ) < 0;
+
+    signals.push(
+      {
+        id:
+          `bank-${firstUnmatched.id}`,
+
+        type:
+          "missing_document",
+
+        message:
+          outgoing
+            ? `Hé, ik zie een betaling van ${amount}${
+                party
+                  ? ` aan ${party}`
+                  : ""
+              } die nog niet helemaal rond is. Volgens mij moet hier nog een factuur of bon bij. Wil je die even toevoegen? Dan kan de administratie weer verder.`
+            : `Goed nieuws, er is ${amount}${
+                party
+                  ? ` van ${party}`
+                  : ""
+              } binnengekomen. Ik kan deze betaling nog niet helemaal netjes koppelen. Wil je even kijken of je weet bij welke factuur dit hoort?`,
+
+        action:
+          outgoing
+            ? "Documenten"
+            : "Bankieren",
+
+        actionLabel:
+          outgoing
+            ? "Bon of factuur uploaden"
+            : "Betaling bekijken",
+      },
+    );
+  } else if (
+    context
+      .bank
+      .unmatchedCount >
+    0
+  ) {
+    signals.push(
+      {
+        id:
+          "bank-unmatched",
+
+        type:
+          "attention",
+
+        message:
+          `Even een seintje: ik zie ${
+            context
+              .bank
+              .unmatchedCount
+          } bankmutatie${
+            context
+              .bank
+              .unmatchedCount ===
+            1
+              ? ""
+              : "s"
+          } die nog aandacht nodig ${
+            context
+              .bank
+              .unmatchedCount ===
+            1
+              ? "heeft"
+              : "hebben"
+          }. Zullen we die even nalopen?`,
+
+        action:
+          "Bankieren",
+
+        actionLabel:
+          "Even kijken",
+      },
+    );
+  }
+
+  if (
+    context
+      .receivables
+      .overdueCents >
+    0
+  ) {
+    signals.push(
+      {
+        id:
+          "receivables-overdue",
+
+        type:
+          "attention",
+
+        message:
+          `Nog een klein seintje: er staat ${money(
+            context
+              .receivables
+              .overdueCents,
+          )} aan klantfacturen over de betaaltermijn. Niet per se iets om van te schrikken, maar wel goed om even in de gaten te houden.`,
+
+        action:
+          "Klanten",
+
+        actionLabel:
+          "Openstaande facturen bekijken",
+      },
+    );
+  }
+
+  return signals;
 }
 
 
@@ -346,12 +534,15 @@ function answerQuestion(
   if (taxQuestion) {
     return {
       answer:
-        "Dit is een fiscale of wettelijke vraag. Ik wil daarbij alleen antwoorden op basis van actuele, gecontroleerde regels. Mijn officiële fiscale kennislaag wordt nog aangesloten. Ik kan deze vraag nu direct voorleggen aan Bestemd.",
+        "Deze wil ik liever niet uit de losse pols beantwoorden. Het gaat om fiscale of wettelijke regels en daar wil ik zeker weten dat je het goede antwoord krijgt. Zal ik Bestemd er even bij halen?",
 
       needsHuman:
         true,
 
       action:
+        null,
+
+      actionLabel:
         null,
     };
   }
@@ -368,7 +559,7 @@ function answerQuestion(
   ) {
     return {
       answer:
-        `Je omzet in de huidige maand staat op ${money(
+        `Zeker. Je omzet staat deze maand op ${money(
           context.month
             .revenueCents,
         )}.`,
@@ -378,6 +569,9 @@ function answerQuestion(
 
       action:
         "Rapportages",
+
+      actionLabel:
+        "Rapport bekijken",
     };
   }
 
@@ -425,6 +619,9 @@ function answerQuestion(
 
       action:
         "Rapportages",
+
+      actionLabel:
+        "Rapport bekijken",
     };
   }
 
@@ -439,7 +636,7 @@ function answerQuestion(
   ) {
     return {
       answer:
-        `De kosten in de huidige maand staan op ${money(
+        `Je kosten staan deze maand op ${money(
           context.month
             .costsCents,
         )}.`,
@@ -449,6 +646,9 @@ function answerQuestion(
 
       action:
         "Rapportages",
+
+      actionLabel:
+        "Rapport bekijken",
     };
   }
 
@@ -487,6 +687,9 @@ function answerQuestion(
 
       action:
         "Klanten",
+
+      actionLabel:
+        "Facturen bekijken",
     };
   }
 
@@ -524,6 +727,9 @@ function answerQuestion(
 
       action:
         "Leveranciers",
+
+      actionLabel:
+        "Leveranciers bekijken",
     };
   }
 
@@ -563,18 +769,24 @@ function answerQuestion(
 
         action:
           "Bankieren",
+
+        actionLabel:
+          "Even kijken",
       };
     }
 
     return {
       answer:
-        "Ik zie op dit moment geen ongekoppelde bankmutaties. Je kunt Documenten openen als je toch een factuur of bon wilt toevoegen.",
+        "Ziet er netjes uit 👍 Ik zie op dit moment geen bankmutaties die nog op een koppeling wachten. Wil je toch een bon of factuur toevoegen, dan kan dat natuurlijk gewoon bij Documenten.",
 
       needsHuman:
         false,
 
       action:
         "Documenten",
+
+      actionLabel:
+        "Document toevoegen",
     };
   }
 
@@ -610,12 +822,15 @@ function answerQuestion(
 
       action:
         "Dashboard",
+
+      actionLabel:
+        "Dashboard bekijken",
     };
   }
 
   return {
     answer:
-      "Ik kan deze vraag nog niet met voldoende zekerheid beantwoorden. Ik kan hem direct doorzetten naar Bestemd, zodat Randy of Ed in hetzelfde gesprek kan bijspringen.",
+      "Deze weet ik niet zeker genoeg om zomaar iets te roepen. Ik zet liever geen verkeerde koers voor je uit. Zal ik Randy of Ed er even bij halen?",
 
     needsHuman:
       true,
@@ -751,6 +966,11 @@ export async function GET(
           },
 
           ...context,
+
+          proactiveSignals:
+            buildProactiveSignals(
+              context,
+            ),
         },
       );
     },
