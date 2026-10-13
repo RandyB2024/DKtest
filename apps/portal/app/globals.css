@@ -11713,11 +11713,11 @@ button.personal-start-card:hover{
   .mobile-upload-fab-circle{
     position:absolute;
 
-    top:-27px;
+    top:-22px;
     left:50%;
 
-    width:58px;
-    height:58px;
+    width:52px;
+    height:52px;
 
     display:grid;
     place-items:center;
@@ -11727,20 +11727,21 @@ button.personal-start-card:hover{
 
     border-radius:50%;
 
-    background:#2563eb;
+    background:#ffffff;
 
-    color:#fff;
+    color:#2563eb;
 
     border:
-      5px solid #fff;
+      2px solid #cfe0ff;
 
     box-shadow:
-      0 8px 22px
-      rgba(37,99,235,.34);
+      0 5px 14px
+      rgba(37,99,235,.16);
 
     transition:
       transform .15s ease,
-      box-shadow .15s ease;
+      box-shadow .15s ease,
+      border-color .15s ease;
   }
 
   .mobile-upload-fab:active
@@ -11750,15 +11751,15 @@ button.personal-start-card:hover{
       scale(.94);
 
     box-shadow:
-      0 5px 14px
-      rgba(37,99,235,.28);
+      0 4px 10px
+      rgba(37,99,235,.14);
   }
 
   .mobile-upload-fab-circle svg{
-    width:27px;
-    height:27px;
+    width:25px;
+    height:25px;
 
-    stroke-width:2.5;
+    stroke-width:2.4;
   }
 
   .mobile-upload-fab-label{
