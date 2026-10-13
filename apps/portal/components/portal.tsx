@@ -42,7 +42,7 @@ const businessNav = [
   ["Relaties", Users],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
-  ["Agenda", CalendarDays],
+  ["Afspraken", CalendarDays],
   ["Rapportages", ChartNoAxesCombined],
   ["Aangiften", ClipboardCheck],
   ["Bedrijfsmiddelen", Boxes],
@@ -475,18 +475,14 @@ if (view === "Documenten") {
     }
 
     if (
-      view === "Agenda"
+      view === "Afspraken"
     ) {
       return (
         <>
           <div className="heading">
             <div>
-              <h1>Agenda</h1>
+              <h1>Afspraken</h1>
 
-              <p>
-                Plan een gesprek voor inzicht,
-                vragen of de volgende stap in jouw onderneming.
-              </p>
             </div>
           </div>
 
@@ -507,10 +503,6 @@ if (view === "Documenten") {
                 </p>
               </div>
 
-              <div className="bestemd-calendar-info">
-                <span>30 minuten</span>
-                <span>Direct bevestigd</span>
-              </div>
             </div>
 
             <div className="bestemd-cal-frame-wrap">
