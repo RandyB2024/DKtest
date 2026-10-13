@@ -33,8 +33,52 @@ type Appointment = {
 };
 
 
+type AppointmentProgramStatus = {
+  organizationId: string;
+  year: number;
+
+  program: {
+    enabled: boolean;
+    meetingsPerYear: number;
+    regularDurationMinutes: number;
+    annualReviewDurationMinutes: number;
+  };
+
+  completedCount: number;
+  plannedCount: number;
+  remainingCount: number;
+
+  nextAppointment:
+    | {
+        id: string;
+        sequenceNumber: number;
+        type: string;
+        durationMinutes: number;
+        startsAt: string | null;
+        endsAt: string | null;
+        calcomUid: string | null;
+      }
+    | null;
+
+  nextRequiredMeeting:
+    | {
+        sequenceNumber: number;
+        type:
+          | "periodic"
+          | "annual_review";
+        durationMinutes: number;
+      }
+    | null;
+};
+
+
 type UpcomingAppointmentResponse = {
   appointment: Appointment | null;
+
+  appointmentStatus?:
+    AppointmentProgramStatus |
+    null;
+
   error?: string;
 };
 
@@ -87,6 +131,18 @@ export default function AppointmentsView({
     setAppointment,
   ] =
     useState<Appointment | null>(
+      null,
+    );
+
+
+  const [
+    appointmentStatus,
+    setAppointmentStatus,
+  ] =
+    useState<
+      AppointmentProgramStatus |
+      null
+    >(
       null,
     );
 
@@ -155,7 +211,10 @@ export default function AppointmentsView({
     try {
       const response =
         await fetch(
-          "/api/appointments/upcoming",
+          `/api/appointments/upcoming?organizationId=${encodeURIComponent(
+            context
+              .organizationId,
+          )}`,
           {
             cache:
               "no-store",
@@ -178,6 +237,12 @@ export default function AppointmentsView({
 
       setAppointment(
         data.appointment ??
+        null,
+      );
+
+
+      setAppointmentStatus(
+        data.appointmentStatus ??
         null,
       );
 
@@ -405,6 +470,154 @@ export default function AppointmentsView({
           {error}
         </div>
       )}
+
+
+      {!loading &&
+        appointmentStatus &&
+        appointmentStatus
+          .program
+          .enabled && (
+          <section className="appointment-program-card">
+
+            <div className="appointment-program-heading">
+              <div>
+                <span className="customer-section-label">
+                  Jouw gesprekken {
+                    appointmentStatus.year
+                  }
+                </span>
+
+                <h2>
+                  {
+                    appointmentStatus
+                      .completedCount
+                  } van {
+                    appointmentStatus
+                      .program
+                      .meetingsPerYear
+                  } gesprekken afgerond
+                </h2>
+
+                <p>
+                  We spreken elkaar verspreid over
+                  het jaar. De eerste drie gesprekken
+                  duren ongeveer {
+                    appointmentStatus
+                      .program
+                      .regularDurationMinutes
+                  } minuten. Het vierde gesprek is
+                  het uitgebreide jaaroverzicht van
+                  ongeveer {
+                    appointmentStatus
+                      .program
+                      .annualReviewDurationMinutes
+                  } minuten.
+                </p>
+              </div>
+
+              <strong className="appointment-program-score">
+                {
+                  appointmentStatus
+                    .completedCount
+                }/{
+                  appointmentStatus
+                    .program
+                    .meetingsPerYear
+                }
+              </strong>
+            </div>
+
+
+            <div className="appointment-program-stats">
+
+              <div>
+                <span>
+                  Afgerond
+                </span>
+
+                <strong>
+                  {
+                    appointmentStatus
+                      .completedCount
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Gepland
+                </span>
+
+                <strong>
+                  {
+                    appointmentStatus
+                      .plannedCount
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <span>
+                  Nog te gaan
+                </span>
+
+                <strong>
+                  {
+                    appointmentStatus
+                      .remainingCount
+                  }
+                </strong>
+              </div>
+
+            </div>
+
+
+            {appointmentStatus
+              .nextRequiredMeeting && (
+              <div className="appointment-program-next">
+
+                <CalendarDays />
+
+                <div>
+                  <span>
+                    Volgende gesprek
+                  </span>
+
+                  <strong>
+                    Gesprek {
+                      appointmentStatus
+                        .nextRequiredMeeting
+                        .sequenceNumber
+                    } van {
+                      appointmentStatus
+                        .program
+                        .meetingsPerYear
+                    }
+                    {" · "}
+                    ongeveer {
+                      appointmentStatus
+                        .nextRequiredMeeting
+                        .durationMinutes
+                    } minuten
+                  </strong>
+
+                  <small>
+                    {
+                      appointmentStatus
+                        .nextRequiredMeeting
+                        .type ===
+                      "annual_review"
+                        ? "Uitgebreid jaaroverzicht: samen kijken we naar het volledige financiële plaatje en de volgende koers."
+                        : "Periodiek gesprek: cijfers, vragen, plannen en wat er op dit moment speelt."
+                    }
+                  </small>
+                </div>
+
+              </div>
+            )}
+
+          </section>
+        )}
 
 
       {!loading &&
