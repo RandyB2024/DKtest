@@ -152,6 +152,9 @@ export async function mountWizeAdmin(
   let appointmentStatus =
     null;
 
+  let activity =
+    [];
+
   let busy =
     false;
 
@@ -262,6 +265,12 @@ export async function mountWizeAdmin(
       <section
         class="panel"
         data-appointments
+      ></section>
+
+
+      <section
+        class="panel"
+        data-activity
       ></section>
 
 
@@ -415,6 +424,235 @@ export async function mountWizeAdmin(
         </article>
 
       </div>
+    `;
+  }
+
+
+
+  function formatActivityDate(
+    value
+  ) {
+    if (!value) {
+      return "Onbekend";
+    }
+
+    try {
+      return new Intl.DateTimeFormat(
+        "nl-NL",
+        {
+          day:
+            "numeric",
+
+          month:
+            "short",
+
+          year:
+            "numeric",
+
+          hour:
+            "2-digit",
+
+          minute:
+            "2-digit",
+        }
+      ).format(
+        new Date(value)
+      );
+    } catch {
+      return "Onbekend";
+    }
+  }
+
+
+  function activityLabel(
+    type
+  ) {
+    const labels = {
+      shown:
+        "Getoond aan klant",
+
+      reminded:
+        "Herinnering gestuurd",
+
+      customer_action:
+        "Klant heeft actie ondernomen",
+
+      escalated:
+        "Doorgestuurd naar Bestemd",
+
+      conversation_linked:
+        "Gekoppeld aan gesprek",
+
+      resolved:
+        "Opgelost",
+    };
+
+    return labels[type] ??
+      type ??
+      "Activiteit";
+  }
+
+
+  function eventTypeLabel(
+    type
+  ) {
+    const labels = {
+      bank_document_missing:
+        "Ontbrekend document",
+
+      appointment_due:
+        "Afspraak nodig",
+
+      overdue_invoice:
+        "Vervallen factuur",
+    };
+
+    return labels[type] ??
+      type ??
+      "Wize-signaal";
+  }
+
+
+  function renderActivity() {
+    const target =
+      root.querySelector(
+        "[data-activity]"
+      );
+
+
+    if (!target) {
+      return;
+    }
+
+
+    const rows =
+      Array.isArray(activity)
+        ? activity
+        : [];
+
+
+    target.innerHTML = `
+      <div class="wize-admin-section-head">
+        <div>
+          <p class="eyebrow">
+            WIZE ACTIVITEIT
+          </p>
+
+          <h3>
+            Wat heeft Wize al gedaan?
+          </h3>
+
+          <p>
+            Hier zie je per onderneming welke signalen
+            Wize heeft getoond en hoe de klant daarop
+            heeft gereageerd.
+          </p>
+        </div>
+
+        <span class="wize-activity-count">
+          ${esc(rows.length)}
+        </span>
+      </div>
+
+
+      ${
+        rows.length
+          ? `
+            <div class="wize-activity-list">
+
+              ${
+                rows
+                  .map(
+                    item => `
+                      <article class="wize-activity-item">
+
+                        <div class="wize-activity-marker"></div>
+
+                        <div class="wize-activity-copy">
+
+                          <div class="wize-activity-topline">
+
+                            <span class="wize-activity-type">
+                              ${esc(
+                                eventTypeLabel(
+                                  item.eventType
+                                )
+                              )}
+                            </span>
+
+                            <time>
+                              ${esc(
+                                formatActivityDate(
+                                  item.activityCreatedAt
+                                )
+                              )}
+                            </time>
+
+                          </div>
+
+                          <strong>
+                            ${esc(
+                              item.title ??
+                              "Wize-signaal"
+                            )}
+                          </strong>
+
+                          <p>
+                            ${esc(
+                              activityLabel(
+                                item.activityType
+                              )
+                            )}
+                          </p>
+
+                          <div class="wize-activity-meta">
+
+                            <span>
+                              Status:
+                              <b>
+                                ${esc(
+                                  item.eventStatus ??
+                                  "-"
+                                )}
+                              </b>
+                            </span>
+
+                            ${
+                              item.activityConversationId ||
+                              item.conversationId
+                                ? `
+                                  <span>
+                                    Communicatie gekoppeld
+                                  </span>
+                                `
+                                : ""
+                            }
+
+                          </div>
+
+                        </div>
+
+                      </article>
+                    `
+                  )
+                  .join("")
+              }
+
+            </div>
+          `
+          : `
+            <div class="wize-activity-empty">
+              <strong>
+                Nog geen Wize-activiteit
+              </strong>
+
+              <p>
+                Zodra Wize een signaal toont of een klant
+                daarop reageert, verschijnt dat hier.
+              </p>
+            </div>
+          `
+      }
     `;
   }
 
@@ -1454,6 +1692,7 @@ export async function mountWizeAdmin(
     renderSecurity();
     renderCapabilities();
     renderAppointments();
+    renderActivity();
     renderRules();
     renderAddRule();
   }
@@ -1497,6 +1736,11 @@ export async function mountWizeAdmin(
       appointmentStatus =
         data.appointmentStatus ??
         null;
+
+      activity =
+        data.activity
+          ?.items ??
+        [];
 
       renderAll();
 

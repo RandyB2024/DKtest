@@ -180,12 +180,28 @@ export async function wizeAdminRoute(
       );
 
 
+    const activity =
+      checkQuery(
+        await client.rpc(
+          "office_wize_get_event_activity",
+          {
+            p_organization_id:
+              organizationId,
+
+            p_limit:
+              100,
+          }
+        )
+      );
+
+
     return {
       status: 200,
 
       data: {
         policy,
         appointmentStatus,
+        activity,
       },
     };
   }
