@@ -149,6 +149,9 @@ export async function mountWizeAdmin(
   let policy =
     null;
 
+  let appointmentStatus =
+    null;
+
   let busy =
     false;
 
@@ -253,6 +256,12 @@ export async function mountWizeAdmin(
       <section
         class="panel"
         data-capabilities
+      ></section>
+
+
+      <section
+        class="panel"
+        data-appointments
       ></section>
 
 
@@ -407,6 +416,350 @@ export async function mountWizeAdmin(
 
       </div>
     `;
+  }
+
+
+
+  function renderAppointments() {
+    const target =
+      root.querySelector(
+        "[data-appointments]"
+      );
+
+
+    if (!target) {
+      return;
+    }
+
+
+    if (
+      !appointmentStatus
+    ) {
+      target.innerHTML = `
+        <div class="wize-admin-section-head">
+          <div>
+            <p class="eyebrow">
+              GESPREKSCYCLUS
+            </p>
+
+            <h3>
+              Nog geen afspraakgegevens
+            </h3>
+          </div>
+        </div>
+
+        <p class="muted">
+          Er is nog geen gespreksstatus beschikbaar
+          voor deze onderneming.
+        </p>
+      `;
+
+      return;
+    }
+
+
+    const program =
+      appointmentStatus
+        .program ?? {};
+
+
+    const next =
+      appointmentStatus
+        .nextRequiredMeeting;
+
+
+    const planned =
+      appointmentStatus
+        .nextAppointment;
+
+
+    const total =
+      Number(
+        program
+          .meetingsPerYear ??
+        4
+      );
+
+
+    const completed =
+      Number(
+        appointmentStatus
+          .completedCount ??
+        0
+      );
+
+
+    const plannedCount =
+      Number(
+        appointmentStatus
+          .plannedCount ??
+        0
+      );
+
+
+    const remaining =
+      Number(
+        appointmentStatus
+          .remainingCount ??
+        0
+      );
+
+
+    let plannedText =
+      "Geen afspraak gepland";
+
+
+    if (
+      planned
+        ?.startsAt
+    ) {
+      try {
+        plannedText =
+          new Intl.DateTimeFormat(
+            "nl-NL",
+            {
+              weekday:
+                "long",
+
+              day:
+                "numeric",
+
+              month:
+                "long",
+
+              year:
+                "numeric",
+
+              hour:
+                "2-digit",
+
+              minute:
+                "2-digit",
+            }
+          ).format(
+            new Date(
+              planned.startsAt
+            )
+          );
+      } catch {
+        plannedText =
+          "Afspraak gepland";
+      }
+    }
+
+
+    const nextLabel =
+      next
+        ? (
+            next.type ===
+            "annual_review"
+              ? `Gesprek ${next.sequenceNumber} · jaaroverzicht · ±${next.durationMinutes} min`
+              : `Gesprek ${next.sequenceNumber} · periodiek · ±${next.durationMinutes} min`
+          )
+        : (
+            remaining === 0
+              ? "Gesprekscyclus compleet"
+              : "Nog te bepalen"
+          );
+
+
+    target.innerHTML = `
+      <div class="wize-admin-section-head">
+        <div>
+          <p class="eyebrow">
+            GESPREKSCYCLUS
+          </p>
+
+          <h3>
+            Gesprekken ${
+              esc(
+                appointmentStatus
+                  .year
+              )
+            }
+          </h3>
+
+          <p>
+            Bestemd plant ${
+              esc(total)
+            } gesprekken per jaar:
+            ${
+              esc(
+                Math.max(
+                  total - 1,
+                  0
+                )
+              )
+            } periodieke gesprekken en
+            één uitgebreid jaaroverzicht.
+          </p>
+        </div>
+
+        <span class="wize-meeting-score">
+          ${esc(completed)}/${esc(total)}
+        </span>
+      </div>
+
+
+      <div class="wize-meeting-metrics">
+
+        <article>
+          <span>
+            Afgerond
+          </span>
+
+          <strong>
+            ${esc(completed)}
+          </strong>
+        </article>
+
+        <article>
+          <span>
+            Gepland
+          </span>
+
+          <strong>
+            ${esc(plannedCount)}
+          </strong>
+        </article>
+
+        <article>
+          <span>
+            Nog te gaan
+          </span>
+
+          <strong>
+            ${esc(remaining)}
+          </strong>
+        </article>
+
+      </div>
+
+
+      <div class="wize-meeting-detail">
+
+        <div>
+          <span>
+            Volgende stap
+          </span>
+
+          <strong>
+            ${esc(nextLabel)}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            Geplande afspraak
+          </span>
+
+          <strong>
+            ${esc(plannedText)}
+          </strong>
+        </div>
+
+      </div>
+
+
+      ${
+        planned
+          ?.id
+          ? `
+            <div class="customer-buttons">
+              <button
+                type="button"
+                class="primary"
+                data-complete-appointment
+              >
+                Gesprek als afgerond markeren
+              </button>
+            </div>
+          `
+          : ""
+      }
+    `;
+
+
+    const completeButton =
+      target.querySelector(
+        "[data-complete-appointment]"
+      );
+
+
+    if (
+      completeButton &&
+      planned?.id
+    ) {
+      completeButton.onclick =
+        async () => {
+
+          if (busy) {
+            return;
+          }
+
+
+          const confirmed =
+            window.confirm(
+              "Is dit gesprek daadwerkelijk afgerond?"
+            );
+
+
+          if (!confirmed) {
+            return;
+          }
+
+
+          busy = true;
+          error("");
+          status(
+            "Gesprek afronden..."
+          );
+
+          completeButton.disabled =
+            true;
+
+
+          try {
+            await api(
+              "/api/wize-admin",
+              {
+                action:
+                  "completeAppointment",
+
+                appointmentId:
+                  planned.id,
+              }
+            );
+
+
+            await loadPolicy();
+
+            status(
+              "Gesprek als afgerond geregistreerd."
+            );
+
+          } catch (
+            caughtError
+          ) {
+            error(
+              caughtError.message
+            );
+
+            status("");
+
+          } finally {
+            busy = false;
+
+            if (
+              completeButton
+                .isConnected
+            ) {
+              completeButton.disabled =
+                false;
+            }
+          }
+        };
+    }
   }
 
 
@@ -1100,6 +1453,7 @@ export async function mountWizeAdmin(
   function renderAll() {
     renderSecurity();
     renderCapabilities();
+    renderAppointments();
     renderRules();
     renderAddRule();
   }
@@ -1139,6 +1493,10 @@ export async function mountWizeAdmin(
 
       policy =
         data.policy;
+
+      appointmentStatus =
+        data.appointmentStatus ??
+        null;
 
       renderAll();
 

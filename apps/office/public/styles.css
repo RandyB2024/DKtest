@@ -3688,3 +3688,78 @@ body.sidebar-collapsed #logout::after{
   }
 
 }
+
+/* WIZE MEETING CYCLE V1 */
+
+.wize-meeting-score{
+  display:grid;
+  place-items:center;
+  min-width:68px;
+  min-height:68px;
+  padding:10px;
+  border-radius:50%;
+  background:#edf8fa;
+  color:#0b6388;
+  font-size:1.15rem;
+  font-weight:800;
+  border:1px solid #d8edf0;
+}
+
+.wize-meeting-metrics{
+  display:grid;
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin-top:18px;
+}
+
+.wize-meeting-metrics article{
+  display:grid;
+  gap:5px;
+  padding:16px 17px;
+  border:1px solid #e0e9ee;
+  border-radius:13px;
+  background:#f8fbfc;
+}
+
+.wize-meeting-metrics span,
+.wize-meeting-detail span{
+  color:#708596;
+  font-size:.72rem;
+  font-weight:700;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+}
+
+.wize-meeting-metrics strong{
+  color:#082f49;
+  font-size:1.5rem;
+}
+
+.wize-meeting-detail{
+  display:grid;
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+  gap:12px;
+  margin:14px 0 18px;
+}
+
+.wize-meeting-detail > div{
+  display:grid;
+  gap:6px;
+  padding:15px 17px;
+  border-radius:13px;
+  background:#f4f8fa;
+}
+
+.wize-meeting-detail strong{
+  color:#18364d;
+  line-height:1.45;
+}
+
+@media(max-width:720px){
+  .wize-meeting-metrics,
+  .wize-meeting-detail{
+    grid-template-columns:1fr;
+  }
+}

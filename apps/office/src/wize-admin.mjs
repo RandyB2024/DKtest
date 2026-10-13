@@ -26,6 +26,26 @@ function requireOrganizationId(
 }
 
 
+
+function requireRecordId(
+  value,
+  label = "Record"
+) {
+  if (
+    typeof value !== "string" ||
+    !uuid.test(value)
+  ) {
+    throw new OfficeError(
+      400,
+      "INVALID_RECORD_ID",
+      `${label} is ongeldig.`
+    );
+  }
+
+  return value;
+}
+
+
 function requiredText(
   value,
   label,
@@ -147,11 +167,25 @@ export async function wizeAdminRoute(
         )
       );
 
+
+    const appointmentStatus =
+      checkQuery(
+        await client.rpc(
+          "wize_get_appointment_status",
+          {
+            p_organization_id:
+              organizationId,
+          }
+        )
+      );
+
+
     return {
       status: 200,
 
       data: {
         policy,
+        appointmentStatus,
       },
     };
   }
@@ -179,6 +213,43 @@ export async function wizeAdminRoute(
     typeof input.action === "string"
       ? input.action
       : "";
+
+
+  // ==========================================================
+  // GESPREK AFRONDEN
+  // ==========================================================
+
+  if (
+    action === "completeAppointment"
+  ) {
+    const appointmentId =
+      requireRecordId(
+        input.appointmentId,
+        "Afspraak"
+      );
+
+
+    const result =
+      checkQuery(
+        await client.rpc(
+          "office_wize_complete_appointment",
+          {
+            p_appointment_id:
+              appointmentId,
+          }
+        )
+      );
+
+
+    return {
+      status: 200,
+
+      data: {
+        appointment:
+          result,
+      },
+    };
+  }
 
 
   // ==========================================================
