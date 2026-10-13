@@ -1144,7 +1144,9 @@ export default function CustomerDashboard({
         </div>
       )}
 
-      <section className="customer-next-appointment">
+      {!appointmentLoading &&
+        upcomingAppointment && (
+          <section className="customer-next-appointment">
         <div className="customer-next-appointment-icon">
           <CalendarDays />
         </div>
@@ -1251,6 +1253,7 @@ export default function CustomerDashboard({
           <ArrowRight />
         </button>
       </section>
+        )}
 
       <section className="customer-kpi-grid">
         <MetricCard
