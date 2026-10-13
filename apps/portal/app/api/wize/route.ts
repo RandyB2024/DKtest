@@ -6,6 +6,10 @@ import {
 } from "@/lib/portal-access";
 
 import {
+  calcomRequest,
+} from "@/lib/calcom";
+
+import {
   portalApi,
   readBody,
 } from "@/lib/portal-api";
@@ -315,6 +319,283 @@ async function loadCompanyContext(
             5,
           ),
     },
+  };
+}
+
+
+
+type WizeCalBooking = {
+  uid?: string;
+  title?: string | null;
+  start?: string | null;
+  end?: string | null;
+  status?: string | null;
+
+  eventType?: {
+    slug?: string | null;
+  } | null;
+};
+
+
+function extractCalBookings(
+  response: unknown,
+): WizeCalBooking[] {
+  const value =
+    response as {
+      data?:
+        | WizeCalBooking[]
+        | {
+            bookings?:
+              WizeCalBooking[];
+          };
+    };
+
+  if (
+    Array.isArray(
+      value?.data,
+    )
+  ) {
+    return value.data;
+  }
+
+  if (
+    value?.data &&
+    typeof value.data ===
+      "object" &&
+    Array.isArray(
+      value.data.bookings,
+    )
+  ) {
+    return value
+      .data
+      .bookings;
+  }
+
+  return [];
+}
+
+
+async function loadAppointmentContext(
+  client: any,
+  organizationId: string,
+  customerEmail: string,
+) {
+  let upcoming:
+    WizeCalBooking |
+    null =
+    null;
+
+  try {
+    const query =
+      new URLSearchParams();
+
+    query.set(
+      "attendeeEmail",
+      customerEmail,
+    );
+
+    query.set(
+      "afterStart",
+      new Date()
+        .toISOString(),
+    );
+
+    const response =
+      await calcomRequest(
+        `/bookings?${query.toString()}`,
+      );
+
+    upcoming =
+      extractCalBookings(
+        response,
+      )
+        .filter(
+          booking => {
+            if (
+              !booking.start
+            ) {
+              return false;
+            }
+
+            const start =
+              Date.parse(
+                booking.start,
+              );
+
+            if (
+              !Number.isFinite(
+                start,
+              ) ||
+              start <=
+                Date.now()
+            ) {
+              return false;
+            }
+
+            const status =
+              (
+                booking.status ??
+                ""
+              )
+                .trim()
+                .toLowerCase();
+
+            return ![
+              "cancelled",
+              "canceled",
+              "rejected",
+            ].includes(
+              status,
+            );
+          },
+        )
+        .sort(
+          (a, b) =>
+            Date.parse(
+              a.start!,
+            ) -
+            Date.parse(
+              b.start!,
+            ),
+        )[0] ??
+      null;
+
+  } catch {
+    // Wize mag niet volledig uitvallen
+    // als Cal.com tijdelijk niet bereikbaar is.
+  }
+
+
+  const {
+    data:
+      appointmentStatus,
+    error:
+      appointmentStatusError,
+  } =
+    await client.rpc(
+      "wize_get_appointment_status",
+      {
+        p_organization_id:
+          organizationId,
+      },
+    );
+
+
+  let appointmentEvent:
+    unknown =
+    null;
+
+
+  /*
+   * Alleen een detector uitvoeren wanneer:
+   * - Bestemd de programmastatus kon lezen;
+   * - Cal.com geen toekomstige afspraak teruggeeft.
+   *
+   * Zo voorkomt Wize onnodig vragen wanneer er live al
+   * een afspraak bestaat.
+   */
+  if (
+    !appointmentStatusError &&
+    !upcoming
+  ) {
+    const {
+      data,
+      error,
+    } =
+      await client.rpc(
+        "wize_detect_appointment_event",
+        {
+          p_organization_id:
+            organizationId,
+        },
+      );
+
+    if (!error) {
+      appointmentEvent =
+        data;
+    }
+  }
+
+
+  const {
+    data:
+      activeEventResponse,
+    error:
+      activeEventError,
+  } =
+    await client.rpc(
+      "wize_get_active_events",
+      {
+        p_organization_id:
+          organizationId,
+      },
+    );
+
+
+  const activeEvents =
+    !activeEventError &&
+    activeEventResponse &&
+    typeof activeEventResponse ===
+      "object" &&
+    Array.isArray(
+      (
+        activeEventResponse as {
+          events?: unknown[];
+        }
+      ).events,
+    )
+      ? (
+          activeEventResponse as {
+            events: Array<{
+              id: string;
+              eventType: string;
+              status: string;
+              priority: string;
+              title: string;
+              customerMessage: string;
+            }>;
+          }
+        ).events
+      : [];
+
+
+  return {
+    status:
+      appointmentStatusError
+        ? null
+        : appointmentStatus,
+
+    upcoming:
+      upcoming
+        ? {
+            uid:
+              upcoming.uid ??
+              null,
+
+            title:
+              upcoming.title ??
+              "Gesprek met Bestemd",
+
+            start:
+              upcoming.start ??
+              null,
+
+            end:
+              upcoming.end ??
+              null,
+
+            eventSlug:
+              upcoming
+                .eventType
+                ?.slug ??
+              "afspraak",
+          }
+        : null,
+
+    activeEvents,
+
+    detector:
+      appointmentEvent,
   };
 }
 
@@ -947,11 +1228,107 @@ export async function GET(
               organizationId,
           );
 
-      const context =
-        await loadCompanyContext(
-          client,
-          organizationId,
-        );
+      const [
+        context,
+        appointments,
+      ] =
+        await Promise.all([
+          loadCompanyContext(
+            client,
+            organizationId,
+          ),
+
+          loadAppointmentContext(
+            client,
+            organizationId,
+            identity
+              .profile
+              .email,
+          ),
+        ]);
+
+      const eventSignals =
+        appointments
+          .activeEvents
+          .slice(
+            0,
+            3,
+          )
+          .map(
+            event => ({
+              id:
+                `event-${event.id}`,
+
+              type:
+                "attention",
+
+              message:
+                event
+                  .customerMessage,
+
+              action:
+                event
+                  .eventType ===
+                "appointment_due"
+                  ? "Afspraken"
+                  : null,
+
+              actionLabel:
+                event
+                  .eventType ===
+                "appointment_due"
+                  ? "Afspraak plannen"
+                  : null,
+            }),
+          );
+
+      const liveAppointmentSignal =
+        appointments
+          .upcoming
+          ?.start
+          ? [
+              {
+                id:
+                  `appointment-${appointments.upcoming.uid ?? "upcoming"}`,
+
+                type:
+                  "attention",
+
+                message:
+                  `Je volgende afspraak met Bestemd staat op ${
+                    new Intl.DateTimeFormat(
+                      "nl-NL",
+                      {
+                        weekday:
+                          "long",
+                        day:
+                          "numeric",
+                        month:
+                          "long",
+                        hour:
+                          "2-digit",
+                        minute:
+                          "2-digit",
+                        timeZone:
+                          "Europe/Amsterdam",
+                      },
+                    ).format(
+                      new Date(
+                        appointments
+                          .upcoming
+                          .start,
+                      ),
+                    )
+                  }. Die staat dus al netjes gepland.`,
+
+                action:
+                  "Afspraken",
+
+                actionLabel:
+                  "Afspraak bekijken",
+              },
+            ]
+          : [];
 
       return Response.json(
         {
@@ -967,10 +1344,18 @@ export async function GET(
 
           ...context,
 
-          proactiveSignals:
-            buildProactiveSignals(
+          appointments,
+
+          proactiveSignals: [
+            ...liveAppointmentSignal,
+            ...eventSignals,
+            ...buildProactiveSignals(
               context,
             ),
+          ].slice(
+            0,
+            4,
+          ),
         },
       );
     },
