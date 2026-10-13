@@ -12381,3 +12381,201 @@ button.personal-start-card:hover{
     padding:0 12px 11px;
   }
 }
+
+
+/* BESTEMD WIZE FLOATING LAUNCHER V1 */
+
+.wize-floating-launcher{
+  position:fixed;
+
+  right:
+    max(
+      22px,
+      env(safe-area-inset-right)
+    );
+
+  bottom:
+    max(
+      22px,
+      env(safe-area-inset-bottom)
+    );
+
+  z-index:35;
+
+  display:flex;
+  align-items:center;
+
+  gap:7px;
+
+  padding:5px 9px 5px 5px;
+
+  border:
+    1px solid
+    #d8e5f1;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,.97);
+
+  color:#173d59;
+
+  box-shadow:
+    0 8px 24px
+    rgba(19,61,89,.13);
+
+  cursor:pointer;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    border-color .16s ease,
+    background .16s ease;
+
+  backdrop-filter:
+    blur(8px);
+}
+
+.wize-floating-launcher:hover{
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #b7d4ec;
+
+  background:#fff;
+
+  box-shadow:
+    0 11px 28px
+    rgba(19,61,89,.17);
+}
+
+.wize-floating-launcher:active{
+  transform:
+    translateY(0)
+    scale(.97);
+}
+
+.wize-floating-icon{
+  width:43px;
+  height:43px;
+
+  display:grid;
+  place-items:center;
+
+  flex:none;
+
+  border-radius:50%;
+
+  background:#edf5ff;
+
+  color:#2563eb;
+}
+
+.wize-floating-icon svg{
+  width:21px;
+  height:21px;
+
+  stroke-width:2.2;
+}
+
+.wize-floating-label{
+  padding-right:3px;
+
+  color:#173d59;
+
+  font-size:.78rem;
+  font-weight:750;
+
+  letter-spacing:-.01em;
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media(max-width:900px){
+
+  .wize-floating-launcher{
+    right:17px;
+  }
+
+}
+
+
+/* ==========================================================
+   MOBIEL
+   Boven de vaste onderste navigatie
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .wize-floating-launcher{
+    right:14px;
+
+    bottom:
+      calc(
+        83px +
+        env(safe-area-inset-bottom)
+      );
+
+    padding:
+      4px;
+
+    border-radius:50%;
+  }
+
+  .wize-floating-icon{
+    width:48px;
+    height:48px;
+
+    background:#ffffff;
+
+    border:
+      1.5px solid
+      #cbdff3;
+
+    box-shadow:
+      0 5px 15px
+      rgba(37,99,235,.13);
+  }
+
+  .wize-floating-icon svg{
+    width:22px;
+    height:22px;
+
+    color:#2563eb;
+  }
+
+  .wize-floating-label{
+    display:none;
+  }
+
+}
+
+
+/* ==========================================================
+   EXTRA KLEIN MOBIEL
+   ========================================================== */
+
+@media(max-width:390px){
+
+  .wize-floating-launcher{
+    right:11px;
+
+    bottom:
+      calc(
+        81px +
+        env(safe-area-inset-bottom)
+      );
+  }
+
+  .wize-floating-icon{
+    width:45px;
+    height:45px;
+  }
+
+}
+

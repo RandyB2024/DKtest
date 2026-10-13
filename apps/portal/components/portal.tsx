@@ -16,6 +16,7 @@ import {
   FolderOpen,
   LayoutDashboard,
   MessagesSquare,
+  MessageCircleMore,
   MoreHorizontal,
   Plus,
   Camera,
@@ -936,6 +937,28 @@ if (view === "Documenten") {
           {renderView()}
         </div>
       </main>
+
+      {view !== "Wize" && (
+        <button
+          type="button"
+          className="wize-floating-launcher"
+          onClick={() => {
+            setView("Wize");
+            setMobileMoreOpen(false);
+            setMobileUploadOpen(false);
+          }}
+          aria-label="Open Wize"
+          title="Wize"
+        >
+          <span className="wize-floating-icon">
+            <MessageCircleMore />
+          </span>
+
+          <span className="wize-floating-label">
+            Wize
+          </span>
+        </button>
+      )}
 
       <nav
         className="mobile-nav"
