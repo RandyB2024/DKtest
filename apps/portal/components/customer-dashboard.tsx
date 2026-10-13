@@ -958,8 +958,8 @@ export default function CustomerDashboard({
 
   const resultTitle =
     resultIsLoss
-      ? "Verlies"
-      : "Winst";
+      ? "Verlies vóór belasting"
+      : "Winst vóór belasting";
 
   const costsValue =
     context.organizationId ===
