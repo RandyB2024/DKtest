@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useEffect,
@@ -203,44 +203,96 @@ export default function AppointmentsView({
   );
 
 
-  function cancelAppointment() {
+  async function cancelAppointment() {
 
-    if (!appointment) {
+    if (
+      !appointment ||
+      busy
+    ) {
       return;
     }
 
 
-    const url =
-      new URL(
-        `https://cal.com/booking/${encodeURIComponent(
-          appointment.uid,
-        )}`,
+    const confirmed =
+      window.confirm(
+        "Weet je zeker dat je deze afspraak wilt annuleren?",
       );
 
 
-    url.searchParams.set(
-      "cancel",
-      "true",
-    );
+    if (!confirmed) {
+      return;
+    }
 
 
-    url.searchParams.set(
-      "allRemainingBookings",
-      "false",
-    );
+    setBusy(true);
+    setError("");
 
 
-    url.searchParams.set(
-      "cancelledBy",
-      context.profile.email,
-    );
+    try {
+      const response =
+        await fetch(
+          "/api/appointments/manage",
+          {
+            method:
+              "POST",
+
+            headers: {
+              "content-type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                uid:
+                  appointment.uid,
+
+                action:
+                  "cancel",
+
+                organizationId:
+                  context
+                    .organizationId,
+              }),
+          },
+        );
 
 
-    window.open(
-      url.toString(),
-      "_blank",
-      "noopener,noreferrer",
-    );
+      const data =
+        (await response.json()) as
+          ManageAppointmentResponse;
+
+
+      if (
+        !response.ok ||
+        !data.cancelled
+      ) {
+        throw new Error(
+          data.error ??
+          "Annuleren is niet gelukt.",
+        );
+      }
+
+
+      setAppointment(
+        null,
+      );
+
+
+      setCalendarUrl(
+        createBookingUrl(),
+      );
+
+    } catch (caught) {
+
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Annuleren is niet gelukt.",
+      );
+
+    } finally {
+      setBusy(false);
+    }
   }
 
 
@@ -278,6 +330,10 @@ export default function AppointmentsView({
 
                 action:
                   "reschedule",
+
+                organizationId:
+                  context
+                    .organizationId,
               }),
           },
         );

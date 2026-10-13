@@ -1,5 +1,6 @@
 import {
   calcomRequest,
+  getCalcomSyncKey,
 } from "@/lib/calcom";
 
 import {
@@ -10,9 +11,19 @@ import {
   portalApi,
 } from "@/lib/portal-api";
 
+import {
+  requireAal2,
+  requireOrganization,
+  requirePortalIdentity,
+} from "@/lib/portal-access";
+
 
 type CalBooking = {
   uid?: string;
+
+  start?: string | null;
+  end?: string | null;
+  status?: string | null;
 
   attendees?: Array<{
     email?: string | null;
@@ -100,13 +111,15 @@ export async function POST(
 
 
       const body =
-        await request.json()
+        await request
+          .json()
           .catch(
             () =>
               null,
           ) as {
             uid?: string;
             action?: string;
+            organizationId?: string;
           } | null;
 
 
@@ -135,7 +148,51 @@ export async function POST(
       }
 
 
+      /*
+       * organizationId wordt alleen gebruikt voor
+       * Mijn Onderneming.
+       *
+       * We vertrouwen nooit blind op de waarde uit
+       * de browser. De organisatie wordt opnieuw
+       * tegen de ingelogde gebruiker gecontroleerd.
+       */
+      let businessOrganizationId:
+        string |
+        null =
+        null;
+
+
+      if (
+        typeof body
+          .organizationId ===
+        "string"
+      ) {
+        const businessIdentity =
+          await requirePortalIdentity(
+            client,
+          );
+
+
+        requireAal2(
+          businessIdentity,
+        );
+
+
+        businessOrganizationId =
+          requireOrganization(
+            businessIdentity,
+            body.organizationId,
+          );
+      }
+
+
       try {
+
+        /*
+         * Eerst bij Cal.com controleren dat de
+         * booking werkelijk van de ingelogde
+         * gebruiker is.
+         */
         const booking =
           await getOwnedBooking(
             body.uid,
@@ -156,6 +213,9 @@ export async function POST(
         }
 
 
+        /*
+         * ANNULEREN
+         */
         if (
           body.action ===
           "cancel"
@@ -182,6 +242,79 @@ export async function POST(
           );
 
 
+          /*
+           * Als dit Mijn Onderneming betreft,
+           * synchroniseren we de annulering meteen
+           * met Wize.
+           *
+           * Zonder geldige:
+           * - sessie
+           * - AAL2
+           * - organisatie-toegang
+           * - server sync key
+           *
+           * accepteert Supabase dit niet.
+           */
+          if (
+            businessOrganizationId &&
+            booking.start &&
+            booking.end
+          ) {
+            const {
+              error:
+                syncError,
+            } =
+              await client.rpc(
+                "wize_sync_calcom_booking",
+                {
+                  p_organization_id:
+                    businessOrganizationId,
+
+                  p_calcom_uid:
+                    body.uid,
+
+                  p_starts_at:
+                    booking.start,
+
+                  p_ends_at:
+                    booking.end,
+
+                  p_status:
+                    "cancelled",
+
+                  p_sync_key:
+                    getCalcomSyncKey(),
+                },
+              );
+
+
+            /*
+             * Cal.com heeft de afspraak al
+             * geannuleerd. Een tijdelijke Wize
+             * sync-fout mag daarom niet doen alsof
+             * de annulering zelf is mislukt.
+             *
+             * De volgende Cal.com-sync kan de
+             * status opnieuw herstellen.
+             */
+            if (syncError) {
+              console.error(
+                "Cancelled appointment Wize sync failed",
+                {
+                  organizationId:
+                    businessOrganizationId,
+
+                  bookingUid:
+                    body.uid,
+
+                  message:
+                    syncError.message,
+                },
+              );
+            }
+          }
+
+
           return Response.json(
             {
               ok: true,
@@ -191,6 +324,15 @@ export async function POST(
         }
 
 
+        /*
+         * VERPLAATSEN
+         *
+         * De feitelijke wijziging gebeurt in Cal.com.
+         * Zodra Wize daarna de booking opnieuw
+         * ophaalt, wordt dezelfde Cal.com UID
+         * bijgewerkt in plaats van een tweede
+         * Bestemd-afspraak aangemaakt.
+         */
         const slug =
           booking.eventType
             ?.slug ??
@@ -214,6 +356,7 @@ export async function POST(
         return Response.json(
           {
             ok: true,
+
             url:
               url.toString(),
           },
