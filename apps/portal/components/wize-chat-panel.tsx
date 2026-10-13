@@ -26,6 +26,9 @@ import type {
 type WizeMessage = {
   id: string;
 
+  eventId?:
+    string;
+
   role:
     | "customer"
     | "wize";
@@ -262,6 +265,9 @@ export default function WizeChatPanel({
                 ): WizeMessage => ({
                   id:
                     signal.id,
+
+                  eventId:
+                    signal.eventId,
 
                   role:
                     "wize",
@@ -711,7 +717,45 @@ export default function WizeChatPanel({
 
   function go(
     view: string,
+    eventId?: string,
   ) {
+
+    if (
+      eventId &&
+      context
+        .organizationId !==
+      "all"
+    ) {
+      void fetch(
+        "/api/wize",
+        {
+          method:
+            "POST",
+
+          headers: {
+            "content-type":
+              "application/json",
+          },
+
+          body:
+            JSON.stringify({
+              action:
+                "eventAction",
+
+              organizationId:
+                context
+                  .organizationId,
+
+              eventId,
+
+              target:
+                view,
+            }),
+        },
+      );
+    }
+
+
     onGo?.(
       view,
     );
@@ -852,6 +896,8 @@ export default function WizeChatPanel({
                             go(
                               message
                                 .action!,
+                              message
+                                .eventId,
                             )
                           }
                         >

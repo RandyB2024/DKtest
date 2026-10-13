@@ -1728,6 +1728,125 @@ export async function POST(
         }
 
 
+        /*
+         * Best effort activity logging.
+         * Het tonen van het signaal mag niet stuklopen
+         * als alleen de historie tijdelijk niet kan schrijven.
+         */
+        await client.rpc(
+          "wize_log_event_activity",
+          {
+            p_event_id:
+              eventId,
+
+            p_activity_type:
+              "shown",
+
+            p_conversation_id:
+              null,
+
+            p_details: {
+              source:
+                "wize_chat",
+            },
+          },
+        );
+
+
+        return Response.json(
+          {
+            ok: true,
+          },
+        );
+      }
+
+
+      if (
+        action ===
+        "eventAction"
+      ) {
+        const eventId =
+          requiredString(
+            input.eventId,
+            "Wize-signaal",
+            100,
+          );
+
+
+        const target =
+          typeof input.target ===
+            "string"
+            ? input.target
+                .trim()
+                .slice(
+                  0,
+                  80,
+                )
+            : null;
+
+
+        const {
+          data:
+            activeEventResponse,
+          error:
+            activeEventError,
+        } =
+          await client.rpc(
+            "wize_get_active_events",
+            {
+              p_organization_id:
+                organizationId,
+            },
+          );
+
+
+        /*
+         * Ook een event dat zojuist op 'asked' is gezet,
+         * kan door de reminder-filter niet meer terugkomen.
+         * Daarom controleren we aanvullend via de event-id
+         * binnen de databasefunctie die zelf tenant access afdwingt.
+         */
+        if (activeEventError) {
+          throw new AccessError(
+            503,
+            "Wize kon de actie niet registreren.",
+          );
+        }
+
+
+        const {
+          error:
+            activityError,
+        } =
+          await client.rpc(
+            "wize_log_event_activity",
+            {
+              p_event_id:
+                eventId,
+
+              p_activity_type:
+                "customer_action",
+
+              p_conversation_id:
+                null,
+
+              p_details: {
+                target,
+                source:
+                  "wize_chat",
+              },
+            },
+          );
+
+
+        if (activityError) {
+          throw new AccessError(
+            503,
+            "Wize kon de actie niet registreren.",
+          );
+        }
+
+
         return Response.json(
           {
             ok: true,
