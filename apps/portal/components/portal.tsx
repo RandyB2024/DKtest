@@ -45,7 +45,7 @@ const businessNav = [
   ["Agenda", CalendarDays],
   ["Rapportages", ChartNoAxesCombined],
   ["Aangiften", ClipboardCheck],
-  ["Inventaris", Boxes],
+  ["Bedrijfsmiddelen", Boxes],
   ["Verzekeringen", Umbrella],
   ["Instellingen", Settings],
 ] as const;
@@ -646,7 +646,7 @@ if (view === "Documenten") {
     }
 
     if (
-      view === "Inventaris"
+      view === "Bedrijfsmiddelen"
     ) {
       return (
         <InventoryView
