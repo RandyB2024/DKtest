@@ -1067,3 +1067,38 @@
     min-height: 740px !important;
   }
 }
+
+
+/* Cal.com agenda - stabiele embedded versie */
+
+.bestemd-cal-frame-wrap {
+  width: 100%;
+  min-height: 760px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.bestemd-cal-frame {
+  display: block;
+  width: 100%;
+  height: 760px;
+  min-height: 760px;
+  border: 0;
+  background: #ffffff;
+}
+
+@media (max-width: 900px) {
+  .bestemd-cal-frame-wrap,
+  .bestemd-cal-frame {
+    min-height: 820px;
+    height: 820px;
+  }
+}
+
+@media (max-width: 640px) {
+  .bestemd-cal-frame-wrap,
+  .bestemd-cal-frame {
+    min-height: 900px;
+    height: 900px;
+  }
+}
