@@ -1866,6 +1866,15 @@ export async function POST(
             5000,
           );
 
+
+        const eventId =
+          typeof input.eventId ===
+            "string" &&
+          input.eventId.trim()
+            ? input.eventId.trim()
+            : null;
+
+
         const wizeAnswer =
           typeof input
             .wizeAnswer ===
@@ -1962,6 +1971,53 @@ export async function POST(
         if (
           conversationId
         ) {
+
+          /*
+           * Wanneer deze overdracht bij een bestaand
+           * Wize-event hoort, koppelen we dat event aan
+           * dezelfde Communicatie-thread.
+           *
+           * Best effort: een bestaande klantvraag mag
+           * niet verloren gaan als alleen de event-link
+           * tijdelijk faalt.
+           */
+          if (
+            eventId
+          ) {
+            const {
+              error:
+                escalationError,
+            } =
+              await client.rpc(
+                "wize_escalate_event",
+                {
+                  p_event_id:
+                    eventId,
+
+                  p_conversation_id:
+                    conversationId,
+                },
+              );
+
+
+            if (
+              escalationError
+            ) {
+              console.error(
+                "Wize event escalation link failed",
+                {
+                  organizationId,
+                  eventId,
+                  conversationId,
+                  message:
+                    escalationError
+                      .message,
+                },
+              );
+            }
+          }
+
+
           await notifyOfficeBestEffort(
             client,
             {
