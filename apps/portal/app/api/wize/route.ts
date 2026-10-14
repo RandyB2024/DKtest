@@ -718,6 +718,42 @@ async function loadAppointmentContext(
   }
 
 
+  /*
+   * Vervallen debiteuren.
+   *
+   * Iedere vervallen verkoopfactuur krijgt een persistent
+   * Wize-event en wordt automatisch opgelost zodra de
+   * openstaande post niet meer vervallen is.
+   */
+  const {
+    error:
+      overdueReceivableEventError,
+  } =
+    await client.rpc(
+      "wize_detect_overdue_receivable_events",
+      {
+        p_organization_id:
+          organizationId,
+      },
+    );
+
+
+  if (
+    overdueReceivableEventError
+  ) {
+    console.error(
+      "Wize overdue receivable detection failed",
+      {
+        organizationId,
+
+        message:
+          overdueReceivableEventError
+            .message,
+      },
+    );
+  }
+
+
   const {
     data:
       activeEventResponse,
@@ -1483,7 +1519,11 @@ export async function GET(
                       .eventType ===
                     "bank_document_missing"
                     ? "Documenten"
-                    : null,
+                    : event
+                        .eventType ===
+                      "overdue_invoice"
+                      ? "Klanten"
+                      : null,
 
               actionLabel:
                 event
@@ -1494,7 +1534,11 @@ export async function GET(
                       .eventType ===
                     "bank_document_missing"
                     ? "Bon of factuur uploaden"
-                    : null,
+                    : event
+                        .eventType ===
+                      "overdue_invoice"
+                      ? "Factuur bekijken"
+                      : null,
             }),
           );
 
@@ -1506,6 +1550,17 @@ export async function GET(
               event
                 .eventType ===
               "bank_document_missing",
+          );
+
+
+      const hasPersistentOverdueInvoiceSignal =
+        appointments
+          .activeEvents
+          .some(
+            event =>
+              event
+                .eventType ===
+              "overdue_invoice",
           );
 
 
@@ -1581,9 +1636,19 @@ export async function GET(
             ).filter(
               signal =>
                 !(
-                  hasPersistentBankDocumentSignal &&
-                  signal.type ===
-                    "missing_document"
+                  (
+                    hasPersistentBankDocumentSignal &&
+                    signal.type ===
+                      "missing_document"
+                  )
+
+                  ||
+
+                  (
+                    hasPersistentOverdueInvoiceSignal &&
+                    signal.id ===
+                      "receivables-overdue"
+                  )
                 ),
             ),
           ].slice(
