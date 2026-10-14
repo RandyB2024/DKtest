@@ -754,6 +754,41 @@ async function loadAppointmentContext(
   }
 
 
+  /*
+   * BTW-deadlines.
+   *
+   * Deadlines komen uit tax_periods.
+   * Wize berekent zelf geen wettelijke datum.
+   */
+  const {
+    error:
+      vatDeadlineEventError,
+  } =
+    await client.rpc(
+      "wize_detect_vat_deadline_events",
+      {
+        p_organization_id:
+          organizationId,
+      },
+    );
+
+
+  if (
+    vatDeadlineEventError
+  ) {
+    console.error(
+      "Wize VAT deadline detection failed",
+      {
+        organizationId,
+
+        message:
+          vatDeadlineEventError
+            .message,
+      },
+    );
+  }
+
+
   const {
     data:
       activeEventResponse,
@@ -1523,7 +1558,11 @@ export async function GET(
                         .eventType ===
                       "overdue_invoice"
                       ? "Klanten"
-                      : null,
+                      : event
+                          .eventType ===
+                        "vat_deadline"
+                        ? "Aangiften"
+                        : null,
 
               actionLabel:
                 event
@@ -1538,7 +1577,11 @@ export async function GET(
                         .eventType ===
                       "overdue_invoice"
                       ? "Factuur bekijken"
-                      : null,
+                      : event
+                          .eventType ===
+                        "vat_deadline"
+                        ? "BTW-aangifte bekijken"
+                        : null,
             }),
           );
 
