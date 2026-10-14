@@ -1,5 +1,3 @@
-import {basis,search} from './helpers/kvk-fixture.mjs';
-import {normalizeBasis,normalizeSearch} from '../src/kvk/normalize.mjs';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

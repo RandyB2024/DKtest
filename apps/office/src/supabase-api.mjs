@@ -15,6 +15,7 @@ import { creditInvoiceRoute } from './credit-invoices.mjs';
 import { paidInvoiceDocumentsRoute } from './paid-invoice-documents.mjs';
 import { creditorsRoute } from './creditors.mjs';
 import { wizeAdminRoute } from './wize-admin.mjs';
+import { taxReturnsRoute } from './tax-returns.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
 export function sendJson(res, status, data, code) {
@@ -684,6 +685,24 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+
+    const taxReturns =
+      await taxReturnsRoute(
+        req,
+        url,
+        client,
+        user,
+        body
+      );
+
+    if (taxReturns) {
+      return sendJson(
+        res,
+        taxReturns.status,
+        taxReturns.data
+      );
+    }
+
 
     const wizeAdmin =
       await wizeAdminRoute(

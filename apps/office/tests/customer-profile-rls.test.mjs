@@ -1,5 +1,5 @@
-import {basis,search} from './helpers/kvk-fixture.mjs';
-import {normalizeBasis,normalizeSearch} from '../src/kvk/normalize.mjs';
+import {lookup} from './helpers/kvk-fixture.mjs';
+import {normalizeLookup} from '../src/kvk/normalize.mjs';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -178,7 +178,7 @@ test('Complete customer profile: PostgreSQL authorization, validation and transa
     });
     await t.test('existing KvK intake and legacy creation still work after all migrations',async()=>{
       await role('owner');await pg.exec('reset role');const key=randomBytes(32).toString('hex');await pg.query("insert into office_kvk_private.worker_gate values(true,encode(sha256(convert_to($1,'UTF8')),'hex'),'test')",[key]);await role('owner');
-      const profile=normalizeBasis(basis('68750110'),'68750110',normalizeSearch(search('68750110')));
+      const profile=normalizeLookup(lookup('68750110'),'68750110');
       const initialCount=await count('customer_relationships');
       const extended={company:{visit_country:'NL',visit_postcode:'3526KP',visit_house_number:'93',postal_same:true},fiscal:{income_tax:'corporate_tax',income_tax_confirm:true,vat_status:'kor'},administration:{klaas_vis:'unknown',vehicles:null}};
       const extendedProfile={...profile,kvkNumber:'12345678'};

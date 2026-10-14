@@ -231,6 +231,20 @@ async function renderRoute() {
       const data = await api('/api/clients');
       recordData = data;
       html = '<div id="office-documents-readonly"></div>';
+    } else if (path === '/tax-returns') {
+      header('Aangiften');
+
+      const data =
+        await api(
+          '/api/clients'
+        );
+
+      recordData =
+        data;
+
+      html =
+        '<div id="office-tax-returns"></div>';
+
     } else if (path === '/communication') {
       header('Communicatie');
       html = '<div id="office-communication"></div>';
@@ -282,6 +296,25 @@ async function renderRoute() {
       }else if(path==='/documents'){
         const {mountOfficeDocumentsReadonly}=await import('/documents-readonly.js');
         if(activeGeneration===generation&&currentUser)mountOfficeDocumentsReadonly($('#office-documents-readonly'),api,recordData);
+      }else if(path==='/tax-returns'){
+        const {
+          mountTaxReturns
+        } =
+          await import(
+            '/tax-returns.js'
+          );
+
+        if(
+          activeGeneration===generation
+          &&currentUser
+        ){
+          await mountTaxReturns(
+            $('#office-tax-returns'),
+            api,
+            recordData
+          );
+        }
+
       }else if(path==='/communication'){
         const {mountOfficeCommunication}=await import('/communication.js');
         if(activeGeneration===generation&&currentUser)await mountOfficeCommunication($('#office-communication'),api,currentUser);

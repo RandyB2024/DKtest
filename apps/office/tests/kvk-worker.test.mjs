@@ -4,14 +4,14 @@ import {randomBytes,randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {createWorker} from '../src/worker.mjs';
 import {supabaseFixture} from './helpers/supabase-fixture.mjs';
-import {kvkTransport,basis,search} from './helpers/kvk-fixture.mjs';
+import {kvkTransport,lookup,search} from './helpers/kvk-fixture.mjs';
 const origin='https://office.testadmin.nl';
 function setup(){
   const fixture=supabaseFixture(),state={key:randomBytes(24).toString('hex'),calls:[]},kvk=kvkTransport(state);
   fixture.db.roles[0].code='owner';let saved;
   fixture.rpc=async(name,input)=>{assert.equal(name,'office_create_relationship_from_kvk');saved=input;return Response.json({relationship_id:randomUUID(),organization_id:randomUUID()});};
-  const env={OFFICE_ORIGIN:origin,SUPABASE_URL:'https://office-fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture',KVK_API_KEY:state.key,KVK_INTAKE_RPC_KEY:randomBytes(32).toString('hex'),KVK_API_MODE:'test'};
-  const worker=createWorker((input,init)=>new URL(input).hostname==='api.kvk.nl'?kvk(input,init):fixture.fetch(input,init));
+  const env={OFFICE_ORIGIN:origin,SUPABASE_URL:'https://office-fixture.supabase.co',SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture',KVKBASE_API_KEY:state.key,KVK_INTAKE_RPC_KEY:randomBytes(32).toString('hex')};
+  const worker=createWorker((input,init)=>new URL(input).hostname==='api.kvkbase.nl'?kvk(input,init):fixture.fetch(input,init));
   let jar='';
   async function call(path,body,headers={}){
     const response=await worker.fetch(new Request(origin+path,{method:body===undefined?'GET':'POST',headers:{Origin:origin,Cookie:jar,'Content-Type':'application/json',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})}),env);
@@ -24,26 +24,26 @@ function setup(){
 test('Worker searches number/name/city, previews and REFETCHES authoritative data before RPC',async()=>{
   const {state,env,call,login,saved}=setup();await login();
   for(const path of ['/api/kvk/search?kvkNumber=68750110','/api/kvk/search?name=Fixture&city=Testplaats']){
-    const r=await call(path);assert.equal(r.status,200);assert.match(r.headers.get('cache-control'),/no-store/);const text=await r.text();assert.ok(!text.includes(env.KVK_API_KEY));assert.ok(!text.includes(env.KVK_INTAKE_RPC_KEY));assert.equal(JSON.parse(text).data.results.length,1);
+    const r=await call(path);assert.equal(r.status,200);assert.match(r.headers.get('cache-control'),/no-store/);const text=await r.text();assert.ok(!text.includes(env.KVKBASE_API_KEY));assert.ok(!text.includes(env.KVK_INTAKE_RPC_KEY));assert.equal(JSON.parse(text).data.results.length,1);
   }
-  assert.equal(state.calls[1].searchParams.get('plaats'),'Testplaats');
+  assert.equal(state.calls[1].searchParams.get('q'),'Fixture Testplaats');
   const preview=await call('/api/kvk/organizations/68750110');assert.equal(preview.status,200);assert.equal((await preview.json()).data.company.legalName,'Fixture BV');
-  state.basis={...basis(),statutaireNaam:'Actuele officiële naam'};
+  state.lookup={...lookup(),legalName:'Actuele officiële naam'};
   const created=await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'Mijn klant',email:'contact@example.invalid'}});
   assert.equal(created.status,201);assert.equal(saved().p_profile.legalName,'Actuele officiële naam');assert.equal(saved().p_manual.email,'contact@example.invalid');assert.equal(saved().p_server_key,env.KVK_INTAKE_RPC_KEY);
-  assert.equal(state.calls.filter(u=>u.pathname.includes('basisprofielen')).length,2);
-  assert.doesNotMatch(await created.text(),new RegExp(env.KVK_API_KEY+'|'+env.KVK_INTAKE_RPC_KEY));
+  assert.equal(state.calls.filter(u=>u.pathname.includes('/lookup/')).length,3);
+  assert.doesNotMatch(await created.text(),new RegExp(env.KVKBASE_API_KEY+'|'+env.KVK_INTAKE_RPC_KEY));
 });
 test('Worker invalid, inactive, upstream, missing config and duplicate scenarios are controlled',async()=>{
   const {state,fixture,env,call,login,saved}=setup();await login();
   for(const path of ['/api/kvk/search?kvkNumber=123','/api/kvk/organizations/123','/api/kvk/search?name=x','/api/kvk/search?name=Fixture&page=1000'])assert.equal((await call(path)).status,400);
   assert.equal((await call('/api/kvk/organizations/90004973')).status,503);
-  assert.equal((await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'x'},profile:basis()})).status,400);
-  state.basis=basis('96354429');state.search=search('96354429',false);
+  assert.equal((await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'x'},profile:lookup()})).status,400);
+  state.lookup=lookup('96354429',false);state.search=search('96354429',false);
   const inactive=await call('/api/relationships/from-kvk',{kvkNumber:'96354429',manual:{relationshipName:'x'}});assert.equal(inactive.status,409);assert.equal(saved(),undefined);
-  state.basis=basis();state.search=search();fixture.rpc=async()=>Response.json({code:'23505',message:env.KVK_API_KEY},{status:409});
+  state.lookup=lookup();state.search=search();fixture.rpc=async()=>Response.json({code:'23505',message:env.KVKBASE_API_KEY},{status:409});
   const duplicate=await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'x'}});assert.equal(duplicate.status,409);assert.equal((await duplicate.json()).error.code,'DUPLICATE_KVK');
-  delete env.KVK_API_KEY;assert.equal((await call('/api/kvk/search?name=Fixture')).status,503);
+  delete env.KVKBASE_API_KEY;assert.equal((await call('/api/kvk/search?name=Fixture')).status,503);
 });
 test('Worker requires active Office + fresh TOTP; writing needs owner/admin; origin remains enforced',async()=>{
   const {fixture,state,call,login}=setup();assert.equal((await call('/api/kvk/search?name=Fixture')).status,401);assert.equal(state.calls.length,0);
@@ -66,6 +66,6 @@ test('wizard is shipped in Worker assets, uses textContent and sends only number
 test('extended intake refetches KvK and sends one atomic RPC with validated optional sections',async()=>{
  const{fixture,state,call,login}=setup();await login();let saved;fixture.rpc=async(name,args)=>{assert.equal(name,'office_create_relationship_from_kvk_intake');saved=args;return Response.json({relationship_id:randomUUID(),organization_id:randomUUID()});};
  const intake={company:{visit_country:'NL',visit_postcode:'3526 kp',visit_house_number:'93'},fiscal:{vat_status:'kor',income_tax:'corporate_tax',income_tax_confirm:true},administration:{vehicles:false,klaas_vis:'unknown'}};
- const r=await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'Extended'},intake});assert.equal(r.status,201);assert.equal(saved.p_intake.company.visit_postcode,'3526KP');assert.equal(saved.p_intake.fiscal.income_tax,'corporate_tax');assert.equal(state.calls.filter(u=>u.pathname.includes('basisprofielen')).length,1);
+ const r=await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'Extended'},intake});assert.equal(r.status,201);assert.equal(saved.p_intake.company.visit_postcode,'3526KP');assert.equal(saved.p_intake.fiscal.income_tax,'corporate_tax');assert.equal(state.calls.filter(u=>u.pathname.includes('/lookup/')).length,1);
  for(const bad of [{unknown:{}},{fiscal:{unknown:'x'}},{fiscal:{income_tax_confirmed_by:randomUUID()}},{company:{registration_number:'12345678'}},[]])assert.equal((await call('/api/relationships/from-kvk',{kvkNumber:'68750110',manual:{relationshipName:'Extended'},intake:bad})).status,400);
 });

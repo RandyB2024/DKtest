@@ -21,7 +21,11 @@ test('six-step wizard retains input, requires fiscal confirmation, clears only a
  const api=async(path,body)=>{if(body){saved=body;return {relationship_id:'fixture'};}if(path.startsWith('/api/kvk/search'))return{results:[{name:'Fixture',kvkNumber:'68750110',status:'active'}]};return{company,environment:'test'};};
  openKvkIntake(api,async()=>{created++;});const button=label=>{const b=root.all().find(n=>n.tagName==='BUTTON'&&n.textContent===label);assert.ok(b,label);return b;};const field=key=>{const f=root.all().find(n=>n.name===key);assert.ok(f,key);return f;};
  const enter=(key,value)=>{field(key).value=value;field(key).dispatchEvent(new Event('input',{bubbles:true}));};const submit=async()=>{root.all().find(n=>n.tagName==='FORM').onsubmit({preventDefault(){}});await tick();await tick();};const click=async label=>{await button(label).onclick();await tick();};
- enter('number','68750110');await submit();await click('Fixture · 68750110 ·  · actief');await click('Gegevens gecontroleerd · verder');enter('relationshipName','Keep this name');await submit();
+ enter('number','68750110');await submit();
+ const resultCard=root.all().find(n=>n.tagName==='BUTTON'&&n.className==='kvk-result-card');
+ assert.ok(resultCard,'KvK-resultaatkaart');
+ await resultCard.onclick();await tick();
+ await click('Gegevens gecontroleerd · verder');enter('relationshipName','Keep this name');await submit();
  assert.equal(field('vehicle_count').tagName,'INPUT');assert.equal(field('vehicle_notes').tagName,'TEXTAREA');assert.equal(field('vehicle_count').parentElement.hidden,true);
  field('vehicles').value='true';await field('vehicles').onchange();enter('vehicle_count','2');field('vehicles').value='false';let pending=field('vehicles').onchange();await click('Behouden');await pending;assert.equal(field('vehicles').value,'true');assert.equal(field('vehicle_count').value,'2');
  field('vehicles').value='false';pending=field('vehicles').onchange();await click('Bevestigen');await pending;assert.equal(field('vehicle_count').value,'');assert.equal(field('vehicle_count').parentElement.hidden,true);

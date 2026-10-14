@@ -5,7 +5,7 @@ import { runScheduledInvoiceReminders } from './invoice-reminders.mjs';
 
 const assets = new Set([
   '/index.html', '/offline.html', '/styles.css', '/intake.css', '/supabase.css',
-  '/supabase-app.js', '/passkeys.js', '/kvk-intake.js', '/customer-profile.js', '/profile-fields.js', '/client-workspace.js', '/intake-fields.js', '/intake-form.js', '/tasks.js', '/documents-readonly.js', '/banking.js', '/payment-monitoring.js', '/communication.js', '/wize-admin.js', '/sw.js', '/manifest.webmanifest',
+  '/supabase-app.js', '/passkeys.js', '/kvk-intake.js', '/customer-profile.js', '/profile-fields.js', '/client-workspace.js', '/intake-fields.js', '/intake-form.js', '/tasks.js', '/documents-readonly.js', '/banking.js', '/payment-monitoring.js', '/tax-returns.js', '/communication.js', '/wize-admin.js', '/sw.js', '/manifest.webmanifest',
   '/personal-portal-access.js',
   '/assets/logo.png', '/assets/icon-192.png', '/assets/icon-512.png',
 ]);

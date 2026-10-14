@@ -1,5 +1,5 @@
-import {basis,search} from './helpers/kvk-fixture.mjs';
-import {normalizeBasis,normalizeSearch} from '../src/kvk/normalize.mjs';
+import {lookup} from './helpers/kvk-fixture.mjs';
+import {normalizeLookup} from '../src/kvk/normalize.mjs';
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -65,7 +65,7 @@ test('KvK atomic intake, server capability, uniqueness and RLS', async t => {
     await pg.exec(readFileSync(new URL('../../portal/supabase/migrations/202609270001_kvk_customer_onboarding.sql',import.meta.url),'utf8'));
     const serverKey=randomBytes(32).toString('hex');
     await pg.query("insert into office_kvk_private.worker_gate values(true,encode(sha256(convert_to($1,'UTF8')),'hex'),'test')",[serverKey]);
-    const company=number=>normalizeBasis(basis(number),number,normalizeSearch(search(number)));
+    const company=number=>normalizeLookup(lookup(number),number);
     async function role(code){await pg.exec('reset role');await pg.query("update office_memberships set role_id=(select id from roles where scope='office' and code=$1),status='active' where user_id=$2",[code,office]);await pg.query("update profiles set account_status='active' where id=$1",[office]);await asUser(office,'aal2');}
     async function intake(number='68750110',key=serverKey,manual={relationshipName:'Intake'},profile=company(number)){
       return (await pg.query('select public.office_create_relationship_from_kvk($1::jsonb,$2::jsonb,$3,$4::timestamptz,$5) as data',[JSON.stringify(profile),JSON.stringify(manual),'test',new Date().toISOString(),key])).rows[0].data;
