@@ -162,6 +162,7 @@ export async function mountWizeAdmin(
         waitingCustomer: 0,
         reminderDue: 0,
         snoozed: 0,
+        escalated: 0,
       },
 
       items: [],
@@ -546,6 +547,9 @@ export async function mountWizeAdmin(
 
       snoozed:
         "Uitgesteld",
+
+      escalated:
+        "Bij Bestemd",
     };
 
     return labels[state] ??
@@ -668,6 +672,29 @@ export async function mountWizeAdmin(
           </strong>
         </article>
 
+
+        <article
+          class="${
+            Number(
+              counts.escalated ??
+              0
+            ) > 0
+              ? "handoff"
+              : ""
+          }"
+        >
+          <span>
+            Bij Bestemd
+          </span>
+
+          <strong>
+            ${esc(
+              counts.escalated ??
+              0
+            )}
+          </strong>
+        </article>
+
       </div>
 
 
@@ -731,36 +758,72 @@ export async function mountWizeAdmin(
                       </div>
 
 
-                      <div class="wize-signal-time">
+                      <div class="wize-signal-side">
+
+                        <div class="wize-signal-time">
+
+                          ${
+                            item.officeState ===
+                              "escalated"
+                              ? `
+                                <span>
+                                  Overgenomen
+                                </span>
+
+                                <strong>
+                                  ${esc(
+                                    formatActivityDate(
+                                      item.escalatedAt
+                                    )
+                                  )}
+                                </strong>
+                              `
+                              : item.nextReminderAt
+                                ? `
+                                  <span>
+                                    Volgende controle
+                                  </span>
+
+                                  <strong>
+                                    ${esc(
+                                      formatActivityDate(
+                                        item.nextReminderAt
+                                      )
+                                    )}
+                                  </strong>
+                                `
+                                : `
+                                  <span>
+                                    Gedetecteerd
+                                  </span>
+
+                                  <strong>
+                                    ${esc(
+                                      formatActivityDate(
+                                        item.firstDetectedAt
+                                      )
+                                    )}
+                                  </strong>
+                                `
+                          }
+
+                        </div>
+
 
                         ${
-                          item.nextReminderAt
+                          item.conversationId
                             ? `
-                              <span>
-                                Volgende controle
-                              </span>
-
-                              <strong>
-                                ${esc(
-                                  formatActivityDate(
-                                    item.nextReminderAt
-                                  )
-                                )}
-                              </strong>
+                              <a
+                                class="wize-signal-conversation"
+                                data-route
+                                href="/communication?thread=${encodeURIComponent(
+                                  item.conversationId
+                                )}"
+                              >
+                                Open gesprek →
+                              </a>
                             `
-                            : `
-                              <span>
-                                Gedetecteerd
-                              </span>
-
-                              <strong>
-                                ${esc(
-                                  formatActivityDate(
-                                    item.firstDetectedAt
-                                  )
-                                )}
-                              </strong>
-                            `
+                            : ""
                         }
 
                       </div>
