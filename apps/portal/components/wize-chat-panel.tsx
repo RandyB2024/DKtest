@@ -275,6 +275,11 @@ export default function WizeChatPanel({
                   body:
                     signal.message,
 
+                  needsHuman:
+                    Boolean(
+                      signal.eventId,
+                    ),
+
                   action:
                     signal.action,
 
@@ -620,8 +625,20 @@ export default function WizeChatPanel({
             "customer",
         );
 
+    const escalationQuestion =
+      customerMessage
+        ?.body ??
+      (
+        message.eventId
+          ? `Ik heb een vraag over dit Wize-signaal:
+
+${message.body}`
+          : ""
+      );
+
+
     if (
-      !customerMessage
+      !escalationQuestion
     ) {
       setError(
         "Ik heb nog geen vraag om door te zetten.",
@@ -657,8 +674,11 @@ export default function WizeChatPanel({
                       .organizationId,
 
                   question:
-                    customerMessage
-                      .body,
+                    escalationQuestion,
+
+                  eventId:
+                    message.eventId ??
+                    null,
 
                   wizeAnswer:
                     message.body,
