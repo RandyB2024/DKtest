@@ -155,6 +155,18 @@ export async function mountWizeAdmin(
   let activity =
     [];
 
+  let signalOverview =
+    {
+      counts: {
+        new: 0,
+        waitingCustomer: 0,
+        reminderDue: 0,
+        snoozed: 0,
+      },
+
+      items: [],
+    };
+
   let busy =
     false;
 
@@ -265,6 +277,12 @@ export async function mountWizeAdmin(
       <section
         class="panel"
         data-appointments
+      ></section>
+
+
+      <section
+        class="panel"
+        data-signals
       ></section>
 
 
@@ -511,6 +529,267 @@ export async function mountWizeAdmin(
       type ??
       "Wize-signaal";
   }
+
+
+  function signalStateLabel(
+    state
+  ) {
+    const labels = {
+      new:
+        "Nieuw",
+
+      waiting_customer:
+        "Wacht op klant",
+
+      reminder_due:
+        "Herinnering nodig",
+
+      snoozed:
+        "Uitgesteld",
+    };
+
+    return labels[state] ??
+      state ??
+      "Actief";
+  }
+
+
+  function renderSignals() {
+    const target =
+      root.querySelector(
+        "[data-signals]"
+      );
+
+
+    if (!target) {
+      return;
+    }
+
+
+    const counts =
+      signalOverview
+        ?.counts ??
+      {};
+
+
+    const items =
+      Array.isArray(
+        signalOverview
+          ?.items
+      )
+        ? signalOverview.items
+        : [];
+
+
+    target.innerHTML = `
+      <div class="wize-admin-section-head">
+
+        <div>
+          <p class="eyebrow">
+            ACTIEVE SIGNALEN
+          </p>
+
+          <h3>
+            Waar is Wize nu mee bezig?
+          </h3>
+
+          <p>
+            Openstaande signalen die Wize volgt
+            voor deze onderneming.
+          </p>
+        </div>
+
+      </div>
+
+
+      <div class="wize-signal-metrics">
+
+        <article>
+          <span>
+            Nieuw
+          </span>
+
+          <strong>
+            ${esc(
+              counts.new ??
+              0
+            )}
+          </strong>
+        </article>
+
+
+        <article>
+          <span>
+            Wacht op klant
+          </span>
+
+          <strong>
+            ${esc(
+              counts.waitingCustomer ??
+              0
+            )}
+          </strong>
+        </article>
+
+
+        <article
+          class="${
+            Number(
+              counts.reminderDue ??
+              0
+            ) > 0
+              ? "attention"
+              : ""
+          }"
+        >
+          <span>
+            Herinnering nodig
+          </span>
+
+          <strong>
+            ${esc(
+              counts.reminderDue ??
+              0
+            )}
+          </strong>
+        </article>
+
+
+        <article>
+          <span>
+            Uitgesteld
+          </span>
+
+          <strong>
+            ${esc(
+              counts.snoozed ??
+              0
+            )}
+          </strong>
+        </article>
+
+      </div>
+
+
+      ${
+        items.length
+          ? `
+            <div class="wize-signal-list">
+
+              ${
+                items.map(
+                  item => `
+                    <article
+                      class="wize-signal-item"
+                      data-state="${esc(
+                        item.officeState
+                      )}"
+                    >
+
+                      <div class="wize-signal-main">
+
+                        <div class="wize-signal-heading">
+
+                          <span
+                            class="wize-signal-state"
+                          >
+                            ${esc(
+                              signalStateLabel(
+                                item.officeState
+                              )
+                            )}
+                          </span>
+
+                          <span
+                            class="wize-signal-priority"
+                          >
+                            ${esc(
+                              item.priority ??
+                              "normal"
+                            )}
+                          </span>
+
+                        </div>
+
+
+                        <strong>
+                          ${esc(
+                            item.title ??
+                            "Wize-signaal"
+                          )}
+                        </strong>
+
+
+                        <small>
+                          ${esc(
+                            eventTypeLabel(
+                              item.eventType
+                            )
+                          )}
+                        </small>
+
+                      </div>
+
+
+                      <div class="wize-signal-time">
+
+                        ${
+                          item.nextReminderAt
+                            ? `
+                              <span>
+                                Volgende controle
+                              </span>
+
+                              <strong>
+                                ${esc(
+                                  formatActivityDate(
+                                    item.nextReminderAt
+                                  )
+                                )}
+                              </strong>
+                            `
+                            : `
+                              <span>
+                                Gedetecteerd
+                              </span>
+
+                              <strong>
+                                ${esc(
+                                  formatActivityDate(
+                                    item.firstDetectedAt
+                                  )
+                                )}
+                              </strong>
+                            `
+                        }
+
+                      </div>
+
+                    </article>
+                  `
+                ).join("")
+              }
+
+            </div>
+          `
+          : `
+            <div class="wize-activity-empty">
+
+              <strong>
+                Geen open Wize-signalen
+              </strong>
+
+              <p>
+                Voor deze onderneming hoeft Wize
+                op dit moment niets actief op te volgen.
+              </p>
+
+            </div>
+          `
+      }
+    `;
+  }
+
 
 
   function renderActivity() {
@@ -1692,6 +1971,7 @@ export async function mountWizeAdmin(
     renderSecurity();
     renderCapabilities();
     renderAppointments();
+    renderSignals();
     renderActivity();
     renderRules();
     renderAddRule();
@@ -1741,6 +2021,21 @@ export async function mountWizeAdmin(
         data.activity
           ?.items ??
         [];
+
+
+      signalOverview =
+        data.signalOverview ??
+        {
+          counts: {
+            new: 0,
+            waitingCustomer: 0,
+            reminderDue: 0,
+            snoozed: 0,
+          },
+
+          items: [],
+        };
+
 
       renderAll();
 

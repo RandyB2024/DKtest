@@ -195,6 +195,18 @@ export async function wizeAdminRoute(
       );
 
 
+    const signalOverview =
+      checkQuery(
+        await client.rpc(
+          "office_wize_get_signal_overview",
+          {
+            p_organization_id:
+              organizationId,
+          }
+        )
+      );
+
+
     return {
       status: 200,
 
@@ -202,6 +214,7 @@ export async function wizeAdminRoute(
         policy,
         appointmentStatus,
         activity,
+        signalOverview,
       },
     };
   }

@@ -3947,3 +3947,260 @@ body.sidebar-collapsed #logout::after{
   }
 
 }
+
+/* ==========================================================
+   WIZE ACTIVE SIGNALS V1
+   ========================================================== */
+
+.wize-signal-metrics{
+  display:grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0,1fr)
+    );
+
+  gap:11px;
+
+  margin-top:18px;
+}
+
+
+.wize-signal-metrics article{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  min-height:68px;
+
+  padding:
+    14px
+    16px;
+
+  border:
+    1px solid #e0e9ed;
+
+  border-radius:13px;
+
+  background:#f8fbfc;
+}
+
+
+.wize-signal-metrics article.attention{
+  border-color:#f0d7a4;
+
+  background:
+    #fff8ea;
+}
+
+
+.wize-signal-metrics span{
+  color:#667e8d;
+
+  font-size:.75rem;
+  font-weight:700;
+}
+
+
+.wize-signal-metrics strong{
+  color:#0b3852;
+
+  font-size:1.4rem;
+}
+
+
+.wize-signal-list{
+  display:grid;
+
+  gap:9px;
+
+  margin-top:17px;
+}
+
+
+.wize-signal-item{
+  display:grid;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    auto;
+
+  gap:18px;
+
+  align-items:center;
+
+  padding:
+    15px
+    16px;
+
+  border:
+    1px solid #e1eaee;
+
+  border-radius:13px;
+
+  background:#fff;
+}
+
+
+.wize-signal-item[data-state="new"]{
+  border-left:
+    4px solid #20c9d7;
+}
+
+
+.wize-signal-item[data-state="reminder_due"]{
+  border-left:
+    4px solid #e6a63b;
+
+  background:#fffdf7;
+}
+
+
+.wize-signal-item[data-state="waiting_customer"]{
+  border-left:
+    4px solid #8ca6b5;
+}
+
+
+.wize-signal-item[data-state="snoozed"]{
+  border-left:
+    4px solid #b6bdc3;
+}
+
+
+.wize-signal-main{
+  min-width:0;
+}
+
+
+.wize-signal-heading{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  margin-bottom:7px;
+}
+
+
+.wize-signal-state,
+.wize-signal-priority{
+  display:inline-flex;
+
+  align-items:center;
+
+  min-height:23px;
+
+  padding:
+    0
+    8px;
+
+  border-radius:999px;
+
+  font-size:.63rem;
+
+  font-weight:800;
+
+  text-transform:uppercase;
+
+  letter-spacing:.04em;
+}
+
+
+.wize-signal-state{
+  background:#edf8fa;
+
+  color:#087c99;
+}
+
+
+.wize-signal-priority{
+  background:#f1f4f6;
+
+  color:#71828e;
+}
+
+
+.wize-signal-main > strong{
+  display:block;
+
+  color:#143b52;
+
+  font-size:.9rem;
+}
+
+
+.wize-signal-main > small{
+  display:block;
+
+  margin-top:4px;
+
+  color:#83949f;
+
+  font-size:.72rem;
+}
+
+
+.wize-signal-time{
+  min-width:150px;
+
+  text-align:right;
+}
+
+
+.wize-signal-time span{
+  display:block;
+
+  color:#8a9aa5;
+
+  font-size:.65rem;
+}
+
+
+.wize-signal-time strong{
+  display:block;
+
+  margin-top:3px;
+
+  color:#506b7d;
+
+  font-size:.73rem;
+}
+
+
+@media(max-width:850px){
+
+  .wize-signal-metrics{
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0,1fr)
+      );
+  }
+
+}
+
+
+@media(max-width:600px){
+
+  .wize-signal-metrics{
+    grid-template-columns:1fr;
+  }
+
+
+  .wize-signal-item{
+    grid-template-columns:1fr;
+  }
+
+
+  .wize-signal-time{
+    min-width:0;
+
+    text-align:left;
+  }
+
+}
