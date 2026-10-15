@@ -114,6 +114,18 @@ export function loadConfig(env = process.env) {
     supabaseServiceRoleKey:
       env.SUPABASE_SERVICE_ROLE_KEY || '',
 
+    wizeOffice:
+      Object.freeze({
+        url:
+          env.WIZE_OLLAMA_URL || '',
+
+        key:
+          env.WIZE_BRIDGE_KEY || '',
+
+        model:
+          env.WIZE_OLLAMA_MODEL || 'qwen2.5:3b',
+      }),
+
     communicationEmailjs:
       Object.freeze({
         privateKey:
