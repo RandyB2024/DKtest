@@ -19,6 +19,10 @@ import {
   notifyOfficeOfCustomerMessage,
 } from "@/lib/communication-email";
 
+import {
+  askWizeOllama,
+} from "@/lib/wize/ollama";
+
 
 type OpenPositionsRow = {
   receivables_total_cents:
@@ -2188,14 +2192,58 @@ export async function POST(
           organizationId,
         );
 
-      const answer =
+      const deterministicAnswer =
         answerQuestion(
           message,
           context,
         );
 
+
+      /*
+       * Fiscale, juridische en andere gevoelige vragen
+       * blijven deterministisch geblokkeerd en gaan niet
+       * naar het taalmodel.
+       */
+      if (
+        deterministicAnswer
+          .needsHuman
+        &&
+        deterministicAnswer
+          .answer
+          .includes(
+            "fiscale of wettelijke regels"
+          )
+      ) {
+        return Response.json(
+          deterministicAnswer,
+        );
+      }
+
+
+      const ollamaAnswer =
+        await askWizeOllama(
+          {
+            question:
+              message,
+
+            organization: {
+              id:
+                organizationId,
+
+              name:
+                organization
+                  ?.name ??
+                "Onderneming",
+            },
+
+            context,
+          }
+        );
+
+
       return Response.json(
-        answer,
+        ollamaAnswer ??
+        deterministicAnswer,
       );
     },
   );
