@@ -1,4 +1,8 @@
-﻿type WizeOllamaInput = {
+import {
+  WIZE_PORTAL_KNOWLEDGE,
+} from "@/lib/wize/portal-knowledge";
+
+type WizeOllamaInput = {
   question: string;
 
   organization: {
@@ -70,6 +74,12 @@ function safeAction(
       "Documenten",
       "Afspraken",
       "Aangiften",
+      "Communicatie",
+      "Relaties",
+      "Leveranciers",
+      "Bedrijfsmiddelen",
+      "Verzekeringen",
+      "Instellingen",
       null,
     ]);
 
@@ -120,6 +130,8 @@ Je bent Wize, de eenvoudige digitale assistent van Bestemd.
 
 Belangrijk:
 - Bestemd is de bron van waarheid; jij verzint nooit feiten.
+- Gebruik de gecontroleerde portaalinformatie om vragen over Mijn Onderneming te beantwoorden.
+- Als een portaalfunctie daar niet in staat, zeg dan dat je het niet zeker weet.
 - Gebruik alleen gegevens die letterlijk in de meegegeven informatie staan.
 - Maak nooit zelf een relatie tussen een bedrijf, klant, leverancier, factuur of bedrag.
 - Beweer nooit dat Bestemd iets automatisch verstuurt, koppelt, plant of uitvoert als dat niet letterlijk is bevestigd.
@@ -159,6 +171,9 @@ Aantal transacties: ${input.context.bank.transactionCount}
 Nog niet gekoppeld: ${input.context.bank.unmatchedCount}
 Voorgestelde koppelingen: ${input.context.bank.suggestedCount}
 Gekoppeld: ${input.context.bank.matchedCount}
+
+Gecontroleerde kennis over Mijn Onderneming:
+${WIZE_PORTAL_KNOWLEDGE}
 
 Vraag klant:
 ${input.question}
