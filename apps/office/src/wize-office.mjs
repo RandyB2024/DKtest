@@ -361,7 +361,8 @@ async function askOllama(
   config,
   fetchImpl,
   question,
-  context
+  context,
+  history = []
 ) {
   const settings =
     config.wizeOffice;
@@ -382,6 +383,7 @@ async function askOllama(
       "Je bent Wize Office, de interne assistent van Bestemd B.V.",
       "Je wordt uitsluitend gebruikt door bevoegde medewerkers van Bestemd Office.",
       "Antwoord alleen over de geselecteerde onderneming en alleen met feiten uit de meegegeven context.",
+      "Gebruik eerdere chatberichten alleen om vervolgvragen te begrijpen; actuele bedrijfscontext blijft altijd leidend.",
       "Verzin nooit bedragen, klanten, leveranciers, documenten, afspraken, statussen of acties.",
       "Trek geen fiscale of juridische conclusie als die niet rechtstreeks uit de gegevens volgt.",
       "Zeg nooit dat je een actie hebt uitgevoerd. Deze versie is alleen-lezen.",
@@ -473,6 +475,28 @@ async function askOllama(
                 content:
                   systemPrompt,
               },
+              ...history
+                .filter(
+                  item =>
+                    item &&
+                    ["user","assistant"].includes(
+                      item.role
+                    ) &&
+                    typeof item.content ===
+                      "string"
+                )
+                .slice(-8)
+                .map(
+                  item => ({
+                    role:
+                      item.role,
+                    content:
+                      item.content.slice(
+                        0,
+                        3000
+                      ),
+                  })
+                ),
               {
                 role:
                   "user",
@@ -599,6 +623,11 @@ export async function wizeOfficeRoute(
   const input =
     await readBody(req);
 
+  const history =
+    Array.isArray(input.history)
+      ? input.history
+      : [];
+
   const organizationId =
     typeof input.organizationId ===
       "string"
@@ -644,7 +673,8 @@ export async function wizeOfficeRoute(
   const direct =
     deterministicAnswer(
       question,
-      context
+      context,
+      history
     );
 
   const result =
