@@ -162,6 +162,9 @@ export async function mountWizeOffice(root,api,data){
 
     try{
       await ensureChat();
+      const historyForModel=
+        currentMessages.slice(-8);
+
       addMessage("user",clean);
       await append("user",clean);
       input.value="";
@@ -175,7 +178,7 @@ export async function mountWizeOffice(root,api,data){
       const result=await api("/api/wize-office",{
         organizationId:select.value,
         question:clean,
-        history:currentMessages.slice(-8)
+        history:historyForModel
       });
 
       thinking.remove();
