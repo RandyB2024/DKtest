@@ -223,15 +223,10 @@ export async function POST(
           await calcomRequest(
             `/bookings/${encodeURIComponent(
               body.uid,
-            )}`,
+            )}/cancel`,
             {
               method:
-                "DELETE",
-
-              headers: {
-                "cal-api-version":
-                  "2024-08-13",
-              },
+                "POST",
 
               body:
                 JSON.stringify({
