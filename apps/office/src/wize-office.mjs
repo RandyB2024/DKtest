@@ -673,8 +673,7 @@ export async function wizeOfficeRoute(
   const direct =
     deterministicAnswer(
       question,
-      context,
-      history
+      context
     );
 
   const result =
@@ -683,7 +682,8 @@ export async function wizeOfficeRoute(
       config,
       fetchImpl,
       question,
-      context
+      context,
+      history
     );
 
   return {
