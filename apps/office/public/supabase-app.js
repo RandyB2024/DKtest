@@ -248,6 +248,19 @@ async function renderRoute() {
     } else if (path === '/communication') {
       header('Communicatie');
       html = '<div id="office-communication"></div>';
+    } else if (path === '/wize-office') {
+      header('Wize Office');
+
+      const data =
+        await api(
+          '/api/clients'
+        );
+
+      recordData =
+        data;
+
+      html =
+        '<div id="office-wize-chat"></div>';
     } else if (path === '/wize') {
       header('Wize Beheer');
 
@@ -264,7 +277,7 @@ async function renderRoute() {
     } else if (path === '/settings') {
       header('Instellingen');html='<section class="panel" id="passkey-settings"></section>';
     } else {
-      const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/banking':'Bankieren','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/wize':'Wize Beheer','/settings':'Instellingen' };
+      const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/banking':'Bankieren','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/wize-office':'Wize Office','/wize':'Wize Beheer','/settings':'Instellingen' };
       header(titles[path] || 'Office');
       html = `<section class="panel empty"><p class="eyebrow">Fase 1 · Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
     }
@@ -318,6 +331,23 @@ async function renderRoute() {
       }else if(path==='/communication'){
         const {mountOfficeCommunication}=await import('/communication.js');
         if(activeGeneration===generation&&currentUser)await mountOfficeCommunication($('#office-communication'),api,currentUser);
+      }else if(path==='/wize-office'){
+        const {
+          mountWizeOffice
+        } = await import(
+          '/wize-office.js'
+        );
+
+        if(
+          activeGeneration===generation
+          &&currentUser
+        ){
+          await mountWizeOffice(
+            $('#office-wize-chat'),
+            api,
+            recordData
+          );
+        }
       }else if(path==='/wize'){
         const {
           mountWizeAdmin
