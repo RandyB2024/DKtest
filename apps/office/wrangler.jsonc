@@ -21,7 +21,9 @@
     "EMAILJS_SERVICE_ID": "service_crgn6gs",
     "EMAILJS_TEMPLATE_ID": "template_gmaawki",
     "EMAILJS_PUBLIC_KEY": "NQoJjpyBsuRCXnbyP",
-    "PORTAL_BASE_URL": "https://mijn.testadmin.nl"
+    "PORTAL_BASE_URL": "https://mijn.testadmin.nl",
+    "WIZE_OLLAMA_URL": "https://ai.mijnbestemd.nl",
+    "WIZE_OLLAMA_MODEL": "qwen2.5:3b"
   }
 }
 
