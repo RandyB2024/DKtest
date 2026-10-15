@@ -571,8 +571,6 @@ export async function wizeOfficeRoute(
     new Set([
       "owner",
       "admin",
-      "accountant",
-      "handler",
     ]);
 
   if (
