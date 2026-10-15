@@ -1038,3 +1038,94 @@
     padding-right:20px;
   }
 }
+
+
+.wize-new-chat{
+  width:100%;
+  justify-content:center;
+}
+
+.wize-chat-history{
+  display:grid;
+  gap:10px;
+  min-height:0;
+}
+
+.wize-chat-history-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  color:#607887;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.wize-chat-list{
+  display:grid;
+  gap:6px;
+  max-height:42vh;
+  overflow:auto;
+  padding-right:3px;
+}
+
+.wize-chat-item{
+  display:grid;
+  gap:3px;
+  width:100%;
+  padding:10px 11px;
+  border:1px solid transparent;
+  border-radius:10px;
+  background:transparent;
+  color:#17384c;
+  text-align:left;
+  cursor:pointer;
+}
+
+.wize-chat-item:hover{
+  background:#fff;
+  border-color:#dbe7eb;
+}
+
+.wize-chat-item.active{
+  background:#fff;
+  border-color:#c9e0e5;
+  box-shadow:0 3px 10px rgba(8,47,73,.04);
+}
+
+.wize-chat-item span{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.82rem;
+  font-weight:700;
+}
+
+.wize-chat-item small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#7b8f9b;
+  font-size:.7rem;
+}
+
+.wize-no-chats{
+  margin:4px 0 0;
+  font-size:.78rem;
+}
+
+.wize-office-chat-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+}
+
+#wize-delete-chat{
+  white-space:nowrap;
+}
+
+.wize-office-shell--assistant .wize-office-sidebar{
+  min-height:0;
+}
