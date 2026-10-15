@@ -23,6 +23,10 @@ import {
   askWizeOllama,
 } from "@/lib/wize/ollama";
 
+import {
+  answerPortalQuestion,
+} from "@/lib/wize/portal-knowledge";
+
 
 type OpenPositionsRow = {
   receivables_total_cents:
@@ -2346,6 +2350,21 @@ export async function POST(
           "Vraag",
           3000,
         );
+
+      /*
+       * Portaalvragen komen uit een gecontroleerde
+       * Bestemd-kennislaag en hoeven niet naar Ollama.
+       */
+      const portalAnswer =
+        answerPortalQuestion(
+          message,
+        );
+
+      if (portalAnswer) {
+        return Response.json(
+          portalAnswer,
+        );
+      }
 
       const context =
         await loadCompanyContext(
