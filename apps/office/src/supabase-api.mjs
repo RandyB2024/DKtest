@@ -16,6 +16,7 @@ import { paidInvoiceDocumentsRoute } from './paid-invoice-documents.mjs';
 import { creditorsRoute } from './creditors.mjs';
 import { wizeAdminRoute } from './wize-admin.mjs';
 import { wizeOfficeRoute } from './wize-office.mjs';
+import { wizeOfficeHistoryRoute } from './wize-office-history-route.mjs';
 import { taxReturnsRoute } from './tax-returns.mjs';
 import { officeSession, officeIdentity, checkQuery, OfficeError } from './auth/supabase.mjs';
 
@@ -701,6 +702,24 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
         res,
         taxReturns.status,
         taxReturns.data
+      );
+    }
+
+
+    const wizeOfficeHistory =
+      await wizeOfficeHistoryRoute(
+        req,
+        url,
+        client,
+        user,
+        body
+      );
+
+    if (wizeOfficeHistory) {
+      return sendJson(
+        res,
+        wizeOfficeHistory.status,
+        wizeOfficeHistory.data
       );
     }
 
