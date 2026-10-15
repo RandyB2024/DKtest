@@ -876,6 +876,10 @@ async function loadAppointmentContext(
 }
 
 
+const WIZE_FALLBACK_ANSWER =
+  "Deze weet ik niet zeker genoeg om zomaar iets te roepen. Ik zet liever geen verkeerde koers voor je uit. Zal ik Randy of Ed er even bij halen?";
+
+
 function containsAny(
   value: string,
   words: string[],
@@ -1060,11 +1064,158 @@ function answerQuestion(
         typeof loadCompanyContext
       >
     >,
+  organizationName: string,
 ) {
   const question =
     message
       .toLowerCase()
       .trim();
+
+  const humanRequest =
+    containsAny(
+      question,
+      [
+        "echte medewerker",
+        "medewerker spreken",
+        "echt persoon",
+        "mens spreken",
+        "iemand van bestemd",
+        "contact met bestemd",
+        "randy spreken",
+        "ed spreken",
+      ],
+    );
+
+  if (humanRequest) {
+    return {
+      answer:
+        "Natuurlijk. Je kunt rechtstreeks contact opnemen met een medewerker van Bestemd.",
+      needsHuman:
+        false,
+      action:
+        "Communicatie",
+      actionLabel:
+        "Open communicatie",
+    };
+  }
+
+  if (
+    /^(hallo|hoi|hey|goedemorgen|goedemiddag|goedenavond)[!. ]*$/i.test(
+      message.trim(),
+    )
+  ) {
+    return {
+      answer:
+        "Hoi! 👋 Waar kan ik je mee helpen?",
+      needsHuman:
+        false,
+      action:
+        null,
+      actionLabel:
+        null,
+    };
+  }
+
+  const selectedOrganization =
+    organizationName
+      .toLowerCase()
+      .trim();
+
+  const mentionsCompanyForm =
+    /\b(b\.?v\.?|n\.?v\.?|vof|stichting|eenmanszaak)\b/i.test(
+      message,
+    );
+
+  if (
+    mentionsCompanyForm &&
+    !question.includes(
+      selectedOrganization,
+    )
+  ) {
+    return {
+      answer:
+        `Ik kan alleen gegevens bekijken van de onderneming die nu is geselecteerd: ${organizationName}. Als je een andere onderneming wilt bekijken, selecteer die dan eerst.`,
+      needsHuman:
+        false,
+      action:
+        null,
+      actionLabel:
+        null,
+    };
+  }
+
+  if (
+    containsAny(
+      question,
+      [
+        "andere onderneming",
+        "andere bedrijf",
+        "onderneming van andere",
+        "bedrijf van andere",
+      ],
+    )
+  ) {
+    return {
+      answer:
+        `Ik kan alleen gegevens bekijken van de onderneming die nu is geselecteerd: ${organizationName}. Kies eerst een andere onderneming als je daarvan de cijfers wilt bekijken.`,
+      needsHuman:
+        false,
+      action:
+        null,
+      actionLabel:
+        null,
+    };
+  }
+
+  const asksAboutAutomation =
+    containsAny(
+      question,
+      [
+        "automatisch",
+        "rechtstreeks verstuurd",
+        "rechtstreeks verzonden",
+        "herinnering",
+        "herinneringen",
+        "wordt verstuurd",
+        "wordt verzonden",
+      ],
+    );
+
+  if (asksAboutAutomation) {
+    return {
+      answer:
+        "Ik wil daar niet over gokken. Of iets automatisch wordt verstuurd of uitgevoerd, moet door Bestemd zelf bevestigd zijn. Je kunt dit het beste via Communicatie aan Bestemd vragen.",
+      needsHuman:
+        false,
+      action:
+        "Communicatie",
+      actionLabel:
+        "Open communicatie",
+    };
+  }
+
+  const asksHowToInvoice =
+    containsAny(
+      question,
+      [
+        "factuur maken",
+        "factuur aanmaken",
+        "nieuwe factuur",
+      ],
+    );
+
+  if (asksHowToInvoice) {
+    return {
+      answer:
+        "Je kunt binnen Bestemd een factuur aanmaken. Ik wil geen stappen verzinnen die misschien niet overeenkomen met jouw scherm. Open de facturatie in het portaal; als iets niet duidelijk is, kun je Bestemd via Communicatie vragen.",
+      needsHuman:
+        false,
+      action:
+        null,
+      actionLabel:
+        null,
+    };
+  }
 
   const taxQuestion =
     containsAny(
@@ -1355,24 +1506,34 @@ function answerQuestion(
         "samenvatting",
         "stand van zaken",
         "hoe gaat",
+        "financiële situatie",
+        "financiele situatie",
+        "hoe sta ik financieel",
+        "hoe staan mijn cijfers",
       ],
     )
   ) {
     return {
       answer:
-        `Deze maand staat de omzet op ${money(
+        `Deze maand heb je ${money(
           context.month
             .revenueCents,
-        )}, de kosten op ${money(
+        )} omzet en ${money(
           context.month
             .costsCents,
-        )} en het resultaat op ${money(
+        )} aan kosten. Je resultaat is ${money(
           context.month
             .resultCents,
-        )}. Daarnaast staat ${money(
+        )}. Klanten moeten je samen nog ${money(
           context.receivables
             .totalCents,
-        )} aan klantfacturen open.`,
+        )} betalen. Daarvan is ${money(
+          context.receivables
+            .overdueCents,
+        )} te laat. Je moet zelf nog ${money(
+          context.payables
+            .totalCents,
+        )} aan leveranciers betalen. Er zijn ${context.bank.unmatchedCount} banktransactie${context.bank.unmatchedCount === 1 ? "" : "s"} die nog niet gekoppeld ${context.bank.unmatchedCount === 1 ? "is" : "zijn"}.`,
 
       needsHuman:
         false,
@@ -1387,7 +1548,7 @@ function answerQuestion(
 
   return {
     answer:
-      "Deze weet ik niet zeker genoeg om zomaar iets te roepen. Ik zet liever geen verkeerde koers voor je uit. Zal ik Randy of Ed er even bij halen?",
+      WIZE_FALLBACK_ANSWER,
 
     needsHuman:
       true,
@@ -2196,6 +2357,9 @@ export async function POST(
         answerQuestion(
           message,
           context,
+          organization
+            ?.name ??
+            "Onderneming",
         );
 
 
@@ -2213,6 +2377,22 @@ export async function POST(
           .includes(
             "fiscale of wettelijke regels"
           )
+      ) {
+        return Response.json(
+          deterministicAnswer,
+        );
+      }
+
+
+      /*
+       * Bestemd is de bron van waarheid.
+       * Herkende financiële, product- en veiligheidsvragen
+       * worden deterministisch beantwoord. Het taalmodel
+       * mag deze feiten niet overschrijven.
+       */
+      if (
+        deterministicAnswer.answer !==
+        WIZE_FALLBACK_ANSWER
       ) {
         return Response.json(
           deterministicAnswer,
