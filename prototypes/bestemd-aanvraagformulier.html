@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BESTEMD — Aanvraagformulier (ontwikkelvoorbeeld)</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,Arial;color:#192b35;background:#f5f7f7}*{box-sizing:border-box}
+body{margin:0}.wrap{max-width:960px;margin:auto;padding:34px 18px 90px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;gap:15px}
+.brand{font-size:27px;font-weight:800;letter-spacing:.12em;color:#1d4241}.flag{font-size:12px;background:#fdf2d7;color:#76540c;border-radius:99px;padding:8px 13px}
+h1{font-size:clamp(26px,4vw,40px);margin:6px 0 10px}h2{font-size:23px;margin:0 0 12px}h3{margin:18px 0 12px}
+p{color:#587079;line-height:1.55}.card{background:white;border:1px solid #e1e9e8;border-radius:20px;padding:clamp(20px,4vw,36px);box-shadow:0 10px 35px #122b2b0b}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:25px 0}.step{border-top:5px solid #dbe4e2;padding:12px 3px;color:#667a7c;font-size:13px}.step.active{border-color:#2c6d62;color:#204f49;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px}.field{display:flex;flex-direction:column;gap:7px;margin:0 0 15px}
+label{font-size:14px;font-weight:650}input,select,textarea{font:inherit;width:100%;padding:12px 13px;border:1px solid #cbd9d7;border-radius:10px;background:white;color:#1c3439}
+input:focus,select:focus,textarea:focus{outline:2px solid #79aaa0;outline-offset:1px}
+input[type=checkbox]{width:auto;accent-color:#27685e}input[type=file]{padding:10px}.check{display:flex;gap:11px;align-items:start;margin:12px 0;font-size:14px}.check label{font-weight:450}
+.actions{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:25px;flex-wrap:wrap}
+button{cursor:pointer;font:inherit;border-radius:11px;padding:12px 18px;border:1px solid #b7ceca;background:white;color:#27594f;font-weight:700}
+button.primary{background:#255c53;border-color:#255c53;color:white}button:focus-visible{outline:3px solid #6fa69a;outline-offset:2px}
+.subcard{border:1px solid #dfe8e6;border-radius:14px;padding:20px;margin:15px 0;background:#fbfdfc}
+.hidden{display:none!important}.note{font-size:13px;background:#eef5f2;border-radius:10px;padding:12px 15px;color:#42635e}
+.warning{background:#fff7e5;color:#76540c}.companyhead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+small,.muted{color:#678084}.progress{font-size:13px;color:#53736e}.docs{display:grid;gap:10px}
+.doc{display:grid;grid-template-columns:1fr minmax(160px,1fr);align-items:center;gap:12px;padding:10px;border-bottom:1px solid #e6eeee}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.doc{grid-template-columns:1fr}.wrap{padding-top:18px}.steps{gap:5px}.step{font-size:11px}}
+</style>
+</head>
+<body><div class="wrap">
+<header><div class="brand">BESTEMD<span style="color:#a8b7b1">.</span></div><span class="flag">Alleen ontwikkelvoorbeeld · geen echte klantgegevens</span></header>
+<p class="progress">Persoonlijke uitnodiging · voorbeeld zonder backend</p>
+<h1>Jouw volgende stap begint hier.</h1>
+<p>We hebben samen jouw bestemming besproken. Nu richten we jouw onderneming(en) goed in. Je vult dit formulier één keer in, ook als je meerdere B.V.'s hebt.</p>
+<div class="steps" aria-label="Voortgang"><div class="step active" data-step="0">01 · De ondernemer</div><div class="step" data-step="1">02 · De onderneming</div><div class="step" data-step="2">03 · Afronding</div></div>
+<form id="onboarding" novalidate>
+<section class="card" data-page="0">
+<h2>1. De ondernemer</h2><p>Wie ben je en wie mogen toegang krijgen tot Mijn Onderneming?</p>
+<div class="grid">
+<div class="field"><label for="first">Voornaam *</label><input id="first" required autocomplete="given-name"></div>
+<div class="field"><label for="last">Achternaam *</label><input id="last" required autocomplete="family-name"></div>
+<div class="field"><label for="email">E-mailadres *</label><input id="email" type="email" required autocomplete="email"></div>
+<div class="field"><label for="mobile">Mobiel telefoonnummer *</label><input id="mobile" type="tel" required autocomplete="tel"></div>
+</div>
+<div class="field"><label for="role">Rol *</label><select id="role" required><option value="">Kies een rol</option><option>Eigenaar</option><option>Bestuurder</option><option>Gemachtigde</option></select></div>
+<h3>Extra gebruikers</h3><p>Iedereen krijgt later een eigen uitnodiging en stelt zelf zijn wachtwoord in. Toegang wordt per onderneming toegekend.</p>
+<div id="users"></div><button type="button" id="add-user">+ Extra gebruiker toevoegen</button>
+<div class="actions"><span class="muted">Stap 1 van 3</span><button class="primary" type="button" data-next>Verder naar ondernemingen →</button></div>
+</section>
+<section class="card hidden" data-page="1">
+<h2>2. De onderneming(en)</h2><p>Vul per onderneming de gegevens in. Alleen relevante vervolgvragen verschijnen.</p>
+<div id="companies"></div><button type="button" id="add-company">+ Onderneming toevoegen</button>
+<div class="actions"><button type="button" data-back>← Vorige</button><button type="button" class="primary" data-next>Verder naar afronding →</button></div>
+</section>
+<section class="card hidden" data-page="2">
+<h2>3. Afronding en documenten</h2><p>Controleer de gegevens en voeg de documenten toe die op jouw situatie van toepassing zijn.</p>
+<div id="document-sections"></div>
+<div class="note warning">Dit is een ontwikkelvoorbeeld. Geselecteerde bestanden worden niet geüpload of bewaard. In de definitieve versie kunnen uitstelbare documenten binnen vijf werkdagen veilig worden aangeleverd. Wettelijk noodzakelijke controles mogen hierdoor niet worden overgeslagen.</div>
+<h3>Akkoord en ondertekening</h3>
+<div class="check"><input type="checkbox" id="terms" required><label for="terms">Ik ga akkoord met de opdrachtbevestiging en de algemene voorwaarden. *</label></div>
+<div class="check"><input type="checkbox" id="truth" required><label for="truth">Ik verklaar bevoegd te zijn om namens de betrokken onderneming(en) te handelen en de gegevens naar waarheid te hebben ingevuld. *</label></div>
+<div class="check"><input type="checkbox" id="privacy" required><label for="privacy">Ik heb kennisgenomen van de privacyverklaring. *</label></div>
+<div class="grid">
+<div class="field"><label for="sign-name">Naam ondertekenaar *</label><input id="sign-name" required></div>
+<div class="field"><label for="sign-role">Functie *</label><input id="sign-role" required></div>
+</div>
+<div class="note">Een getypte naam is hier géén rechtsgeldige digitale ondertekenworkflow. De definitieve versie krijgt identiteits-/bevoegdheidscontrole, versievaste documenten, bewijsregistratie en een beveiligde ondertekenstap.</div>
+<div class="actions"><button type="button" data-back>← Vorige</button><button class="primary" type="submit">Controleer voorbeeld</button></div>
+<div id="result" role="status" aria-live="polite"></div>
+</section>
+</form>
+</div>
+<script>
+"use strict";
+// Veilig prototype: geen netwerkverzoeken, cookies of opslag van persoonsgegevens.
+const $=s=>document.querySelector(s);
+const form=$("#onboarding"), pages=[...document.querySelectorAll("[data-page]")];
+let step=0, companyCounter=0, userCounter=0;
+function el(tag,attributes={},text){const n=document.createElement(tag);for(const [k,v] of Object.entries(attributes)){if(k==="className")n.className=v;else n.setAttribute(k,v)}if(text!==undefined)n.textContent=text;return n}
+function field(parent,label,type="text",required=false,options=null){const wrap=el("div",{className:"field"});const id="f-"+Math.random().toString(36).slice(2);const lab=el("label",{for:id},label+(required?" *":""));let inp;if(options){inp=el("select",{id});options.forEach(([value,title])=>inp.append(el("option",{value},title)))}else{inp=el("input",{id,type})}if(required)inp.required=true;wrap.append(lab,inp);parent.append(wrap);return inp}
+function select(parent,label,options){return field(parent,label,"text",false,options)}
+function checkbox(parent,text){const wrap=el("div",{className:"check"}),inp=el("input",{type:"checkbox"}),lab=el("label",{},text);lab.prepend(inp);wrap.append(lab);parent.append(wrap);return inp}
+function group(parent,label){const box=el("div",{className:"subcard"});box.append(el("h3",{},label));parent.append(box);return box}
+function showStep(next){if(next>step){const invalid=pages[step].querySelectorAll("input:required,select:required");for(const input of invalid){if(!input.checkValidity()){input.reportValidity();input.focus();return}}}
+step=next;pages.forEach((p,i)=>p.classList.toggle("hidden",i!==step));document.querySelectorAll(".step").forEach((p,i)=>p.classList.toggle("active",i===step));if(step===2)renderDocuments();window.scrollTo({top:0,behavior:"smooth"})}
+document.querySelectorAll("[data-next]").forEach(b=>b.addEventListener("click",()=>showStep(step+1)));
+document.querySelectorAll("[data-back]").forEach(b=>b.addEventListener("click",()=>showStep(step-1)));
+$("#add-user").addEventListener("click",()=>{const n=++userCounter,box=group($("#users"),"Extra gebruiker "+n);
+field(box,"Naam *","text",true);field(box,"Eigen e-mailadres *","email",true);
+select(box,"Gewenste rechten",[["view","Alleen inzage"],["docs","Inzage en documenten"],["manage","Uitgebreid beheer (na goedkeuring)"]]);
+const btn=el("button",{type:"button"},"Verwijderen");btn.addEventListener("click",()=>box.remove());box.append(btn)});
+function company(){const n=++companyCounter,box=el("div",{className:"subcard", "data-company":String(n)});
+const head=el("div",{className:"companyhead"});head.append(el("h3",{},"Onderneming "+n));
+const remove=el("button",{type:"button"},"Verwijderen");remove.addEventListener("click",()=>{if(document.querySelectorAll("[data-company]").length>1)box.remove()});head.append(remove);box.append(head);
+const basics=el("div",{className:"grid"});box.append(basics);
+field(basics,"Naam onderneming *","text",true).dataset.name="companyName";
+const kvk=field(basics,"KvK-nummer (8 cijfers)","text");kvk.maxLength=8;kvk.pattern="[0-9]{8}";
+field(basics,"Algemeen zakelijk e-mailadres","email");
+field(basics,"Vast aanspreekpunt administratie *","text",true);
+field(basics,"E-mailadres aanspreekpunt *","email",true);
+field(basics,"Mobiel nummer aanspreekpunt","tel");
+field(basics,"Datum overdracht boekhouding","date");
+const legal=select(box,"Rechtsvorm *",[["bv","Besloten vennootschap (B.V.)"],["eenmanszaak","Eenmanszaak"],["vof","Vennootschap onder firma (vof)"],["anders","Andere rechtsvorm"]]);
+const conditional=el("div");box.append(conditional);
+function render(){conditional.replaceChildren();const type=legal.value;
+if(type==="anders"){field(conditional,"Welke rechtsvorm? *","text",true)}
+if(type==="bv"){field(conditional,"RSIN","text");const vatGroup=select(conditional,"Fiscale eenheid btw?",[["nee","Nee"],["ja","Ja"]]);const vpGroup=select(conditional,"Fiscale eenheid VPB?",[["nee","Nee"],["ja","Ja"]]);const hint=el("p",{className:"note hidden"},"Beschikking(en) Belastingdienst uploaden bij stap 3.");conditional.append(hint);function update(){hint.classList.toggle("hidden",vatGroup.value!=="ja"&&vpGroup.value!=="ja")}vatGroup.addEventListener("change",update);vpGroup.addEventListener("change",update);box.dataset.fiscal="no";function setFiscal(){box.dataset.fiscal=(vatGroup.value==="ja"||vpGroup.value==="ja")?"yes":"no"}vatGroup.addEventListener("change",setFiscal);vpGroup.addEventListener("change",setFiscal)}
+const vat=select(conditional,"Btw-plichtig?",[["ja","Ja"],["nee","Nee"],["onbekend","Weet ik niet"]]);
+const vatFields=el("div");conditional.append(vatFields);function vatRender(){vatFields.replaceChildren();if(vat.value==="ja"){select(vatFields,"Aangiftetijdvak",[["kwartaal","Per kwartaal"],["maand","Per maand"],["jaar","Per jaar"]]);field(vatFields,"Btw-identificatienummer","text");if(type==="eenmanszaak")field(vatFields,"Omzetbelastingnummer","text")};checkbox(vatFields,"Ik pas de kleineondernemersregeling (KOR) toe");}vat.addEventListener("change",vatRender);vatRender();
+field(conditional,"Zakelijk IBAN *","text",true);const extra=checkbox(conditional,"Er zijn extra zakelijke bankrekeningen");const extraWrap=el("div",{className:"hidden"});field(extraWrap,"Extra IBAN('s)","text");conditional.append(extraWrap);extra.addEventListener("change",()=>extraWrap.classList.toggle("hidden",!extra.checked));
+const cc=checkbox(conditional,"Er is een zakelijke creditcard");const ccWrap=el("div",{className:"hidden"});field(ccWrap,"Uitgevende bank / kaartsoort","text");conditional.append(ccWrap);cc.addEventListener("change",()=>ccWrap.classList.toggle("hidden",!cc.checked));
+field(conditional,"Website","url");field(conditional,"Logo (optioneel)","file");
+const staff=select(conditional,"Personeel in dienst?",[["nee","Nee"],["ja","Ja"]]);const staffWrap=el("div",{className:"hidden"});field(staffWrap,"Loonheffingennummer","text");staffWrap.append(el("p",{className:"note"},"Bestemd maakt hiervoor later automatisch een interne taak aan."));conditional.append(staffWrap);staff.addEventListener("change",()=>staffWrap.classList.toggle("hidden",staff.value!=="ja"));
+const cash=select(conditional,"Kasadministratie of contante ontvangsten/betalingen?",[["nee","Nee"],["ja","Ja"]]);const cashWrap=el("div",{className:"hidden"});field(cashWrap,"Toelichting kasadministratie","text");conditional.append(cashWrap);cash.addEventListener("change",()=>cashWrap.classList.toggle("hidden",cash.value!=="ja"));
+}legal.addEventListener("change",render);render();box.dataset.companyType="bv";legal.addEventListener("change",()=>box.dataset.companyType=legal.value);$("#companies").append(box)}
+$("#add-company").addEventListener("click",company);company();
+const bvDocs=["Aandeelhoudersregister","Oprichtingsakte","Aandeelhoudersovereenkomst (indien aanwezig)","Managementovereenkomst (indien van toepassing)","Rekening-courant-/leningsovereenkomsten met aandeelhouders (indien aanwezig)","Arbeidsovereenkomst DGA (indien van toepassing)","UBO-registratiebewijs / relevante KvK-informatie (indien noodzakelijk)"];
+function renderDocuments(){const area=$("#document-sections");area.replaceChildren();document.querySelectorAll("[data-company]").forEach((c,i)=>{const name=c.querySelector('[data-name="companyName"]').value.trim()||"Onderneming "+(i+1);const sec=group(area,name);
+const documents=["Recent KvK-uittreksel (indien nog nodig)",...(c.dataset.companyType==="bv"?bvDocs:[]),...(c.dataset.fiscal==="yes"?["Beschikking fiscale eenheid Belastingdienst"]:[])];
+documents.forEach(doc=>{const row=el("div",{className:"doc"});row.append(el("label",{},doc));const input=el("input",{type:"file",accept:".pdf,.png,.jpg,.jpeg"});input.setAttribute("aria-label","Upload "+doc);row.append(input);sec.append(row)})})}
+form.addEventListener("submit",e=>{e.preventDefault();if(!form.reportValidity())return;const box=$("#result");box.replaceChildren();box.append(el("p",{className:"note"},"✓ Het voorbeeldformulier is ingevuld. Er is niets verzonden, ondertekend of opgeslagen. De productieversie vereist een beveiligde uitnodiging, servervalidatie, documentopslag en digitale ondertekening."))});
+</script></body></html>
