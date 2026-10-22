@@ -116,7 +116,7 @@ function loginScreen(message = '') {
       </p>
 
       <p class="bestemd-login-footer">
-        Bestemd · Rust &amp; Vertrouwen
+        Bestemd Â· Rust &amp; Vertrouwen
       </p>
 
     </main>
@@ -130,7 +130,7 @@ function loginScreen(message = '') {
 }
 async function mfaScreen() {
   screen('lock'); $('#login').replaceChildren();
-  $('#lock').innerHTML = `<main class="login-card"><p class="eyebrow">Office beveiligen</p><h1>Tweestapsverificatie</h1><div id="mfa-content">Authenticator controleren…</div><p id="auth-error" role="alert"></p><p class="micro">Authenticator kwijt? Neem contact op met uw beheerder.</p><button id="mfa-logout" class="text-button">Afmelden</button></main>`;
+  $('#lock').innerHTML = `<main class="login-card"><p class="eyebrow">Office beveiligen</p><h1>Tweestapsverificatie</h1><div id="mfa-content">Authenticator controlerenâ€¦</div><p id="auth-error" role="alert"></p><p class="micro">Authenticator kwijt? Neem contact op met uw beheerder.</p><button id="mfa-logout" class="text-button">Afmelden</button></main>`;
   $('#mfa-logout').onclick = logout;
   const activeEpoch = epoch;
   try {
@@ -151,7 +151,7 @@ async function mfaScreen() {
   } catch (error) { authError(error.message); }
 }
 function verificationForm(factors, setup) {
-  $('#mfa-content').innerHTML = `${setup ? '<p>Scan deze QR-code. Deel de code of instelsleutel met niemand.</p><img id="qr" width="220" height="220" alt="QR-code voor uw authenticator"><details><summary>Handmatig instellen</summary><code id="totp-secret"></code></details>' : ''}<form id="verify">${factors.length > 1 ? `<label>Authenticator<select name="factor">${factors.map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`).join('')}</select></label>` : ''}<label>Verificatiecode<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label><button class="primary" type="submit">Verifiëren</button></form>`;
+  $('#mfa-content').innerHTML = `${setup ? '<p>Scan deze QR-code. Deel de code of instelsleutel met niemand.</p><img id="qr" width="220" height="220" alt="QR-code voor uw authenticator"><details><summary>Handmatig instellen</summary><code id="totp-secret"></code></details>' : ''}<form id="verify">${factors.length > 1 ? `<label>Authenticator<select name="factor">${factors.map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`).join('')}</select></label>` : ''}<label>Verificatiecode<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required></label><button class="primary" type="submit">VerifiÃ«ren</button></form>`;
   if (setup) { const qr = setup.qrCode; $('#qr').src = qr.startsWith('data:image/svg+xml') ? qr : 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(qr); $('#totp-secret').textContent = setup.secret; }
   $('#verify').onsubmit = async event => {
     event.preventDefault(); const form = event.target, button = form.querySelector('button'); button.disabled = true; authError('');
@@ -173,7 +173,7 @@ async function refreshStatus() {
     if(currentUser && currentUser.roleCode !== state.user.roleCode) $('#view').replaceChildren();
     screen('app'); currentUser = state.user;
     $('#login').replaceChildren(); $('#lock').replaceChildren();
-    $('#avatar').textContent = currentUser.displayName.split(' ').map(part => part[0]).slice(0,2).join(''); $('#avatar').title = `${currentUser.displayName} · ${currentUser.role}`;
+    $('#avatar').textContent = currentUser.displayName.split(' ').map(part => part[0]).slice(0,2).join(''); $('#avatar').title = `${currentUser.displayName} Â· ${currentUser.role}`;
     if (entering) await renderRoute();
   } catch (error) { if (activeEpoch === epoch) loginScreen(error.message); }
   finally { statusPending = false; }
@@ -185,7 +185,7 @@ async function logout() {
 }
 function header(title) {
   $('#page-title').textContent = title;
-  $('#header-kicker').textContent = `Bestemd Office · ${currentUser?.displayName ?? ''}`;
+  $('#header-kicker').textContent = `Bestemd Office Â· ${currentUser?.displayName ?? ''}`;
   document.querySelectorAll('[data-route]').forEach(a => a.classList.toggle('active', a.pathname === location.pathname || a.pathname === '/clients' && location.pathname.startsWith('/clients/')));
 }
 async function renderRoute() {
@@ -194,7 +194,7 @@ async function renderRoute() {
   renderRoute.previousPath=location.pathname;
   const activeGeneration = ++generation, path = location.pathname === '/' ? '/dashboard' : location.pathname;
   $('#view').className = /^\/(clients|organizations)\/[^/]+$/.test(path) ? 'dossier-shell' : '';
-  $('#view').innerHTML = '<section class="panel" role="status">Gegevens veilig ophalen…</section>';
+  $('#view').innerHTML = '<section class="panel" role="status">Gegevens veilig ophalenâ€¦</section>';
   try {
     let html, recordData;
     if (path === '/dashboard' || path === '/clients') {
@@ -279,7 +279,7 @@ async function renderRoute() {
     } else {
       const titles = { '/work-queue':'Werkvoorraad','/administration':'Administratie','/banking':'Bankieren','/documents':'Documenten','/tax-returns':'Aangiften','/communication':'Communicatie','/audit':'Audittrail','/wize-office':'Wize Office','/wize':'Wize Beheer','/settings':'Instellingen' };
       header(titles[path] || 'Office');
-      html = `<section class="panel empty"><p class="eyebrow">Fase 1 · Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
+      html = `<section class="panel empty"><p class="eyebrow">Fase 1 Â· Supabase</p><h2>Nog niet gemigreerd</h2><p>${unavailable}</p><p>Er wordt niets lokaal opgeslagen of als verzonden aangemerkt.</p></section>`;
     }
     if (activeGeneration === generation && currentUser) { $('#view').innerHTML = html;
       if(path==='/clients'||path==='/dashboard'){
@@ -414,10 +414,14 @@ function customerControls(path, data) {
   const actions = document.createElement('div'); actions.className = 'customer-buttons';
   const button = (label, action) => { const b=document.createElement('button'); b.type='button'; b.textContent=label; if(label.endsWith('archiveren'))b.className='customer-action-danger'; b.onclick=action; actions.append(b); };
   if (currentUser.canManageCustomers) {
-    if (path === '/clients' || path === '/dashboard') button('Nieuwe klant',()=>customerForm('new'));
+    if (path === '/clients' || path === '/dashboard') {
+      button('Nieuwe klant',()=>customerForm('new'));
+      button('Nieuwe klant uitnodigen',()=>onboardingNewCustomerForm());
+    }
     if (data.relationship) {
       if(!data.organizations.length)button('Klantgegevens bewerken',()=>customerForm('relationship',data.relationship));
       button('Onderneming toevoegen',()=>customerForm('organization-new',data.relationship));
+      button('Aanvraag voorbereiden',()=>onboardingDraftForm(data.relationship,data.organizations));
       button('Klant archiveren',()=>archiveForm('relationship',data.relationship,data.organizations.length));
     }
     if (data.organization) {
@@ -442,7 +446,7 @@ function mutationDialog(title, fields, submitLabel, perform, destination) {
     event.preventDefault(); if(pending)return; pending=true;
     const activeEpoch=epoch; const errorBox=dialog.querySelector('.mutation-error'); errorBox.textContent='';
     const input=Object.fromEntries(new FormData(form));
-    form.querySelectorAll('button,fieldset').forEach(el=>el.disabled=true); form.querySelector('[type=submit]').textContent='Opslaan…';
+    form.querySelectorAll('button,fieldset').forEach(el=>el.disabled=true); form.querySelector('[type=submit]').textContent='Opslaanâ€¦';
     try {
       const result=await perform(input);
       if(activeEpoch!==epoch || !currentUser)return;
@@ -458,9 +462,113 @@ function mutationDialog(title, fields, submitLabel, perform, destination) {
   };
   dialog.showModal();
 }
+function onboardingDraftForm(relationship, organizations = []) {
+  if (!currentUser?.canManageCustomers) return;
+
+  const customerName = relationship.name || '';
+  const companyName = organizations[0]?.name || '';
+
+  const fields = `
+    <p class="muted">
+      Bereid de aanvraag voor. Er wordt nog geen e-mail verzonden.
+    </p>
+
+    <label>
+      Klantnaam
+      <input
+        name="customerName"
+        value="${escapeHtml(customerName)}"
+        maxlength="200"
+        required
+        autocomplete="name"
+      >
+    </label>
+
+    <label>
+      Ondernemingsnaam
+      <input
+        name="companyName"
+        value="${escapeHtml(companyName)}"
+        maxlength="200"
+        required
+        autocomplete="organization"
+      >
+    </label>
+
+    <label>
+      E-mailadres
+      <input
+        name="email"
+        type="email"
+        maxlength="254"
+        required
+        autocomplete="email"
+        placeholder="naam@onderneming.nl"
+      >
+    </label>
+
+    <p class="muted">
+      De aanvraag wordt opgeslagen als concept.
+      Uitnodigingslinks en automatische verzending volgen later.
+    </p>
+  `;
+
+  mutationDialog(
+    'Klantaanvraag voorbereiden',
+    fields,
+    'Concept opslaan',
+    input => api('/api/onboarding/drafts', {
+      relationshipId: relationship.id,
+      customerName: input.customerName,
+      companyName: input.companyName,
+      email: input.email
+    }),
+    () => '/clients/' + encodeURIComponent(relationship.id)
+  );
+}
+function onboardingNewCustomerForm() {
+  if (!currentUser?.canManageCustomers) return;
+
+  const fields = `
+    <p class="muted">
+      Maak een voorlopige klantaanvraag aan. Er wordt nog geen e-mail verzonden.
+    </p>
+    <label>
+      Klantnaam
+      <input name="customerName" maxlength="200"
+        required autocomplete="name">
+    </label>
+    <label>
+      Ondernemingsnaam
+      <input name="companyName" maxlength="200"
+        required autocomplete="organization">
+    </label>
+    <label>
+      E-mailadres
+      <input name="email" type="email" maxlength="254"
+        required autocomplete="email"
+        placeholder="naam@onderneming.nl">
+    </label>
+    <p class="muted">
+      De klantrelatie wordt voorlopig inactief aangemaakt.
+      De onderneming wordt pas na beoordeling definitief verwerkt.
+    </p>`;
+
+  mutationDialog(
+    'Nieuwe klantaanvraag',
+    fields,
+    'Conceptaanvraag aanmaken',
+    input => api('/api/onboarding/new-customer', {
+      customerName: input.customerName,
+      companyName: input.companyName,
+      email: input.email
+    }),
+    result => '/clients/' + encodeURIComponent(result.relationshipId)
+  );
+}
 function customerForm(kind, record={}) {
   const field=(label,name,value='',required=false,extra='')=>`<label>${label}<input name="${name}" value="${escapeHtml(value)}" maxlength="200" ${required?'required':''} ${extra}></label>`;
-  const orgFields=(prefix='',o={})=>field('Ondernemingsnaam',prefix+'name',o.name,true)+field('Officiële naam (optioneel)',prefix+'legal_name',o.legal_name)+field('KvK-nummer (optioneel)',prefix+'registration_number',o.registration_number,false,'pattern="[0-9]{8}" inputmode="numeric"');
+  const orgFields=(prefix='',o={})=>field('Ondernemingsnaam',prefix+'name',o.name,true)+field('OfficiÃ«le naam (optioneel)',prefix+'legal_name',o.legal_name)+field('KvK-nummer (optioneel)',prefix+'registration_number',o.registration_number,false,'pattern="[0-9]{8}" inputmode="numeric"');
   if(kind==='new') {
     const activeEpoch=epoch;
     import('/kvk-intake.js').then(({openKvkIntake})=>{

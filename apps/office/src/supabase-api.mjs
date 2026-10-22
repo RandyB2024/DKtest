@@ -7,6 +7,8 @@ import { passkeyAction, PasskeyError } from '../../shared/passkeys.mjs';
 import { parseCookieHeader, serializeCookieHeader } from '@supabase/ssr';
 import { writeOfficeCookie } from './auth/supabase.mjs';
 import { customerMutation } from './customer-management.mjs';
+import { onboardingDraftRoute } from './onboarding-route.mjs';
+import { onboardingNewCustomerRoute } from './onboarding-new-customer-route.mjs';
 import { personalPortalAccessRoute } from './personal-portal-access.mjs';
 import { kvkRoute } from './kvk/intake.mjs';
 import { profileRoute } from './customer-profile.mjs';
@@ -912,6 +914,10 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     if (profile) return sendJson(res,profile.status,profile.data);
     const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);
     if (intake) return sendJson(res,intake.status,intake.data);
+    const newCustomerOnboarding = await onboardingNewCustomerRoute(req, url, client, user, body);
+    if (newCustomerOnboarding) return sendJson(res, newCustomerOnboarding.status, newCustomerOnboarding.data);
+    const onboarding = await onboardingDraftRoute(req, url, client, user, body);
+    if (onboarding) return sendJson(res, onboarding.status, onboarding.data);
     const mutation = await customerMutation(req, url, client, user, body);
     if (mutation) return sendJson(res, mutation.status, mutation.data);
     if (!['GET','HEAD'].includes(req.method) && req.headers['content-type']?.startsWith('application/json')) {
