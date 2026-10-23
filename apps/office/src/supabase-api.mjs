@@ -9,6 +9,7 @@ import { writeOfficeCookie } from './auth/supabase.mjs';
 import { customerMutation } from './customer-management.mjs';
 import { onboardingDraftRoute } from './onboarding-route.mjs';
 import { onboardingNewCustomerRoute } from './onboarding-new-customer-route.mjs';
+import { onboardingListRoute } from './onboarding-list-route.mjs';
 import { personalPortalAccessRoute } from './personal-portal-access.mjs';
 import { kvkRoute } from './kvk/intake.mjs';
 import { profileRoute } from './customer-profile.mjs';
@@ -914,6 +915,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     if (profile) return sendJson(res,profile.status,profile.data);
     const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);
     if (intake) return sendJson(res,intake.status,intake.data);
+    const onboardingList = await onboardingListRoute(req, url, client, user);
+    if (onboardingList) return sendJson(res, onboardingList.status, onboardingList.data);
     const newCustomerOnboarding = await onboardingNewCustomerRoute(req, url, client, user, body);
     if (newCustomerOnboarding) return sendJson(res, newCustomerOnboarding.status, newCustomerOnboarding.data);
     const onboarding = await onboardingDraftRoute(req, url, client, user, body);
