@@ -417,6 +417,7 @@ function customerControls(path, data) {
     if (path === '/clients' || path === '/dashboard') {
       button('Nieuwe klant',()=>customerForm('new'));
       button('Nieuwe klant uitnodigen',()=>onboardingNewCustomerForm());
+      button('Klantaanvragen bekijken',()=>onboardingApplicationsDialog());
     }
     if (data.relationship) {
       if(!data.organizations.length)button('Klantgegevens bewerken',()=>customerForm('relationship',data.relationship));
@@ -525,6 +526,64 @@ function onboardingDraftForm(relationship, organizations = []) {
     }),
     () => '/clients/' + encodeURIComponent(relationship.id)
   );
+}
+async function onboardingApplicationsDialog() {
+  if (!currentUser?.canManageCustomers) return;
+  const activeEpoch = epoch;
+  const dialog = document.createElement('dialog');
+  dialog.className = 'customer-dialog';
+  const heading = document.createElement('h2');
+  heading.textContent = 'Klantaanvragen';
+  const note = document.createElement('p');
+  note.className = 'muted';
+  note.textContent = 'Concepten zijn nog niet naar klanten verzonden.';
+  const content = document.createElement('div');
+  content.setAttribute('role', 'status');
+  content.textContent = 'Aanvragen ophalen…';
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.textContent = 'Sluiten';
+  close.onclick = () => dialog.close();
+  dialog.append(heading, note, content, close);
+  dialog.addEventListener('close', () => dialog.remove());
+  $('#view').append(dialog);
+  dialog.showModal();
+  try {
+    const result = await api('/api/onboarding/applications');
+    if (activeEpoch !== epoch || !currentUser || !dialog.open) return;
+    content.replaceChildren();
+    const applications = result.applications || [];
+    if (!applications.length) {
+      content.textContent = 'Er zijn nog geen klantaanvragen.';
+      return;
+    }
+    for (const application of applications) {
+      const section = document.createElement('section');
+      section.className = 'panel';
+      const title = document.createElement('h3');
+      title.textContent = application.relationship_name || application.applicant_name || 'Klantaanvraag';
+      const details = document.createElement('p');
+      const names = (application.companies || []).map(company => company.name).filter(Boolean);
+      details.textContent = [
+        application.applicant_email,
+        'Status: ' + application.status,
+        names.length ? 'Ondernemingen: ' + names.join(', ') : 'Geen ondernemingen'
+      ].filter(Boolean).join(' · ');
+      const open = document.createElement('button');
+      open.type = 'button';
+      open.textContent = 'Klantdossier openen';
+      open.onclick = async () => {
+        dialog.close();
+        history.pushState({}, '', '/clients/' + encodeURIComponent(application.relationship_id));
+        await renderRoute();
+      };
+      section.append(title, details, open);
+      content.append(section);
+    }
+  } catch (error) {
+    if (activeEpoch !== epoch || !currentUser || !dialog.open) return;
+    content.textContent = error.message || 'Klantaanvragen zijn tijdelijk niet beschikbaar.';
+  }
 }
 function onboardingNewCustomerForm() {
   if (!currentUser?.canManageCustomers) return;
