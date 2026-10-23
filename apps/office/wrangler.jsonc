@@ -18,7 +18,7 @@
     "MFA_TRUST_MAX_AGE_SECONDS": "86400",
     "PASSKEYS_ENABLED": "false",
     "KVKBASE_API_BASE_URL": "https://api.kvkbase.nl/v1",
-    "EMAILJS_SERVICE_ID": "service_crgn6gs",
+    "EMAILJS_SERVICE_ID": "service_4vq2b63",
     "EMAILJS_TEMPLATE_ID": "template_gmaawki",
     "EMAILJS_PUBLIC_KEY": "NQoJjpyBsuRCXnbyP",
     "PORTAL_BASE_URL": "https://mijn.testadmin.nl",
