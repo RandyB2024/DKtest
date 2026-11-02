@@ -214,6 +214,59 @@ export default function Login({
 
           </div>
 
+          <div
+            className="bestemd-login-methods"
+            aria-label="Beschikbare inlogmethodes"
+            style={{ marginBottom: 24 }}
+          >
+            <p style={{ fontWeight: 700, marginBottom: 12 }}>
+              Kies je inlogmethode
+            </p>
+
+            <div style={{ display: "grid", gap: 10 }}>
+              <div
+                style={{
+                  padding: "14px 16px",
+                  border: "2px solid #087d99",
+                  borderRadius: 12,
+                  background: "#f0fbfd",
+                }}
+              >
+                <strong>Wachtwoord</strong>
+                <p style={{ margin: "4px 0 0", fontSize: 13 }}>
+                  Log hieronder in met je e-mailadres en wachtwoord.
+                </p>
+              </div>
+
+              <div
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #d5dce4",
+                  borderRadius: 12,
+                  opacity: 0.7,
+                }}
+              >
+                <strong>Eenmalige e-mailcode</strong>
+                <p style={{ margin: "4px 0 0", fontSize: 13 }}>
+                  Binnenkort beschikbaar
+                </p>
+              </div>
+
+              <div
+                style={{
+                  padding: "14px 16px",
+                  border: "1px solid #d5dce4",
+                  borderRadius: 12,
+                  opacity: 0.7,
+                }}
+              >
+                <strong>Passkey</strong>
+                <p style={{ margin: "4px 0 0", fontSize: 13 }}>
+                  Binnenkort beschikbaar
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="field bestemd-auth-field">
             <label htmlFor="email">
               E-mailadres

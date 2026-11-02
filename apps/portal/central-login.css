@@ -1,0 +1,831 @@
+/* BESTEMD 92C — lichte, open loginpagina */
+
+.bestemd-new-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 32px 6vw;
+  background: #fcfbf8;
+  color: #203c4b;
+  font-family: "Segoe UI", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+.bestemd-new-background {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 45% 70% at 95% 10%, rgba(171,223,222,.33), transparent 75%),
+    radial-gradient(ellipse 40% 55% at 2% 95%, rgba(244,218,189,.35), transparent 80%);
+}
+
+.bestemd-new-content {
+  position: relative;
+  z-index: 1;
+  width: min(1120px, 100%);
+  min-height: 680px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  column-gap: clamp(50px, 8vw, 130px);
+  align-items: center;
+}
+
+.bestemd-new-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  padding: 10px 0 28px;
+}
+
+.bestemd-new-wordmark {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.bestemd-new-logo {
+  width: 230px;
+  max-width: 100%;
+  max-height: 85px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.bestemd-new-header-caption { display: none; }
+
+.bestemd-new-card {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.bestemd-new-form,
+.bestemd-new-state {
+  width: 100%;
+  max-width: 450px;
+  padding: 0;
+}
+
+.bestemd-new-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: #e4f3f0;
+  color: #168c8e;
+}
+
+.bestemd-new-form h1,
+.bestemd-new-state h1 {
+  margin: 22px 0 12px;
+  font-size: clamp(34px, 3.8vw, 50px);
+  line-height: 1.12;
+  font-weight: 750;
+  letter-spacing: -.055em;
+  color: #203b49;
+}
+
+.bestemd-new-form > p,
+.bestemd-new-state > p {
+  color: #75878d;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.bestemd-new-fields {
+  display: grid;
+  gap: 10px;
+  margin-top: 34px;
+}
+
+.bestemd-new-fields label {
+  color: #35505b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.bestemd-new-fields input {
+  width: 100%;
+  height: 58px;
+  box-sizing: border-box;
+  padding: 0 19px;
+  border: 1px solid #e2e8e7;
+  border-radius: 14px;
+  background: #fff;
+  color: #203c4b;
+  font-size: 15px;
+  font-family: inherit;
+  box-shadow: 0 3px 10px rgba(25,65,70,.025);
+}
+
+.bestemd-new-fields input:focus {
+  outline: none;
+  border-color: #29a2a4;
+  box-shadow: 0 0 0 4px rgba(41,162,164,.10);
+}
+
+.bestemd-new-password-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.bestemd-new-password-label a {
+  color: #138b91;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.bestemd-new-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 27px;
+  padding: 15px 22px;
+  border: none;
+  border-radius: 14px;
+  background: #138e94;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 12px 25px rgba(19,142,148,.15);
+  transition: background .2s, transform .2s;
+}
+
+.bestemd-new-button:hover {
+  background: #0b777d;
+  transform: translateY(-1px);
+}
+
+.bestemd-new-button:disabled {
+  opacity: .6;
+  cursor: wait;
+  transform: none;
+}
+
+.bestemd-new-security {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 25px;
+  color: #859695;
+  font-size: 12px;
+}
+
+.bestemd-new-security svg { color: #138e94; }
+
+.bestemd-new-choices {
+  display: grid;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.bestemd-new-choice {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #e0e8e5;
+  border-radius: 15px;
+  background: #fff;
+  color: #203c4b;
+  text-decoration: none;
+  transition: background .2s, border-color .2s;
+}
+
+.bestemd-new-choice:hover {
+  background: #f2faf7;
+  border-color: #82c9c3;
+}
+
+.bestemd-new-choice > svg:first-child { color: #138e94; }
+
+.bestemd-new-choice span {
+  display: grid;
+  flex: 1;
+  gap: 5px;
+}
+
+.bestemd-new-choice small {
+  color: #7c9193;
+  font-size: 12px;
+}
+
+.bestemd-new-footer {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 30px;
+  color: #899b9a;
+  font-size: 12px;
+}
+
+/* Decoratieve rechterzijde zonder extra kaart */
+.bestemd-new-content::after {
+  content: "";
+  grid-column: 2;
+  grid-row: 2;
+  align-self: stretch;
+  min-height: 480px;
+  border-radius: 45% 55% 35% 65% / 45% 35% 65% 55%;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255,255,255,.85), transparent 35%),
+    radial-gradient(circle at 75% 75%, rgba(244,218,189,.65), transparent 50%),
+    linear-gradient(140deg, #d5eeea, #e8f5ef 55%, #c6e4e1);
+  box-shadow: inset 0 0 75px rgba(255,255,255,.6);
+  transform: rotate(-8deg) scale(.90);
+}
+
+/* MFA zonder kaart-in-kaart */
+.bestemd-new-mfa {
+  width: 100%;
+  max-width: 470px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.bestemd-new-mfa .bestemd-auth-page {
+  min-height: 0;
+  width: 100%;
+  display: block;
+  padding: 0;
+  background: transparent;
+}
+
+.bestemd-new-mfa .bestemd-auth-brand {
+  display: none !important;
+}
+
+.bestemd-new-mfa .bestemd-auth-panel,
+.bestemd-new-mfa .bestemd-auth-content,
+.bestemd-new-mfa .bestemd-auth-card,
+.bestemd-new-mfa .bestemd-auth-form {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.bestemd-new-mfa input {
+  max-width: 100%;
+}
+
+.bestemd-new-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.bestemd-new-loading-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: #e3f3f0;
+  color: #138e94;
+}
+
+.bestemd-new-progress {
+  margin-top: 30px;
+  width: min(100%, 320px);
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #e4efec;
+}
+
+.bestemd-new-progress-bar {
+  width: 35%;
+  height: 100%;
+  border-radius: inherit;
+  background: #138e94;
+  animation: bestemd-progress 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes bestemd-progress {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(280%); }
+}
+
+@media (max-width: 820px) {
+  .bestemd-new-page { padding: 28px 24px; }
+
+  .bestemd-new-content {
+    width: min(480px, 100%);
+    min-height: 0;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 30px;
+  }
+
+  .bestemd-new-header { grid-column: 1; padding: 0; }
+  .bestemd-new-card { grid-column: 1; grid-row: 2; }
+  .bestemd-new-footer { grid-column: 1; grid-row: 3; }
+  .bestemd-new-content::after { display: none; }
+  .bestemd-new-form h1 { font-size: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bestemd-new-progress-bar { animation: none; width: 100%; }
+  .bestemd-new-button,
+  .bestemd-new-choice { transition: none; }
+}
+/* BESTEMD 92D — lichtblauwe huisstijl */
+.bestemd-new-page {
+  background: #f7faff;
+  color: #123957;
+}
+
+.bestemd-new-background {
+  background:
+    radial-gradient(ellipse 55% 65% at 96% 8%, rgba(182,215,248,.55), transparent 75%),
+    radial-gradient(ellipse 40% 50% at 0% 100%, rgba(215,235,255,.7), transparent 80%);
+}
+
+.bestemd-new-form h1,
+.bestemd-new-state h1 {
+  color: #0d3556;
+}
+
+.bestemd-new-icon,
+.bestemd-new-loading-icon {
+  background: #e6f2ff;
+  color: #1769a7;
+}
+
+.bestemd-new-fields input {
+  border-color: #d9e6f4;
+  background: #fff;
+}
+
+.bestemd-new-fields input:focus {
+  border-color: #2b83ca;
+  box-shadow: 0 0 0 4px rgba(43,131,202,.12);
+}
+
+.bestemd-new-password-label a {
+  color: #176cae;
+}
+
+.bestemd-new-button {
+  background: #155f9b;
+  box-shadow: 0 12px 26px rgba(21,95,155,.16);
+}
+
+.bestemd-new-button:hover {
+  background: #104d7f;
+}
+
+.bestemd-new-security svg,
+.bestemd-new-choice > svg:first-child {
+  color: #207dbb;
+}
+
+.bestemd-new-content::after {
+  background:
+    radial-gradient(circle at 25% 22%, rgba(255,255,255,.95), transparent 35%),
+    radial-gradient(circle at 75% 80%, rgba(159,204,249,.7), transparent 50%),
+    linear-gradient(145deg, #dcefff, #c2def8 60%, #a9d0f2);
+}
+
+.bestemd-new-progress-bar {
+  background: #207dbb;
+}
+
+/* Zichtbare inlogmethodes */
+.bestemd-login-methods {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 29px;
+}
+
+.bestemd-login-method {
+  min-width: 0;
+  min-height: 76px;
+  box-sizing: border-box;
+  padding: 12px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #dbe7f3;
+  border-radius: 12px;
+  background: #fff;
+  color: #31536d;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: center;
+}
+
+.bestemd-login-method-active {
+  border-color: #297dbb;
+  background: #eff7ff;
+  color: #155f9b;
+}
+
+.bestemd-login-method-unavailable {
+  color: #899aab;
+  background: #f9fbfe;
+}
+
+.bestemd-login-method small {
+  font-size: 10px;
+  font-weight: 500;
+  color: #8b9bac;
+}
+
+.bestemd-login-method-symbol {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 17px;
+}
+
+@media (max-width: 480px) {
+  .bestemd-login-methods {
+    gap: 6px;
+  }
+
+  .bestemd-login-method {
+    font-size: 11px;
+    padding: 10px 5px;
+  }
+}
+/* BESTEMD-ROUTE-92E */
+
+.bestemd-new-content::after {
+  display: none !important;
+}
+
+.bestemd-route {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.bestemd-route-art {
+  width: min(100%, 520px);
+  overflow: hidden;
+  border-radius: 36px;
+  box-shadow: 0 24px 65px rgba(36,100,154,.10);
+}
+
+.bestemd-route-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.bestemd-route-copy {
+  text-align: center;
+}
+
+.bestemd-route-copy > span {
+  color: #397fb0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .18em;
+}
+
+.bestemd-route-copy h2 {
+  margin: 12px 0 8px;
+  color: #16476e;
+  font-size: clamp(27px, 3vw, 40px);
+  line-height: 1.15;
+  letter-spacing: -.045em;
+}
+
+.bestemd-route-copy p {
+  margin: 0;
+  color: #69869c;
+  font-size: 15px;
+}
+
+@media (max-width: 820px) {
+  .bestemd-route {
+    grid-column: 1;
+    grid-row: auto;
+    margin-top: 5px;
+  }
+
+  .bestemd-route-art {
+    max-width: 360px;
+  }
+
+  .bestemd-route-copy h2 {
+    font-size: 29px;
+  }
+
+  .bestemd-new-footer {
+    grid-row: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .bestemd-route-art {
+    max-width: 290px;
+  }
+}
+/* BESTEMD 93E — interactieve inlogmethodes */
+button.bestemd-login-method {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+button.bestemd-login-method:hover:not(:disabled) {
+  border-color: #297dbb;
+  background: #f0f8ff;
+}
+
+button.bestemd-login-method:focus-visible,
+.bestemd-email-code-actions button:focus-visible {
+  outline: 3px solid #72b6ea;
+  outline-offset: 3px;
+}
+
+button.bestemd-login-method:disabled {
+  cursor: wait;
+  opacity: .65;
+}
+
+.bestemd-email-code-hint {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #647f95;
+}
+
+.bestemd-email-code-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.bestemd-email-code-actions button {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: #176cae;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.bestemd-email-code-actions button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* BESTEMD_LOGIN_94D2 */
+
+.bestemd-new-page {
+  background: #f8fbff;
+  color: #153e61;
+  padding: 30px 5vw;
+}
+
+.bestemd-new-background {
+  background: linear-gradient(120deg, #ffffff, #f0f7ff);
+}
+
+.bestemd-new-content {
+  width: min(1280px, 100%);
+  min-height: min(780px, calc(100dvh - 60px));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  column-gap: clamp(35px, 5vw, 85px);
+}
+
+.bestemd-new-header {
+  grid-column: 1;
+  grid-row: 1;
+  padding: 8px 0 20px;
+}
+
+.bestemd-new-logo {
+  width: clamp(220px, 23vw, 300px);
+  max-height: 115px;
+}
+
+.bestemd-new-card {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+  padding-bottom: 20px;
+}
+
+.bestemd-new-form,
+.bestemd-new-state {
+  max-width: 440px;
+}
+
+.bestemd-new-form > .bestemd-new-icon {
+  display: none;
+}
+
+.bestemd-new-form h1 {
+  margin: 8px 0 10px;
+  color: #153e61;
+  font-size: clamp(36px, 3.7vw, 48px);
+  letter-spacing: -.045em;
+}
+
+.bestemd-new-form > p {
+  color: #688198;
+}
+
+.bestemd-login-methods {
+  margin-top: 26px;
+  gap: 9px;
+}
+
+.bestemd-login-method {
+  min-height: 66px;
+  border-radius: 10px;
+}
+
+.bestemd-new-fields {
+  margin-top: 26px;
+}
+
+.bestemd-new-fields input {
+  height: 54px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.bestemd-new-button {
+  min-height: 54px;
+  border-radius: 10px;
+  background: #155f9b;
+}
+
+.bestemd-new-security {
+  margin-top: 17px;
+}
+
+.bestemd-new-content::after {
+  display: none !important;
+}
+
+.bestemd-route {
+  grid-column: 2;
+  grid-row: 1 / 4;
+  position: relative;
+  align-self: stretch;
+  display: block;
+  min-height: 620px;
+  margin: -30px -5vw -30px 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.bestemd-route-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: linear-gradient(145deg, #dcefff, #a9d0f2);
+}
+
+.bestemd-landscape {
+  position: absolute;
+  inset: -3%;
+  background-image: url("/bestemd-login-landschap.png");
+  background-size: cover;
+  background-position: center;
+  animation: bestemd-landscape-drift 30s ease-in-out infinite alternate;
+}
+
+.bestemd-route-art::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -12%;
+  bottom: -12%;
+  left: -165px;
+  width: 210px;
+  border-radius: 50%;
+  background: #f8fbff;
+  box-shadow: 8px 0 0 rgba(226,239,251,.55);
+}
+
+.bestemd-route-copy {
+  display: none;
+}
+
+.bestemd-new-footer {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  font-size: 11px;
+}
+
+.bestemd-new-footer span:first-child {
+  display: none;
+}
+
+@keyframes bestemd-landscape-drift {
+  from { transform: scale(1); }
+  to { transform: scale(1.045); }
+}
+
+@media (max-width: 900px) {
+  .bestemd-new-page {
+    padding: 28px 24px;
+  }
+
+  .bestemd-new-content {
+    width: min(480px, 100%);
+    min-height: calc(100dvh - 56px);
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+    gap: 22px;
+  }
+
+  .bestemd-new-header {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 0;
+  }
+
+  .bestemd-new-card {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 0;
+  }
+
+  .bestemd-new-footer {
+    grid-column: 1;
+    grid-row: 3;
+    margin-top: 18px;
+  }
+
+  .bestemd-route {
+    display: none;
+  }
+
+  .bestemd-new-logo {
+    width: 235px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bestemd-landscape {
+    animation: none;
+  }
+}
+
+/* BESTEMD_LOGIN_94F1 */
+.bestemd-landscape {
+    background-image: url("/bestemd-login-landschap.jpg");
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    animation: bestemd-landscape-drift 30s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bestemd-landscape {
+        animation: none;
+    }
+}

@@ -5,8 +5,8 @@ export class PasskeyError extends Error {
 export function passkeyConfig(env) {
   const enabled=env.PASSKEYS_ENABLED ?? 'false';
   if(!['true','false'].includes(enabled)) throw new Error('Ongeldige passkeyconfiguratie.');
-  const rpId=env.PASSKEY_RP_ID ?? 'testadmin.nl';
-  if(rpId!=='testadmin.nl') throw new Error('Passkeys vereisen RP ID testadmin.nl.');
+  const rpId=env.PASSKEY_RP_ID ?? 'mijnbestemd.nl';
+  if(rpId!=='mijnbestemd.nl') throw new Error('Passkeys vereisen RP ID mijnbestemd.nl.');
   const origin=env.PASSKEY_ORIGIN;
   if(enabled==='true'){
     let url;try{url=new URL(origin);}catch{throw new Error('Configureer een exacte HTTPS PASSKEY_ORIGIN.');}
@@ -33,7 +33,7 @@ async function recentClaims(client,userId){
 }
 export async function passkeyAction({client,config,origin,input,identity,getChallenge,setChallenge}){
   if(!config.enabled)fail(503,'PASSKEY_DISABLED','Passkeys zijn nog niet ingeschakeld. Gebruik uw wachtwoord en authenticator.');
-  if(origin!==config.origin)fail(403,'PASSKEY_ORIGIN_DENIED','Passkeys zijn alleen beschikbaar op het ingestelde testadmin.nl-domein.');
+  if(origin!==config.origin)fail(403,'PASSKEY_ORIGIN_DENIED','Passkeys zijn alleen beschikbaar op het ingestelde mijnbestemd.nl-domein.');
   const action=input?.action;
   if(typeof action!=='string')fail(400,'INVALID_REQUEST','Ongeldig passkeyverzoek.');
   validInput(input,['action',...(action?.endsWith('-verify')?['challengeId','credential']:action==='delete'?['passkeyId']:[])]);

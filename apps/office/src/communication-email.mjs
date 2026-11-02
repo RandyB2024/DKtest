@@ -11,7 +11,7 @@ const PUBLIC_KEY =
   '7g_wmXwISP-XOUsUq';
 
 const PORTAL_BASE_URL =
-  'https://mijn.testadmin.nl';
+  'https://app.mijnbestemd.nl';
 
 
 async function recordDelivery(

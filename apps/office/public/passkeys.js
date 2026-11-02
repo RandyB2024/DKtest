@@ -25,7 +25,7 @@ export async function runPasskey(kind,api,credentials=globalThis.navigator?.cred
 export function mountPasskeySettings(root,api) {
   let disposed=false,pending=false;
   const el=(tag,text)=>{const n=document.createElement(tag);if(text)n.textContent=text;return n;};
-  const title=el('h2','Persoonlijke passkeys'),notice=el('p','Inloggen met Face ID, Touch ID, Windows Hello of apparaat-PIN. Daarna blijft de authenticator nodig. Passkeys horen bij testadmin.nl; op een later domein kan opnieuw registreren nodig zijn.');
+  const title=el('h2','Persoonlijke passkeys'),notice=el('p','Inloggen met Face ID, Touch ID, Windows Hello of apparaat-PIN. Daarna blijft de authenticator nodig. Passkeys horen bij mijnbestemd.nl; op een later domein kan opnieuw registreren nodig zijn.');
   const recovery=el('p','Apparaat kwijt? Log in met uw wachtwoord en authenticator en verwijder de verloren passkey. Zonder authenticator: neem contact op met uw beheerder; verificatie wordt niet overgeslagen.');
   const status=el('p');status.setAttribute('role','status');
   const list=el('div'),form=el('form'),label=el('label','Authenticatorcode (opnieuw bevestigen voor beheer)'),code=el('input'),select=el('select');

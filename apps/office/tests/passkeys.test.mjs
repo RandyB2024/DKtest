@@ -12,16 +12,16 @@ function setup(){
   const client={auth:{getClaims:async()=>ok({claims:state.claims}),signOut:async()=>{},mfa:{listFactors:async()=>ok(state.factors)},passkey:{
     list:async()=>ok([{id:key,friendly_name:'Personal',created_at:'2026-01-01',private_field:'never return'}]),
     delete:async()=>{state.deleted++;return ok(null);},
-    startRegistration:async()=>ok({challenge_id:challenge,expires_at:now+300,options:{rp:{id:'testadmin.nl'}}}),
-    startAuthentication:async()=>ok({challenge_id:challenge,expires_at:now+300,options:{rpId:'testadmin.nl'}}),
+    startRegistration:async()=>ok({challenge_id:challenge,expires_at:now+300,options:{rp:{id:'mijnbestemd.nl'}}}),
+    startAuthentication:async()=>ok({challenge_id:challenge,expires_at:now+300,options:{rpId:'mijnbestemd.nl'}}),
     verifyRegistration:async()=>{state.registered++;return ok({id:key});},verifyAuthentication:async()=>{state.verified++;return ok({session:'never return'});},
   }}};
-  const action=input=>passkeyAction({client,config:passkeyConfig({PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://testadmin.nl'}),origin:'https://testadmin.nl',input,identity:async()=>({id,aal2:true}),getChallenge:()=>cookie,setChallenge:v=>{cookie=v;}});
+  const action=input=>passkeyAction({client,config:passkeyConfig({PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://mijnbestemd.nl'}),origin:'https://mijnbestemd.nl',input,identity:async()=>({id,aal2:true}),getChallenge:()=>cookie,setChallenge:v=>{cookie=v;}});
   return {state,action,client,id,key};
 }
-test('passkey configuration is opt-in, exact HTTPS testadmin.nl origin, invalid values fail closed',()=>{
+test('passkey configuration is opt-in, exact HTTPS mijnbestemd.nl origin, invalid values fail closed',()=>{
   assert.equal(passkeyConfig({}).enabled,false);
-  for(const env of [{PASSKEYS_ENABLED:'yes'},{PASSKEYS_ENABLED:'true'},{PASSKEY_RP_ID:'evil.invalid'},{PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'http://testadmin.nl'},{PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://testadmin.nl.evil.invalid'},{PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://testadmin.nl/path'}])assert.throws(()=>passkeyConfig(env));
+  for(const env of [{PASSKEYS_ENABLED:'yes'},{PASSKEYS_ENABLED:'true'},{PASSKEY_RP_ID:'evil.invalid'},{PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'http://mijnbestemd.nl'},{PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://mijnbestemd.nl.evil.invalid'},{PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://mijnbestemd.nl/path'}])assert.throws(()=>passkeyConfig(env));
 });
 test('management rejects AAL1, missing/malformed/old/future TOTP, wrong subject, even valid WebAuthn AAL2',async()=>{
   for(const change of [c=>c.aal='aal1',c=>delete c.amr,c=>c.amr={},c=>c.amr=[{method:'webauthn',timestamp:Math.floor(Date.now()/1000)}],c=>c.amr[0].timestamp-=300,c=>c.amr[0].timestamp+=100,c=>c.amr[0].timestamp='123',c=>c.sub=randomUUID()]){
@@ -59,12 +59,12 @@ test('provider failures and wrong RP never result in a successful login',async()
 });
 test('browser new/lost device, cancel, and unsupported browser keep password/TOTP fallback',async()=>{
   for(const credentials of [null,{get:async()=>null},{get:async()=>{throw new Error('NotAllowedError');}}]){
-    let calls=0;const api=async()=>{calls++;return {challengeId:randomUUID(),options:{challenge:'AQID',rpId:'testadmin.nl'}};};
+    let calls=0;const api=async()=>{calls++;return {challengeId:randomUUID(),options:{challenge:'AQID',rpId:'mijnbestemd.nl'}};};
     await assert.rejects(runPasskey('authentication',api,credentials),/wachtwoord en authenticator/);assert.ok(calls<=1,'No successful verification without a credential');
   }
 });
 test('browser uses native credential serialization, sends no tokens and helper copies stay identical',async()=>{
-  const sent=[];const api=async(path,body)=>{sent.push(body);return body.action.endsWith('-options')?{challengeId:randomUUID(),options:{challenge:'AQID',rpId:'testadmin.nl'}}:{mfaRequired:true};};
+  const sent=[];const api=async(path,body)=>{sent.push(body);return body.action.endsWith('-options')?{challengeId:randomUUID(),options:{challenge:'AQID',rpId:'mijnbestemd.nl'}}:{mfaRequired:true};};
   const result=await runPasskey('authentication',api,{get:async({publicKey})=>{assert.deepEqual([...publicKey.challenge],[1,2,3]);return {id:'AQID',rawId:new Uint8Array([1,2,3]).buffer,type:'public-key',getClientExtensionResults:()=>({}),response:{clientDataJSON:new Uint8Array([1]),authenticatorData:new Uint8Array([2]),signature:new Uint8Array([3]),userHandle:null}};}});
   assert.equal(result.mfaRequired,true);assert.equal(sent[1].credential.rawId,'AQID');assert.equal(sent[1].access_token,undefined);
   assert.equal(readFileSync(new URL('../public/passkeys.js',import.meta.url),'utf8'),readFileSync(new URL('../../portal/public/passkeys.js',import.meta.url),'utf8'));

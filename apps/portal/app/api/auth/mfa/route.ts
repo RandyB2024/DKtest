@@ -1,9 +1,18 @@
 import { portalApi, readBody } from "@/lib/portal-api";
 import { AccessError, requirePortalIdentity } from "@/lib/portal-access";
+import { requirePersonalIdentity } from "@/lib/personal-access";
 
+async function requireAnyPortalIdentity(client: Parameters<typeof requirePortalIdentity>[0]) {
+  try {
+    return await requirePortalIdentity(client);
+  } catch (businessError) {
+    if (businessError instanceof AccessError && businessError.status === 503) throw businessError;
+    return requirePersonalIdentity(client);
+  }
+}
 export async function GET(request: Request) {
   return portalApi(request, async ({ client }) => {
-    await requirePortalIdentity(client);
+    await requireAnyPortalIdentity(client);
     const { data, error } = await client.auth.mfa.listFactors();
     if (error) throw new AccessError(503, "Tweestapsverificatie kan niet worden geladen.");
     return Response.json({ factors: data.totp.filter(f => f.status === "verified").map(f => ({ id: f.id, name: f.friendly_name ?? "Authenticator" })) });
@@ -11,7 +20,7 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   return portalApi(request, async ({ client }) => {
-    await requirePortalIdentity(client);
+    await requireAnyPortalIdentity(client);
     const body = await readBody(request);
     const { data: factors, error: factorsError } = await client.auth.mfa.listFactors();
     if (factorsError) throw new AccessError(503, "Tweestapsverificatie kan niet worden geladen.");

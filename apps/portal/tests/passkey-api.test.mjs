@@ -11,13 +11,13 @@ import {GET as context} from '../app/api/context/route.ts';
 
 function setup(t){
   const previousFetch=globalThis.fetch,previous={};
-  for(const [key,value] of Object.entries({NEXT_PUBLIC_SUPABASE_URL:'https://office-fixture.supabase.co',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture',PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://portal.testadmin.nl'})){previous[key]=process.env[key];process.env[key]=value;}
+  for(const [key,value] of Object.entries({NEXT_PUBLIC_SUPABASE_URL:'https://office-fixture.supabase.co',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture',PASSKEYS_ENABLED:'true',PASSKEY_ORIGIN:'https://app.mijnbestemd.nl'})){previous[key]=process.env[key];process.env[key]=value;}
   t.after(()=>{globalThis.fetch=previousFetch;for(const [key,value] of Object.entries(previous)){if(value===undefined)delete process.env[key];else process.env[key]=value;}});
   const fixture=addPasskeys(supabaseFixture());fixture.portal=true;fixture.db.roles[0].scope='customer';
   fixture.db.organization_memberships=[{user_id:fixture.user.id,organization_id:fixture.db.organizations[0].id,role_id:fixture.db.roles[0].id,status:'active',valid_from:'2020-01-01',valid_until:null}];
   globalThis.fetch=fixture.fetch;const jar=new Map();
   async function call(handler,input,headers={}){
-    const response=await handler(new Request('https://portal.testadmin.nl/api/auth/passkeys',{method:input===undefined?'GET':'POST',headers:{origin:'https://portal.testadmin.nl','content-type':'application/json',cookie:[...jar].map(([k,v])=>`${k}=${v}`).join('; '),...headers},...(input===undefined?{}:{body:JSON.stringify(input)})}));
+    const response=await handler(new Request('https://app.mijnbestemd.nl/api/auth/passkeys',{method:input===undefined?'GET':'POST',headers:{origin:'https://app.mijnbestemd.nl','content-type':'application/json',cookie:[...jar].map(([k,v])=>`${k}=${v}`).join('; '),...headers},...(input===undefined?{}:{body:JSON.stringify(input)})}));
     for(const cookie of response.headers.getSetCookie()){const pair=cookie.split(';')[0],split=pair.indexOf('=');if(/max-age=0/i.test(cookie))jar.delete(pair.slice(0,split));else jar.set(pair.slice(0,split),pair.slice(split+1));}
     return response;
   }

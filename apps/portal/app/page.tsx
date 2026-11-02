@@ -1,5 +1,5 @@
-import AccessChoice from "@/components/access-choice";
+import CentralLogin from "@/components/central-login";
 
 export default function Home() {
-  return <AccessChoice />;
+  return <CentralLogin />;
 }

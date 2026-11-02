@@ -4,6 +4,7 @@ import type {
 } from "next";
 
 import "./globals.css";
+import "../central-login.css";
 import "./brand.css";
 import "./multi.css";
 import "./users.css";

@@ -9,7 +9,7 @@ export function addPasskeys(state) {
     if(!authentication&&!state.sessions.has(token))return json({message:'denied'},401);
     if(url.pathname.endsWith('/options')){
       const id=randomUUID();state.challenges.set(id,authentication?'authentication':'registration');
-      return json({challenge_id:id,expires_at:Math.floor(Date.now()/1000)+300,options:{challenge:'AQID',...(authentication?{rpId:'testadmin.nl'}:{rp:{id:'testadmin.nl',name:'Test'},user:{id:'AQID',name:state.user.email,displayName:'Test'},pubKeyCredParams:[{type:'public-key',alg:-7}]})}});
+      return json({challenge_id:id,expires_at:Math.floor(Date.now()/1000)+300,options:{challenge:'AQID',...(authentication?{rpId:'mijnbestemd.nl'}:{rp:{id:'mijnbestemd.nl',name:'Test'},user:{id:'AQID',name:state.user.email,displayName:'Test'},pubKeyCredParams:[{type:'public-key',alg:-7}]})}});
     }
     if(url.pathname.endsWith('/verify')){
       const purpose=state.challenges.get(body.challenge_id);state.challenges.delete(body.challenge_id);

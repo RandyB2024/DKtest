@@ -1,5 +1,6 @@
 import { portalApi, readBody } from "@/lib/portal-api";
 import { AccessError, requirePortalIdentity } from "@/lib/portal-access";
+import { requirePersonalIdentity } from "@/lib/personal-access";
 import { contextCookie } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
@@ -9,7 +10,14 @@ export async function POST(request: Request) {
     if (typeof body.email !== "string" || typeof body.password !== "string" || !body.email.trim() || !body.password || body.email.length > 254 || body.password.length > 1024) throw denied();
     const { error } = await client.auth.signInWithPassword({ email: body.email.trim(), password: body.password });
     if (error) throw denied();
-    try { await requirePortalIdentity(client); }
+    try {
+      try {
+        await requirePortalIdentity(client);
+      } catch (businessError) {
+        if (businessError instanceof AccessError && businessError.status === 503) throw businessError;
+        await requirePersonalIdentity(client);
+      }
+    }
     catch (error) {
       await client.auth.signOut({ scope: "local" });
       if (error instanceof AccessError && error.status === 503) throw error;

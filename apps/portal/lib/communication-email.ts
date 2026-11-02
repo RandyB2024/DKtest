@@ -10,7 +10,7 @@ const OFFICE_RECIPIENT =
   "buijsr@icloud.com";
 
 const OFFICE_BASE_URL =
-  "https://office.testadmin.nl";
+  "https://office.mijnbestemd.nl";
 
 const SERVICE_ID =
   "service_qrpo8pn";

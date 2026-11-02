@@ -8,7 +8,7 @@ import { supabaseFixture } from './helpers/supabase-fixture.mjs';
 
 async function setup(t, overrides={}) {
   const fixture = addPasskeys(supabaseFixture());
-  const config = loadConfig({ SUPABASE_URL:'https://office-fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture', OFFICE_ORIGIN:'https://office.testadmin.nl', PASSKEYS_ENABLED:'true', PASSKEY_ORIGIN:'https://office.testadmin.nl', ...overrides });
+  const config = loadConfig({ SUPABASE_URL:'https://office-fixture.supabase.co', SUPABASE_PUBLISHABLE_KEY:'sb_publishable_fixture', OFFICE_ORIGIN:'https://office.mijnbestemd.nl', PASSKEYS_ENABLED:'true', PASSKEY_ORIGIN:'https://office.mijnbestemd.nl', ...overrides });
   const server = createServer({config,fetchImpl:fixture.fetch}).listen(0,'127.0.0.1');
   await new Promise(resolve => server.once('listening',resolve));
   t.after(() => { server.closeAllConnections(); server.close(); });
