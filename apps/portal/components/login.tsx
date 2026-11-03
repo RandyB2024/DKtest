@@ -1,4 +1,5 @@
 "use client";
+import BestemdTurnstile from "./bestemd-turnstile";
 
 /* eslint-disable @next/next/no-img-element */
 
@@ -35,6 +36,9 @@ export default function Login({
     recoverySent,
     setRecoverySent,
   ] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+
 
   async function submit(
     e: React.FormEvent,
@@ -53,10 +57,7 @@ export default function Login({
             "content-type":
               "application/json",
           },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
+          body: JSON.stringify({ email, password, turnstileToken }),
         },
       );
 
@@ -82,6 +83,8 @@ export default function Login({
         "Inloggen is tijdelijk niet beschikbaar. Probeer het opnieuw.",
       );
     } finally {
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
       setBusy(false);
     }
   }
@@ -343,6 +346,7 @@ export default function Login({
             </div>
           )}
 
+          {!forgotPassword && <BestemdTurnstile key={turnstileReset} onToken={setTurnstileToken} />}
           {error && (
             <p
               className="bestemd-auth-error"

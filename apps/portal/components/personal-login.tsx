@@ -1,4 +1,5 @@
 "use client";
+import BestemdTurnstile from "./bestemd-turnstile";
 
 import {
   useState,
@@ -35,6 +36,9 @@ export default function PersonalLogin() {
     setBusy,
   ] =
     useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileReset, setTurnstileReset] = useState(0);
+
 
 
   async function submit(
@@ -58,10 +62,7 @@ export default function PersonalLogin() {
             },
 
             body:
-              JSON.stringify({
-                email,
-                password,
-              }),
+              JSON.stringify({ email, password, turnstileToken }),
           },
         );
 
@@ -91,6 +92,8 @@ export default function PersonalLogin() {
       );
 
     } finally {
+      setTurnstileToken("");
+      setTurnstileReset((n) => n + 1);
       setBusy(false);
     }
   }
@@ -232,6 +235,7 @@ export default function PersonalLogin() {
           </div>
 
 
+          <BestemdTurnstile key={turnstileReset} onToken={setTurnstileToken} />
           {error && (
             <p
               className="bestemd-auth-error"

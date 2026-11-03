@@ -1,3 +1,4 @@
+import { requireLoginTurnstile } from "@/lib/security/turnstile-siteverify";
 import {
   portalApi,
   readBody,
@@ -22,6 +23,14 @@ export async function POST(
         await readBody(
           request,
         );
+      try {
+        await requireLoginTurnstile(body.turnstileToken);
+      } catch {
+        throw new AccessError(
+          403,
+          "De beveiligingscontrole is niet gelukt. Probeer opnieuw."
+        );
+      }
 
       const denied =
         () =>
