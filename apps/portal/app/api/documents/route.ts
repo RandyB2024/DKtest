@@ -647,8 +647,7 @@ export async function POST(
               "customer",
             status:
               "new",
-            document_type:
-              "other",
+            document_type: stringField(formData.get("documentType")) === "purchase_invoice" ? "purchase_invoice" : "other",
             visible_to_customer:
               true,
             customer_action_required:
