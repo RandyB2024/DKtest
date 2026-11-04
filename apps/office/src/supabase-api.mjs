@@ -17,6 +17,7 @@ import { creditInvoiceRoute } from './credit-invoices.mjs';
 import { paidInvoiceDocumentsRoute } from './paid-invoice-documents.mjs';
 import { creditorsRoute } from './creditors.mjs';
 import { wizeAdminRoute } from './wize-admin.mjs';
+import { assetDraftsRoute } from './asset-drafts-route.mjs';
 import { wizeOfficeRoute } from './wize-office.mjs';
 import { wizeOfficeHistoryRoute } from './wize-office-history-route.mjs';
 import { taxReturnsRoute } from './tax-returns.mjs';
@@ -689,6 +690,8 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+    const assetDrafts = await assetDraftsRoute(req, url, client, user);
+    if (assetDrafts) return sendJson(res, assetDrafts.status, assetDrafts.data);
 
     const taxReturns =
       await taxReturnsRoute(
