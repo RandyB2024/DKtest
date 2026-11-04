@@ -1,6 +1,7 @@
 import test, { afterEach, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import { createLoginLockoutFixture } from "./helpers/login-lockout-fixture.mjs";
 import { readFileSync, readdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -61,6 +62,7 @@ beforeEach(() => {
     organization_memberships: [{ user_id: user.id, organization_id: org.id, role_id: role.id, status: "active", valid_from: new Date(Date.now() - 60000).toISOString(), valid_until: null }],
     organizations: [org, { ...org, id: randomUUID(), name: "Niet gekoppeld" }], roles: [role],
   };
+  const lockoutRpc = createLoginLockoutFixture();
   globalThis.fetch = async (input, init = {}) => {
     const url = new URL(typeof input === "string" ? input : input.url ?? String(input));
     assert.equal(url.origin, "https://sdk-fixture.supabase.co", "Tests must never contact a real project");
@@ -68,6 +70,8 @@ beforeEach(() => {
     const headers = new Headers(init.headers);
     const body = init.body ? JSON.parse(init.body) : {};
     calls.push({ path: url.pathname, query: url.searchParams, method });
+    const mockedRpc = lockoutRpc(url, body, headers);
+    if (mockedRpc) return mockedRpc;
     if (url.pathname === "/auth/v1/token") {
       if (url.searchParams.get("grant_type") === "refresh_token") {
         const active = [...sessions.values()].find(s => s.refresh === body.refresh_token);

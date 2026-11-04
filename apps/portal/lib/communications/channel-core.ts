@@ -12,17 +12,17 @@ export const DEFAULT_CHANNELS = Object.freeze([
   { key: "whatsapp-ed", type: CHANNELS.WHATSAPP, label: "WhatsApp Ed", status: CHANNEL_STATUS.DISABLED }
 ]);
 
-function required(value, name) {
+function required(value: unknown, name: string) {
   if (typeof value !== "string" || !value.trim()) throw new TypeError(name + " is required");
   return value.trim();
 }
 
 /** Only call after authentication and organization membership authorization. */
-export function normalizeInboundMessage(input, context) {
+export function normalizeInboundMessage(input: Record<string, unknown>, context: Record<string, unknown>) {
   const organizationId = required(context?.organizationId, "organizationId");
   const conversationId = required(input?.conversationId, "conversationId");
   const channel = required(input?.channel, "channel");
-  if (!Object.values(CHANNELS).includes(channel)) throw new TypeError("Unsupported channel");
+  if (!(channel === CHANNELS.PORTAL || channel === CHANNELS.WHATSAPP)) throw new TypeError("Unsupported channel");
   const externalMessageId = input?.externalMessageId == null ? null : required(input.externalMessageId, "externalMessageId");
   if (channel === CHANNELS.WHATSAPP && !externalMessageId) throw new TypeError("WhatsApp messages need provider message IDs for deduplication");
   const body = required(input?.body, "body");
@@ -40,13 +40,13 @@ export function normalizeInboundMessage(input, context) {
   };
 }
 
-export function whatsappDeliveryAvailable(channel, provider) {
+export function whatsappDeliveryAvailable(channel: { type?: string; status?: string } | null | undefined, provider: { approved?: boolean; send?: unknown } | null | undefined) {
   return channel?.type === CHANNELS.WHATSAPP &&
     channel.status === CHANNEL_STATUS.ACTIVE &&
     provider?.approved === true &&
     typeof provider.send === "function";
 }
 
-export function deduplicationKey(message) {
+export function deduplicationKey(message: Record<string, unknown>) {
   return [required(message.organizationId, "organizationId"), required(message.channelAccountKey, "channelAccountKey"), required(message.externalMessageId, "externalMessageId")].join(":");
 }
