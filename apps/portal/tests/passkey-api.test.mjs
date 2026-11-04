@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
+import {createLoginLockoutFixture} from './helpers/login-lockout-fixture.mjs';
 import {supabaseFixture} from '../../office/tests/helpers/supabase-fixture.mjs';
 import {addPasskeys,credential} from '../../office/tests/helpers/passkey-fixture.mjs';
 import {POST as login} from '../app/api/auth/login/route.ts';
@@ -15,7 +16,18 @@ function setup(t){
   t.after(()=>{globalThis.fetch=previousFetch;for(const [key,value] of Object.entries(previous)){if(value===undefined)delete process.env[key];else process.env[key]=value;}});
   const fixture=addPasskeys(supabaseFixture());fixture.portal=true;fixture.db.roles[0].scope='customer';
   fixture.db.organization_memberships=[{user_id:fixture.user.id,organization_id:fixture.db.organizations[0].id,role_id:fixture.db.roles[0].id,status:'active',valid_from:'2020-01-01',valid_until:null}];
-  globalThis.fetch=fixture.fetch;const jar=new Map();
+  const originalFixtureFetch = fixture.fetch;
+  const lockoutRpc = createLoginLockoutFixture();
+  globalThis.fetch = async (input, init = {}) => {
+    const url = new URL(typeof input === 'string' ? input : input.url ?? String(input));
+    // Never allow the fixture to send requests to external Supabase projects.
+    if (url.origin !== 'https://office-fixture.supabase.co') throw new Error('Unexpected test Supabase origin');
+    const headers = new Headers(init.headers);
+    const body = init.body ? JSON.parse(init.body) : {};
+    const mockedRpc = lockoutRpc(url, body, headers);
+    return mockedRpc ?? originalFixtureFetch(input, init);
+  };
+  const jar=new Map();
   async function call(handler,input,headers={}){
     const response=await handler(new Request('https://app.mijnbestemd.nl/api/auth/passkeys',{method:input===undefined?'GET':'POST',headers:{origin:'https://app.mijnbestemd.nl','content-type':'application/json',cookie:[...jar].map(([k,v])=>`${k}=${v}`).join('; '),...headers},...(input===undefined?{}:{body:JSON.stringify(input)})}));
     for(const cookie of response.headers.getSetCookie()){const pair=cookie.split(';')[0],split=pair.indexOf('=');if(/max-age=0/i.test(cookie))jar.delete(pair.slice(0,split));else jar.set(pair.slice(0,split),pair.slice(split+1));}
