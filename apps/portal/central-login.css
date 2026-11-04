@@ -730,7 +730,7 @@ button.bestemd-login-method:disabled {
 .bestemd-landscape {
   position: absolute;
   inset: -3%;
-  background-image: url("/bestemd-login-landschap.png");
+  background-image: url("https://d2ol7oe51mr4n9.cloudfront.net/user_3L1Dk2QcsFf7KL82FSvtUquBeEP/1bfecea4-5c6f-4e47-86a2-81d9a8b8d173.png");
   background-size: cover;
   background-position: center;
   animation: bestemd-landscape-drift 30s ease-in-out infinite alternate;
