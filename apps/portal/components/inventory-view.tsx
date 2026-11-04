@@ -1,4 +1,6 @@
 "use client";
+import InventoryReceipts from "./inventory-receipts";
+import InventoryDisposalAction from "./inventory-disposal-action";
 
 import {
   useEffect,
@@ -232,6 +234,11 @@ export default function InventoryView({
       emptyForm,
     );
 
+
+  // BESTEMD_RECEIPT_UPLOAD_291B
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [receiptRefresh, setReceiptRefresh] = useState(0);
 
   async function load() {
     if (
@@ -609,14 +616,11 @@ export default function InventoryView({
         <button
           type="button"
           className="btn primary inventory-add-button"
-          onClick={() =>
-            setFormOpen(
-              true,
-            )
-          }
+          onClick={() => {
+            setFormOpen(true);
+          }}
         >
-          <Plus size={17} />
-          Inventaris toevoegen
+          Aankoopbon uploaden
         </button>
       </section>
 
@@ -630,6 +634,11 @@ export default function InventoryView({
         </div>
       )}
 
+
+      <InventoryReceipts
+        organizationId={context.organizationId}
+        refreshKey={receiptRefresh}
+      />
 
       <section className="inventory-summary">
 
@@ -810,7 +819,7 @@ export default function InventoryView({
             </strong>
 
             <p>
-              Voeg jouw eerste bedrijfsmiddel toe
+              Upload een aankoopbon of factuur
               om de inventaris op te bouwen.
             </p>
           </div>
@@ -882,9 +891,13 @@ export default function InventoryView({
                   </div>
 
                   <div>
-                    <span className="status ok">
-                      Actief
-                    </span>
+                    <span className="status ok">{item.status === "active" ? "Actief" : item.status}</span>
+                    {item.status === "active" && (
+                      <InventoryDisposalAction
+                        organizationId={context.organizationId}
+                        itemId={item.id}
+                      />
+                    )}
                   </div>
                 </article>
               ),
@@ -898,355 +911,126 @@ export default function InventoryView({
 
       {formOpen && (
         <div className="inventory-modal-backdrop">
-
           <div className="inventory-modal">
-
             <div className="inventory-modal-head">
               <div>
-                <small>
-                  INVENTARIS
-                </small>
-
-                <h2>
-                  Bedrijfsmiddel toevoegen
-                </h2>
+                <small>AANKOOPDOCUMENT</small>
+                <h2>Aankoopbon uploaden</h2>
               </div>
-
               <button
                 type="button"
                 className="btn"
-                onClick={() =>
-                  setFormOpen(
-                    false,
-                  )
-                }
+                disabled={busy}
+                onClick={() => setFormOpen(false)}
               >
                 <X size={17} />
               </button>
             </div>
 
-
-            <form
-              className="inventory-form"
-              onSubmit={save}
-            >
-
-              <label>
-                Categorie *
-
-                <select
-                  required
-                  value={
-                    form.category
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "category",
-                      event.target.value,
-                    )
-                  }
-                >
-                  <option value="vehicle">
-                    Voertuig
-                  </option>
-
-                  <option value="equipment">
-                    Apparatuur / machine
-                  </option>
-
-                  <option value="ict">
-                    ICT / elektronica
-                  </option>
-
-                  <option value="furniture">
-                    Meubilair
-                  </option>
-
-                  <option value="other">
-                    Overig
-                  </option>
-                </select>
-              </label>
-
-
-              <label>
-                Naam *
-
-                <input
-                  required
-                  maxLength={160}
-                  value={
-                    form.name
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "name",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
+            <div className="inventory-form">
+              <p>
+                Upload een aankoopbon of factuur als PDF,
+                JPG of PNG.
+              </p>
 
               <label className="inventory-form-wide">
-                Omschrijving
-
+                Aankoopbon of factuur
                 <input
-                  maxLength={500}
-                  value={
-                    form.description
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "description",
-                      event.target.value,
-                    )
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  onChange={(event) =>
+                    setReceiptFile(event.target.files?.[0] ?? null)
                   }
                 />
               </label>
-
-
-              <label>
-                Aanschafdatum
-
-                <input
-                  type="date"
-                  value={
-                    form.purchaseDate
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "purchaseDate",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
-
-              <label>
-                Aanschafwaarde
-
-                <input
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  value={
-                    form.purchaseValue
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "purchaseValue",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
-
-              <label>
-                Boekwaarde
-
-                <input
-                  inputMode="decimal"
-                  placeholder="0,00"
-                  value={
-                    form.bookValue
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "bookValue",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
-
-              <label>
-                Locatie
-
-                <input
-                  maxLength={160}
-                  value={
-                    form.location
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "location",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
-
-              <label>
-                Merk
-
-                <input
-                  maxLength={120}
-                  value={
-                    form.make
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "make",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
-
-              <label>
-                Model
-
-                <input
-                  maxLength={120}
-                  value={
-                    form.model
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "model",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
-
-              {form.category ===
-                "vehicle" && (
-                <>
-                  <label>
-                    Kenteken
-
-                    <input
-                      maxLength={30}
-                      value={
-                        form.licensePlate
-                      }
-                      onChange={(
-                        event,
-                      ) =>
-                        field(
-                          "licensePlate",
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </label>
-
-                  <label>
-                    Kilometerstand
-
-                    <input
-                      type="number"
-                      min="0"
-                      value={
-                        form.odometerKm
-                      }
-                      onChange={(
-                        event,
-                      ) =>
-                        field(
-                          "odometerKm",
-                          event.target.value,
-                        )
-                      }
-                    />
-                  </label>
-                </>
-              )}
-
-
-              <label>
-                Serienummer
-
-                <input
-                  maxLength={120}
-                  value={
-                    form.serialNumber
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "serialNumber",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
-
-              <label className="inventory-form-wide">
-                Notities
-
-                <textarea
-                  maxLength={2000}
-                  value={
-                    form.notes
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    field(
-                      "notes",
-                      event.target.value,
-                    )
-                  }
-                />
-              </label>
-
 
               <div className="inventory-form-actions">
                 <button
                   type="button"
                   className="btn"
                   disabled={busy}
-                  onClick={() =>
-                    setFormOpen(
-                      false,
-                    )
-                  }
+                  onClick={() => setFormOpen(false)}
                 >
                   Annuleren
                 </button>
 
                 <button
-                  type="submit"
+                  type="button"
                   className="btn primary"
-                  disabled={busy}
+                  disabled={busy || !receiptFile}
+                  onClick={async () => {
+                    if (!receiptFile) return;
+
+                    if (![
+                      "application/pdf",
+                      "image/jpeg",
+                      "image/png",
+                    ].includes(receiptFile.type)) {
+                      setError("Alleen PDF, JPG en PNG zijn toegestaan.");
+                      return;
+                    }
+
+                    if (receiptFile.size > 50 * 1024 * 1024) {
+                      setError("Het bestand mag maximaal 50 MB zijn.");
+                      return;
+                    }
+
+                    setBusy(true);
+                    setError("");
+                    setUploadMessage("");
+
+                    try {
+                      const data = new FormData();
+                      data.append("organizationId", context.organizationId);
+                      data.append("documentType", "purchase_invoice");
+                      data.append("file", receiptFile);
+
+                      const response = await fetch("/api/documents", {
+                        method: "POST",
+                        credentials: "same-origin",
+                        body: data,
+                      });
+
+                      const result = (await response.json()) as {
+                        item?: { id: string };
+                        error?: string;
+                      };
+
+                      if (!response.ok) {
+                        throw new Error(
+                          result.error || "Upload mislukt."
+                        );
+                      }
+
+                      setReceiptFile(null);
+                      setReceiptRefresh((current) => current + 1);
+                      setFormOpen(false);
+                      setUploadMessage(
+                        "Aankoopbon opgeslagen. " +
+                        "Wize-analyse wordt nog aangesloten."
+                      );
+                    } catch (caught) {
+                      setError(
+                        caught instanceof Error
+                          ? caught.message
+                          : "Upload mislukt."
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
                 >
-                  {busy
-                    ? "Opslaan..."
-                    : "Toevoegen"}
+                  {busy ? "Uploaden..." : "Aankoopbon uploaden"}
                 </button>
               </div>
-
-            </form>
-
+            </div>
           </div>
+        </div>
+      )}
+
+      {uploadMessage && (
+        <div className="notice" role="status">
+          {uploadMessage}
         </div>
       )}
 

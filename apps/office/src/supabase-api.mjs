@@ -687,8 +687,180 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
         return sendJson(res, 200, { verified: true });
       }
     }
+    // Office bedrijfsmiddelen: bestaande Supabase RPC, na verplichte Office AAL2-authenticatie.
+    if (path === '/api/office/inventory') {
+      // BESTEMD_INVENTORY_MFA_275
+      await officeIdentity(client);
+      if (req.method !== 'GET') throw new OfficeError(405, 'METHOD_NOT_ALLOWED', 'Methode niet toegestaan.');
+      const organizationId = url.searchParams.get('organizationId');
+      if (!uuid.test(organizationId ?? '')) throw new OfficeError(400, 'INVALID_ORGANIZATION', 'Selecteer een geldige onderneming.');
+      await entity(client, 'organizations', organizationId, orgFields);
+      const { data, error } = await client.rpc('get_customer_inventory', { p_organization_id: organizationId });
+      if (error) throw new OfficeError(503, 'INVENTORY_UNAVAILABLE', 'Bedrijfsmiddelen konden niet worden geladen.');
+      return sendJson(res, 200, { items: data ?? [] });
+    }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+
+    // BESTEMD_DISPOSAL_REVIEW_302
+    // Deze route wordt pas bereikt na officeIdentity(client), inclusief MFA.
+    if (path === '/api/office/inventory-disposals/review') {
+      if (req.method !== 'POST') {
+        return sendJson(res, 405, {
+          message: 'Alleen POST is toegestaan.'
+        });
+      }
+
+      if (!['owner', 'admin'].includes(user.roleCode)) {
+        throw new OfficeError(
+          403,
+          'DISPOSAL_REVIEW_FORBIDDEN',
+          'Geen bevoegdheid om afmeldverzoeken te beoordelen.'
+        );
+      }
+
+      const input = await body(req);
+
+      if (
+        !input ||
+        typeof input !== 'object' ||
+        Array.isArray(input) ||
+        Object.keys(input).some(
+          key => !['requestId', 'decision', 'reviewNote'].includes(key)
+        )
+      ) {
+        throw new OfficeError(
+          400,
+          'INVALID_DISPOSAL_REVIEW',
+          'Ongeldig beoordelingsverzoek.'
+        );
+      }
+
+      const requestId = input.requestId;
+      const decision = input.decision;
+      const reviewNote = input.reviewNote ?? '';
+
+      if (
+        typeof requestId !== 'string' ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(requestId)
+      ) {
+        throw new OfficeError(
+          400,
+          'INVALID_REQUEST_ID',
+          'Ongeldig afmeldverzoek.'
+        );
+      }
+
+      if (!['approved', 'rejected'].includes(decision)) {
+        throw new OfficeError(
+          400,
+          'INVALID_DECISION',
+          'Kies goedkeuren of afwijzen.'
+        );
+      }
+
+      if (
+        typeof reviewNote !== 'string' ||
+        reviewNote.length > 1500 ||
+        (decision === 'rejected' && !reviewNote.trim())
+      ) {
+        throw new OfficeError(
+          400,
+          'INVALID_REVIEW_NOTE',
+          'Een geldige toelichting is vereist.'
+        );
+      }
+
+      const { data, error } = await client.rpc(
+        'office_review_inventory_disposal',
+        {
+          p_request_id: requestId,
+          p_decision: decision,
+          p_review_note: reviewNote.trim()
+        }
+      );
+
+      if (error) {
+        // Geen SQL-details of andere vertrouwelijke gegevens teruggeven.
+        throw new OfficeError(
+          409,
+          'DISPOSAL_REVIEW_NOT_COMPLETED',
+          'De beoordeling kon niet worden opgeslagen. Controleer de status en bevoegdheden.'
+        );
+      }
+
+      if (
+        !data ||
+        data.requestId !== requestId ||
+        data.status !== decision ||
+        data.financiallyProcessed !== false
+      ) {
+        throw new OfficeError(
+          503,
+          'INVALID_REVIEW_RESULT',
+          'De beoordeling kon niet worden bevestigd.'
+        );
+      }
+
+      return sendJson(res, 200, {
+        requestId: data.requestId,
+        status: data.status,
+        financiallyProcessed: false
+      });
+    }
+    // BESTEMD_DISPOSAL_QUEUE_297
+    // Uitsluitend lezen; geen inventaris- of boekhoudmutaties.
+    if (path === '/api/office/inventory-disposals') {
+      if (req.method !== 'GET') {
+        return sendJson(res, 405, {
+          message: 'Deze route is alleen-lezen.'
+        });
+      }
+
+      if (!['owner', 'admin'].includes(user.roleCode)) {
+        throw new OfficeError(
+          403,
+          'OFFICE_DISPOSAL_FORBIDDEN',
+          'Geen bevoegdheid om afmeldverzoeken te bekijken.'
+        );
+      }
+
+      const organizationId = url.searchParams.get('organizationId');
+
+      if (
+        !organizationId ||
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(organizationId)
+      ) {
+        throw new OfficeError(
+          400,
+          'INVALID_ORGANIZATION',
+          'Selecteer een geldige onderneming.'
+        );
+      }
+
+      const { data, error } = await client
+        .from('inventory_disposal_requests')
+        .select(
+          'id,organization_id,inventory_item_id,reason,effective_date,sale_amount_cents,note,status,created_at,reviewed_at,review_note'
+        )
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        throw new OfficeError(
+          503,
+          'DISPOSALS_UNAVAILABLE',
+          'Afmeldverzoeken zijn tijdelijk niet beschikbaar.'
+        );
+      }
+
+      return sendJson(res, 200, {
+        items: data ?? [],
+        readOnly: true
+      });
+    }
+
 
     const taxReturns =
       await taxReturnsRoute(

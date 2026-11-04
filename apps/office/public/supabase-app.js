@@ -207,7 +207,10 @@ async function renderRoute() {
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
       const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header('Onderneming');
       html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
-    } else if (path === '/banking') {
+    } else if (path === '/inventory') {
+      header('Bedrijfsmiddelen');
+      recordData = await api('/api/clients');
+      html = '<div id="office-inventory"></div>';    } else if (path === '/banking') {
       header('Bankieren');
       const data = await api('/api/clients');
       recordData = data;
@@ -285,7 +288,10 @@ async function renderRoute() {
       if(path==='/clients'||path==='/dashboard'){
         const {mountClientWorkspace}=await import('/client-workspace.js');
         if(activeGeneration===generation&&currentUser)mountClientWorkspace($('#client-workspace'),recordData,{canCreate:currentUser.canManageCustomers,onCreate:()=>customerForm('new')});
-      }else if(path==='/banking'){
+      }else if(path==='/inventory'){
+        if(activeGeneration===generation&&currentUser){
+          await mountOfficeInventory($('#office-inventory'),api,recordData);
+        }      }else if(path==='/banking'){
         const {mountOfficeBanking}=await import('/banking.js');
         if(activeGeneration===generation&&currentUser)mountOfficeBanking($('#office-banking'),api,recordData);
       }else if(path==='/payment-monitoring'){
@@ -725,3 +731,356 @@ addEventListener('beforeinstallprompt', event => { event.preventDefault(); insta
 $('#install').onclick = async () => { if (installPrompt) await installPrompt.prompt(); installPrompt = null; $('#install').hidden = true; };
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 void refreshStatus();
+
+// BESTEMD Office bedrijfsmiddelen - alleen lezen, per onderneming.
+async function mountOfficeInventory(root, api, recordData) {
+  if (!root) return;
+  const organizations = Array.isArray(recordData?.organizations)
+    ? recordData.organizations.filter(org => !org.archived_at)
+    : [];
+  const euro = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
+  root.innerHTML = `
+    <section class="panel">
+      <p class="eyebrow">BESTEMD Office Â· Boekhouding</p>
+      <h2>Bedrijfsmiddelen & inventaris</h2>
+      <p>Registratie en controle per onderneming.</p>
+      <label>Onderneming
+        <select id="inventory-organization">
+          <option value="">Selecteer een onderneming</option>
+          ${organizations.map(org => `<option value="${escapeHtml(org.id)}">${escapeHtml(org.name)}</option>`).join('')}
+        </select>
+      </label>
+    </section>
+    <section class="panel" id="inventory-results">
+      <p>Selecteer een onderneming om bedrijfsmiddelen op te halen.</p>
+    </section>`;
+  const select = root.querySelector('#inventory-organization');
+  const results = root.querySelector('#inventory-results');
+  const wizeSection = document.createElement('section');
+  wizeSection.className = 'panel';
+  wizeSection.innerHTML = `
+    <h2>Wize AI-beoordeling</h2>
+    <button type="button" class="primary" id="inventory-wize-review">Vraag Wize om beoordeling</button>
+    <p id="inventory-wize-result" role="status" aria-live="polite"></p>
+  `;
+  root.append(wizeSection);
+
+  // BESTEMD_DISPOSALS_UI_300A
+  const disposalPanel = document.createElement('section');
+  disposalPanel.className = 'panel';
+  disposalPanel.innerHTML = `
+    <h2>Afmeldverzoeken</h2>
+    <p>Gemelde verkopen, afvoer, defecten, diefstal en verlies.</p>
+    <p class="muted">
+      Afmeldingen worden pas definitief verwerkt na beoordeling.
+    </p>
+    <button type="button" id="disposal-refresh">
+      Vernieuwen
+    </button>
+    <div id="disposal-list" role="status" aria-live="polite">
+      Selecteer een onderneming.
+    </div>
+  `;
+
+  root.append(disposalPanel);
+
+  const disposalList =
+    disposalPanel.querySelector('#disposal-list');
+
+  const disposalReasonLabels = {
+    sold: 'Verkocht',
+    discarded: 'Afgevoerd',
+    disposed: 'Afgevoerd',
+    broken: 'Defect',
+    stolen: 'Gestolen',
+    lost: 'Verloren',
+    other: 'Overig'
+  };
+
+  const disposalStatusLabels = {
+    pending: 'In behandeling',
+    approved: 'Goedgekeurd',
+    rejected: 'Afgewezen'
+  };
+
+  async function loadInventoryDisposals() {
+    const organizationId = select.value;
+
+    if (!organizationId) {
+      disposalList.textContent = 'Selecteer een onderneming.';
+      return;
+    }
+
+    disposalList.textContent = 'Afmeldverzoeken laden...';
+
+    try {
+      const query = encodeURIComponent(organizationId);
+
+      const [disposalsResponse, inventoryResponse] =
+        await Promise.all([
+          api('/api/office/inventory-disposals?organizationId=' + query),
+          api('/api/office/inventory?organizationId=' + query)
+        ]);
+
+      if (!root.isConnected || select.value !== organizationId) {
+        return;
+      }
+
+      const requests = Array.isArray(disposalsResponse.items)
+        ? disposalsResponse.items : [];
+
+      const inventory = Array.isArray(inventoryResponse.items)
+        ? inventoryResponse.items : [];
+
+      const names = new Map(
+        inventory.map(item => [item.id, item.name])
+      );
+
+      if (!requests.length) {
+        disposalList.textContent =
+          'Geen afmeldverzoeken voor deze onderneming.';
+        return;
+      }
+
+      const money = value =>
+        value != null &&
+        Number.isSafeInteger(Number(value))
+          ? euro.format(Number(value) / 100)
+          : '-';
+
+      disposalList.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Bedrijfsmiddel</th>
+                <th>Reden</th>
+                <th>Datum</th>
+                <th>Verkoopprijs</th>
+                <th>Status</th><th>Beoordeling</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${requests.map(item => `
+                <tr>
+                  <td>${escapeHtml(
+                    names.get(item.inventory_item_id) ||
+                    item.inventory_item_id ||
+                    'Onbekend'
+                  )}</td>
+                  <td>${escapeHtml(
+                    disposalReasonLabels[item.reason] ||
+                    item.reason ||
+                    'Onbekend'
+                  )}</td>
+                  <td>${escapeHtml(item.effective_date || '-')}</td>
+                  <td>${money(item.sale_amount_cents)}</td>
+                  <td>${escapeHtml(
+                    disposalStatusLabels[item.status] ||
+                    item.status ||
+                    'Onbekend'
+                  )}</td>
+                  <td>
+                    ${item.status === 'pending' &&
+                      ['owner', 'admin'].includes(currentUser?.roleCode)
+                        ? `
+                          <button type="button"
+                            data-disposal-action="approved"
+                            data-request-id="${escapeHtml(item.id)}">
+                            Goedkeuren
+                          </button>
+                          <button type="button"
+                            data-disposal-action="rejected"
+                            data-request-id="${escapeHtml(item.id)}">
+                            Afwijzen
+                          </button>
+                        `
+                        : '-'}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (error) {
+      if (root.isConnected && select.value === organizationId) {
+        disposalList.textContent =
+          error.message ||
+          'Afmeldverzoeken zijn tijdelijk niet beschikbaar.';
+      }
+    }
+  }
+
+  // BESTEMD_DISPOSAL_ACTIONS_303
+  let disposalReviewBusy = false;
+
+  const disposalReviewNotice = document.createElement('p');
+  disposalReviewNotice.setAttribute('role', 'status');
+  disposalReviewNotice.setAttribute('aria-live', 'polite');
+  disposalPanel.insertBefore(disposalReviewNotice, disposalList);
+
+  disposalList.addEventListener('click', async event => {
+    const target = event.target;
+
+    if (!(target instanceof Element)) return;
+
+    const button = target.closest('button[data-disposal-action]');
+    if (!button || disposalReviewBusy) return;
+
+    if (!['owner', 'admin'].includes(currentUser?.roleCode)) {
+      disposalReviewNotice.textContent =
+        'Geen bevoegdheid om dit verzoek te beoordelen.';
+      return;
+    }
+
+    const requestId = button.dataset.requestId;
+    const decision = button.dataset.disposalAction;
+    const organizationId = select.value;
+
+    if (!/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(requestId || '') ||
+        !['approved', 'rejected'].includes(decision) ||
+        !organizationId) {
+      disposalReviewNotice.textContent = 'Ongeldig verzoek.';
+      return;
+    }
+
+    let reviewNote = '';
+
+    if (decision === 'approved') {
+      if (!window.confirm(
+        'Dit afmeldverzoek goedkeuren? ' +
+        'Er wordt nog geen boeking of afschrijving uitgevoerd.'
+      )) return;
+    } else {
+      const entered = window.prompt(
+        'Waarom wordt dit afmeldverzoek afgewezen?'
+      );
+
+      if (entered === null) return;
+
+      reviewNote = entered.trim();
+
+      if (!reviewNote || reviewNote.length > 1500) {
+        disposalReviewNotice.textContent =
+          'Vul een toelichting van maximaal 1500 tekens in.';
+        return;
+      }
+    }
+
+    disposalReviewBusy = true;
+    disposalReviewNotice.textContent = 'Beoordeling opslaan...';
+
+    const buttons = disposalList.querySelectorAll(
+      'button[data-disposal-action]'
+    );
+    buttons.forEach(item => { item.disabled = true; });
+
+    try {
+      const result = await api(
+        '/api/office/inventory-disposals/review',
+        {
+          requestId,
+          decision,
+          reviewNote
+        }
+      );
+
+      if (result.status !== decision ||
+          result.financiallyProcessed !== false) {
+        throw new Error(
+          'De beoordeling kon niet worden bevestigd.'
+        );
+      }
+
+      if (select.value === organizationId && root.isConnected) {
+        await loadInventoryDisposals();
+
+        disposalReviewNotice.textContent =
+          decision === 'approved'
+            ? 'Afmeldverzoek goedgekeurd. Nog niet financieel verwerkt.'
+            : 'Afmeldverzoek afgewezen.';
+      }
+    } catch (error) {
+      disposalReviewNotice.textContent =
+        error.message || 'Beoordeling mislukt.';
+    } finally {
+      disposalReviewBusy = false;
+
+      disposalList.querySelectorAll(
+        'button[data-disposal-action]'
+      ).forEach(item => { item.disabled = false; });
+    }
+  });
+  select.addEventListener(
+    'change',
+    () => void loadInventoryDisposals()
+  );
+
+  disposalPanel.querySelector('#disposal-refresh').onclick =
+    () => void loadInventoryDisposals();
+
+
+  const wizeButton = wizeSection.querySelector('#inventory-wize-review');
+  const wizeResult = wizeSection.querySelector('#inventory-wize-result');
+
+  wizeButton.hidden = !['owner','admin'].includes(currentUser?.roleCode);
+
+  wizeButton.onclick = async () => {
+    const organizationId = select.value;
+
+    if (!organizationId) {
+      wizeResult.textContent = 'Selecteer eerst een onderneming.';
+      return;
+    }
+
+    wizeButton.disabled = true;
+    wizeResult.textContent = 'Wize beoordeelt de bedrijfsmiddelen...';
+
+    try {
+      const result = await api('/api/wize-office', {
+        organizationId,
+        question: 'Beoordeel de geregistreerde bedrijfsmiddelen. Noem ontbrekende gegevens en mogelijke aandachtspunten voor afschrijving. Doe alleen een conceptvoorstel. Verzin geen fiscale regels, gebruiksduur of restwaarde.',
+        history: []
+      });
+
+      if (root.isConnected && select.value === organizationId) {
+        wizeResult.textContent = String(result.answer ?? 'Geen beoordeling beschikbaar.');
+      }
+    } catch (error) {
+      if (root.isConnected && select.value === organizationId) {
+        wizeResult.textContent = error.message || 'Wize is tijdelijk niet beschikbaar.';
+      }
+    } finally {
+      wizeButton.disabled = false;
+    }
+  };
+  select.onchange = async () => {
+    const orgId = select.value;
+    if (!orgId) { results.textContent = 'Selecteer een onderneming.'; return; }
+    results.textContent = 'Bedrijfsmiddelen ophalen...';
+    try {
+      const response = await api('/api/office/inventory?organizationId=' + encodeURIComponent(orgId));
+      if (!root.isConnected || select.value !== orgId) return;
+      const items = Array.isArray(response.items) ? response.items : [];
+      const money = cents => cents != null && Number.isSafeInteger(Number(cents))
+        ? euro.format(Number(cents) / 100) : 'â€”';
+      results.innerHTML = `
+        <h2>${items.length} bedrijfsmiddelen</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Bedrijfsmiddel</th><th>Categorie</th><th>Aanschafwaarde</th><th>Boekwaarde</th><th>Status</th></tr></thead>
+          <tbody>${items.map(item => `<tr>
+            <td>${escapeHtml(item.name)}</td>
+            <td>${escapeHtml(item.category)}</td>
+            <td>${money(item.purchaseValueCents)}</td>
+            <td>${money(item.bookValueCents)}</td>
+            <td>${escapeHtml(item.status)}</td>
+          </tr>`).join('') || '<tr><td colspan="5">Geen bedrijfsmiddelen gevonden.</td></tr>'}</tbody>
+        </table></div>`;
+    } catch (error) {
+      if (root.isConnected && select.value === orgId) {
+        results.textContent = error.message || 'Bedrijfsmiddelen zijn tijdelijk niet beschikbaar.';
+      }
+    }
+  };
+}
