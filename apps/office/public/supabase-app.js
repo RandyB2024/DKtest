@@ -229,6 +229,10 @@ async function renderRoute() {
       html =
         '<div id="office-payment-monitoring"></div>';
 
+    } else if (path === '/fixed-assets') {
+      header('Bedrijfsmiddelen');
+      recordData = await api('/api/clients');
+      html = '<div id="office-fixed-assets"></div>';
     } else if (path === '/documents') {
       header('Documenten');
       const data = await api('/api/clients');
@@ -312,6 +316,10 @@ async function renderRoute() {
           );
         }
 
+      }else if(path==='/fixed-assets'){
+        const {mountOfficeFixedAssets} = await import('/fixed-assets.js');
+        if(activeGeneration===generation&&currentUser)
+          await mountOfficeFixedAssets($('#office-fixed-assets'),api,recordData);
       }else if(path==='/documents'){
         const {mountOfficeDocumentsReadonly}=await import('/documents-readonly.js');
         if(activeGeneration===generation&&currentUser)mountOfficeDocumentsReadonly($('#office-documents-readonly'),api,recordData);
