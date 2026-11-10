@@ -1,7 +1,7 @@
 import {
   verifyMetaWebhookChallenge,
   verifyMetaWebhookSignature,
-} from "../../../../../../lib/communications/meta-webhook-security";
+} from "../../../../../lib/communications/meta-webhook-security";
 
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
