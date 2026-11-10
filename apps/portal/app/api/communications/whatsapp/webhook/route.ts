@@ -3,6 +3,9 @@ import {
   verifyMetaWebhookSignature,
 } from "../../../../../lib/communications/meta-webhook-security";
 
+import { parseWhatsAppInboundEvents } from "../../../../../lib/communications/meta-event-parser";
+import { stageVerifiedWhatsAppEvents } from "../../../../../lib/communications/meta-event-staging";
+
 export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
@@ -60,5 +63,20 @@ export async function POST(request: Request): Promise<Response> {
   );
   if (!valid) return reply("Forbidden", 403);
 
-  return reply("WhatsApp ingestion not yet enabled", 503);
+  let payload: unknown;
+  try {
+    payload = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return reply("Invalid JSON", 400);
+  }
+  const events = parseWhatsAppInboundEvents(payload);
+  // Status-only and unknown event shapes are not yet supported. Do not ACK
+  // before status processing exists, to avoid silently dropping updates.
+  if (events.length === 0) return reply("Unsupported WhatsApp event", 503);
+  try {
+    const staged = await stageVerifiedWhatsAppEvents(events);
+    return staged ? reply("EVENT_RECEIVED", 200) : reply("WhatsApp storage unavailable", 503);
+  } catch {
+    return reply("WhatsApp storage unavailable", 503);
+  }
 }
