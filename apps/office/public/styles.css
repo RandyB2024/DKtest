@@ -4564,3 +4564,39 @@ body.sidebar-collapsed #logout::after{
   }
 
 }
+
+
+/* BESTEMD Office login only — visual layer; auth/MFA logic unchanged. */
+#login.login-shell{
+  min-height:100svh;
+  padding:clamp(16px,4vw,40px);
+  background-color:#d4c6b8;
+  background-image:
+    linear-gradient(90deg,rgba(14,35,48,.10),rgba(14,35,48,.03)),
+    url("/assets/office-login-background.webp"),
+    linear-gradient(125deg,#c8b19d 0%,#eee4d8 42%,#9d806b 100%);
+  background-size:cover,cover,cover;
+  background-position:center,center,center;
+  background-repeat:no-repeat;
+}
+#login .bestemd-login-card{
+  width:min(100%,440px);
+  padding:clamp(25px,3.5vw,38px);
+  border:1px solid rgba(255,255,255,.84);
+  border-radius:22px;
+  background:rgba(255,255,255,.97);
+  box-shadow:0 22px 65px rgba(16,32,44,.24);
+  backdrop-filter:blur(8px);
+}
+#login .bestemd-login-card::before{display:none}
+#login .bestemd-login-brand{margin-bottom:20px}
+#login .bestemd-login-card .login-logo{width:250px;max-width:85%}
+#login .bestemd-login-heading{margin-bottom:22px}
+#login .bestemd-login-heading h1{font-size:clamp(1.8rem,3vw,2.15rem)}
+#login .bestemd-login-form{gap:15px}
+#login .bestemd-login-form input{min-height:48px}
+#login .bestemd-login-submit{min-height:48px;margin-top:4px}
+@media(max-width:600px){
+  #login.login-shell{padding:16px}
+  #login .bestemd-login-card{width:100%;padding:28px 24px}
+}

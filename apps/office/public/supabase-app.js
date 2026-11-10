@@ -31,17 +31,9 @@ function loginScreen(message = '') {
       </div>
 
       <div class="bestemd-login-heading">
-        <p class="eyebrow">
-          BESTEMD OFFICE
-        </p>
-
         <h1>
           Welkom terug
         </h1>
-
-        <p class="muted">
-          Log veilig in op uw persoonlijke Office-omgeving.
-        </p>
       </div>
 
       <form
@@ -75,37 +67,10 @@ function loginScreen(message = '') {
           class="primary bestemd-login-submit"
           type="submit"
         >
-          Veilig inloggen
+          Inloggen
         </button>
 
       </form>
-
-      <div class="bestemd-login-security">
-
-        <div
-          class="bestemd-security-icon"
-          aria-hidden="true"
-        >
-          <svg viewBox="0 0 24 24">
-            <path d="M12 3l7 3v5c0 4.8-2.8 8.2-7 10-4.2-1.8-7-5.2-7-10V6l7-3z"/>
-            <path d="M9 12l2 2 4-4"/>
-          </svg>
-        </div>
-
-        <div>
-          <strong>
-            Beveiligd met tweestapsverificatie
-          </strong>
-
-          <p>
-            Na uw wachtwoord bevestigt u uw identiteit
-            met uw gekoppelde authenticator-app,
-            bijvoorbeeld Microsoft Authenticator
-            of Google Authenticator.
-          </p>
-        </div>
-
-      </div>
 
       <p
         id="auth-error"
@@ -113,10 +78,6 @@ function loginScreen(message = '') {
         role="alert"
       >
         ${escapeHtml(message)}
-      </p>
-
-      <p class="bestemd-login-footer">
-        Bestemd Â· Rust &amp; Vertrouwen
       </p>
 
     </main>
