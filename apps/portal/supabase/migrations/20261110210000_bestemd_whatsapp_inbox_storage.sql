@@ -39,13 +39,14 @@ CREATE TABLE IF NOT EXISTS public.bestemd_wa_conversations (
   assigned_staff_user_id uuid,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (organization_id, channel_account_id, contact_phone_e164)
+  UNIQUE (organization_id, channel_account_id, contact_phone_e164),
+  UNIQUE (id, organization_id, channel_account_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.bestemd_wa_messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id uuid NOT NULL,
-  conversation_id uuid NOT NULL REFERENCES public.bestemd_wa_conversations(id),
+  conversation_id uuid NOT NULL,
   channel_account_id uuid NOT NULL REFERENCES public.bestemd_wa_channel_accounts(id),
   provider_message_id text NOT NULL,
   direction text NOT NULL CHECK (direction IN ('inbound','outbound')),
@@ -54,7 +55,9 @@ CREATE TABLE IF NOT EXISTS public.bestemd_wa_messages (
   delivery_status text NOT NULL DEFAULT 'received',
   provider_timestamp timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (channel_account_id, provider_message_id)
+  UNIQUE (channel_account_id, provider_message_id),
+  FOREIGN KEY (conversation_id, organization_id, channel_account_id)
+    REFERENCES public.bestemd_wa_conversations(id, organization_id, channel_account_id)
 );
 
 CREATE INDEX IF NOT EXISTS bestemd_wa_conversations_org_idx
