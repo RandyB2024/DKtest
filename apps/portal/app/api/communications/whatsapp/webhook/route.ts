@@ -4,6 +4,7 @@ import {
 } from "../../../../../lib/communications/meta-webhook-security";
 
 import { parseWhatsAppInboundEvents } from "../../../../../lib/communications/meta-event-parser";
+import { parseWhatsAppStatusEvents } from "../../../../../lib/communications/meta-status-parser";
 import { stageVerifiedWhatsAppEvents } from "../../../../../lib/communications/meta-event-staging";
 
 export const runtime = "edge";
@@ -69,13 +70,25 @@ export async function POST(request: Request): Promise<Response> {
   } catch {
     return reply("Invalid JSON", 400);
   }
-  // Refuse mixed delivery-status payloads until statuses are durably handled.
   const entries = (payload && typeof payload === "object" && "entry" in payload && Array.isArray(payload.entry)) ? payload.entry : [];
-  const hasStatuses = entries.some((entry: any) => Array.isArray(entry?.changes) && entry.changes.some((change: any) => Array.isArray(change?.value?.statuses) && change.value.statuses.length > 0));
-  if (hasStatuses) return reply("Delivery status ingestion not yet enabled", 503);
-  const events = parseWhatsAppInboundEvents(payload);
-  // Status-only and unknown event shapes are not yet supported. Do not ACK
-  // before status processing exists, to avoid silently dropping updates.
+  const changes = entries.flatMap((entry: any) => Array.isArray(entry?.changes) ? entry.changes : []);
+  // Never acknowledge unsupported provider event types or malformed message/status
+  // arrays: they must not be silently discarded.
+  if (changes.some((change: any) => change?.field !== "messages" ||
+    (Array.isArray(change?.value?.messages) &&
+      change.value.messages.length !== parseWhatsAppInboundEvents({
+        object: "whatsapp_business_account",
+        entry: [{ changes: [change] }],
+      }).length) ||
+    (Array.isArray(change?.value?.statuses) &&
+      change.value.statuses.length !== parseWhatsAppStatusEvents({
+        object: "whatsapp_business_account",
+        entry: [{ changes: [change] }],
+      }).length))) return reply("Unsupported WhatsApp event", 503);
+  const events = [
+    ...parseWhatsAppInboundEvents(payload),
+    ...parseWhatsAppStatusEvents(payload),
+  ];
   if (events.length === 0) return reply("Unsupported WhatsApp event", 503);
   try {
     const staged = await stageVerifiedWhatsAppEvents(events);
