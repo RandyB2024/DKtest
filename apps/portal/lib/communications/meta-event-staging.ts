@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { WhatsAppInboundEvent } from "./meta-event-parser";
+import type { WhatsAppStatusEvent } from "./meta-status-parser";
 
 /**
  * Store verified provider events in the private inbox queue.
@@ -7,7 +8,7 @@ import type { WhatsAppInboundEvent } from "./meta-event-parser";
  * The downstream worker must resolve contact + organization and keep unknown
  * or ambiguous senders in a staff-only queue.
  */
-export async function stageVerifiedWhatsAppEvents(events: WhatsAppInboundEvent[]): Promise<boolean> {
+export async function stageVerifiedWhatsAppEvents(events: (WhatsAppInboundEvent | WhatsAppStatusEvent)[]): Promise<boolean> {
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return false;
