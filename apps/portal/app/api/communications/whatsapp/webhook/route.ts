@@ -69,6 +69,10 @@ export async function POST(request: Request): Promise<Response> {
   } catch {
     return reply("Invalid JSON", 400);
   }
+  // Refuse mixed delivery-status payloads until statuses are durably handled.
+  const entries = (payload && typeof payload === "object" && "entry" in payload && Array.isArray(payload.entry)) ? payload.entry : [];
+  const hasStatuses = entries.some((entry: any) => Array.isArray(entry?.changes) && entry.changes.some((change: any) => Array.isArray(change?.value?.statuses) && change.value.statuses.length > 0));
+  if (hasStatuses) return reply("Delivery status ingestion not yet enabled", 503);
   const events = parseWhatsAppInboundEvents(payload);
   // Status-only and unknown event shapes are not yet supported. Do not ACK
   // before status processing exists, to avoid silently dropping updates.
