@@ -702,6 +702,17 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
 
+    // Central calendar: Office-only, AAL2 protected by officeIdentity above.
+    if (path === '/api/office/dashboard/appointments') {
+      if (req.method !== 'GET') throw new OfficeError(405, 'METHOD_NOT_ALLOWED', 'Methode niet toegestaan.');
+      const { data, error } = await client.rpc('bestemd_office_calendar_upcoming');
+      if (error) {
+        console.error('Office calendar unavailable', { message: error.message });
+        throw new OfficeError(503, 'APPOINTMENTS_UNAVAILABLE', 'Afspraken konden niet worden geladen.');
+      }
+      return sendJson(res, 200, { items: Array.isArray(data) ? data : [] });
+    }
+
     // BESTEMD_DISPOSAL_REVIEW_302
     // Deze route wordt pas bereikt na officeIdentity(client), inclusief MFA.
     if (path === '/api/office/inventory-disposals/review') {
