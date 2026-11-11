@@ -15,7 +15,17 @@ await rm(destination, { recursive: true, force: true });
 for (const file of files) {
   const target = join(destination, file);
   await mkdir(join(target, '..'), { recursive: true });
-  await copyFile(join(source, file), target);
+  try {
+    await copyFile(join(source, file), target);
+  } catch (error) {
+    // This optional background image exists only in some local worktrees.
+    // Never fail the whole Office deployment because it is not committed.
+    if (file === 'assets/office-login-background.webp' && error?.code === 'ENOENT') {
+      console.warn('Optional Office login background not found; continuing build.');
+      continue;
+    }
+    throw error;
+  }
 }
 const html = await readFile(join(source, 'index.html'), 'utf8');
 const start = html.indexOf('  <div id="login"');
