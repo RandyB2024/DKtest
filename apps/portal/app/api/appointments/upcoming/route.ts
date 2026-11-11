@@ -347,6 +347,29 @@ export async function GET(
               );
 
 
+            // Independently register the calendar booking. Wize's annual
+            // conversation limit must never hide a valid calendar appointment.
+            // Organization access is validated above; the SQL RPC repeats it.
+            const { error: calendarError } = await client.rpc(
+              "bestemd_portal_sync_calendar_booking",
+              {
+                p_organization_id: organizationId,
+                p_calcom_uid: booking.uid,
+                p_title: booking.title ?? "Gesprek met Bestemd",
+                p_starts_at: booking.start,
+                p_ends_at: booking.end,
+                p_status: normalizeStatus(booking),
+                p_sync_key: getCalcomSyncKey(),
+              },
+            );
+            if (calendarError) {
+              console.error("Calendar booking sync failed", {
+                organizationId,
+                bookingUid: booking.uid,
+                message: calendarError.message,
+              });
+            }
+
             if (syncError) {
               console.error(
                 "Appointment Cal.com sync failed",
