@@ -4,6 +4,7 @@
   "compatibility_date": "2026-09-27",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
+  "previews": {},
   "routes": [{ "pattern": "office.mijnbestemd.nl", "custom_domain": true }],
   "triggers": {
     "crons": ["15 7 * * *"]
