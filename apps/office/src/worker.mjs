@@ -1,3 +1,4 @@
+import { publicProspectRoute } from './prospects.mjs';
 import { loadConfig } from './config.mjs';
 import { securityHeaders } from './security.mjs';
 import { handleOfficeApi } from './supabase-api.mjs';
@@ -6,6 +7,9 @@ import { runScheduledInvoiceReminders } from './invoice-reminders.mjs';
 const assets = new Set([
   '/index.html', '/offline.html', '/styles.css', '/intake.css', '/supabase.css',
   '/supabase-app.js', '/passkeys.js', '/kvk-intake.js', '/customer-profile.js', '/profile-fields.js', '/client-workspace.js', '/intake-fields.js', '/intake-form.js', '/tasks.js', '/documents-readonly.js', '/banking.js', '/payment-monitoring.js', '/tax-returns.js', '/communication.js', '/wize-admin.js', '/wize-office.js', '/sw.js', '/manifest.webmanifest',
+  '/prospect.js',
+  '/prospect-signature.js',
+  '/prospect-wizard.js',
   '/personal-portal-access.js',
   '/assets/logo.png', '/assets/icon-192.png', '/assets/icon-512.png',
 ]);
@@ -120,6 +124,62 @@ export function createWorker(fetchImpl = fetch) { return {
     if (url.origin !== config.origin) return unavailable(421);
     let path;
     try { path = decodeURIComponent(url.pathname); } catch { return unavailable(400); }
+    // BESTEMD 3.0 — publieke aanvraag, gescheiden van Office-authenticatie
+    if (path === '/api/prospect') {
+      const readProspectBody = async (req) => {
+        const contentType = req.headers['content-type'] || '';
+        if (!contentType.startsWith('application/json')) {
+          throw new Error('Ongeldig inhoudstype.');
+        }
+
+        const chunks = [];
+        let size = 0;
+        const maxSize = 4_500_000;
+
+        for await (const chunk of req) {
+          size += chunk.length;
+          if (size > maxSize) throw new Error('Aanvraag te groot.');
+          chunks.push(chunk);
+        }
+
+        return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      };
+
+      try {
+        const result = await publicProspectRoute(
+          nodeRequest(request), url, config, fetchImpl, readProspectBody
+        );
+
+        return secured(new Response(JSON.stringify({
+          ok: true,
+          data: result.data
+        }), {
+          status: result.status,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-store, private'
+          }
+        }));
+      } catch (error) {
+        const status = Number.isInteger(error?.status)
+          && error.status >= 400 && error.status <= 599
+          ? error.status : 400;
+
+        return secured(new Response(JSON.stringify({
+          ok: false,
+          error: {
+            code: 'PROSPECT_REQUEST_FAILED',
+            message: 'De aanvraag kon niet worden verwerkt.'
+          }
+        }), {
+          status,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-store, private'
+          }
+        }));
+      }
+    }
     if (path === '/api' || path.startsWith('/api/')) {
       const res = nodeResponse();
       try { await handleOfficeApi(nodeRequest(request), res, config, fetchImpl); }

@@ -1,3 +1,5 @@
+import { officeProspectReviewRoute } from './prospect-review.mjs';
+import { officeProspectRoute } from './prospects.mjs';
 import { bankingRoute } from './banking.mjs';
 import { paymentMonitoringRoute } from './payment-monitoring.mjs';
 import { communicationRoute } from './communication.mjs';
@@ -873,6 +875,16 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
 
 
+    // BESTEMD 3.0 — prospectroutes
+    const prospectReview = await officeProspectReviewRoute(
+      req, url, client, user, config, fetchImpl, body
+    );
+    if (prospectReview) return sendJson(res, prospectReview.status, prospectReview.data);
+
+    const prospect = await officeProspectRoute(
+      req, url, client, user, config, fetchImpl, body
+    );
+    if (prospect) return sendJson(res, prospect.status, prospect.data);
     const taxReturns =
       await taxReturnsRoute(
         req,
