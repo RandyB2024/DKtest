@@ -5,7 +5,7 @@ export function whatsappLoginEnabled() {
   return process.env.WHATSAPP_LOGIN_ENABLED === "true"
     && process.env.WHATSAPP_SMS_HOOK_CONFIRMED === "true"
     && Boolean(process.env.WHATSAPP_ACCESS_TOKEN)
-    && /^\\d+$/.test(process.env.WHATSAPP_PHONE_NUMBER_ID ?? "")
+    && /^\d+$/.test(process.env.WHATSAPP_PHONE_NUMBER_ID ?? "")
     && Boolean(process.env.SUPABASE_SEND_SMS_HOOK_SECRET);
 }
 
