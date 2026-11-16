@@ -25,6 +25,7 @@ export default function CentralLogin() {
   const [access, setAccess] = useState<Access>({});
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
+  const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -68,6 +69,10 @@ export default function CentralLogin() {
 
   useEffect(() => {
     void refresh();
+    void fetch("/api/auth/whatsapp-code/status", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : { enabled: false })
+      .then(data => setWhatsappEnabled(data?.enabled === true))
+      .catch(() => setWhatsappEnabled(false));
   }, [refresh]);
 
   async function signIn(event: React.FormEvent<HTMLFormElement>) {
@@ -125,10 +130,11 @@ export default function CentralLogin() {
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(requesting ? { email: email.trim() } : {
-            email: email.trim(),
-            token: emailToken.trim(),
-          }),
+          body: JSON.stringify(requesting
+            ? (loginMethod === "whatsapp" ? { phone: mobile.trim() } : { email: email.trim() })
+            : (loginMethod === "whatsapp"
+              ? { phone: mobile.trim(), token: emailToken.trim() }
+              : { email: email.trim(), token: emailToken.trim() })),
         },
       );
 
@@ -162,7 +168,7 @@ export default function CentralLogin() {
       const response = await fetch(loginMethod === "whatsapp" ? "/api/auth/whatsapp-code/request" : "/api/auth/email-code/request", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify(loginMethod === "whatsapp" ? { phone: mobile.trim() } : { email: email.trim() }),
       });
       const data = (await response.json()) as { error?: string; message?: string };
       if (!response.ok) throw new Error(data.error ?? "Opnieuw verzenden is niet gelukt.");
@@ -207,7 +213,7 @@ export default function CentralLogin() {
           {stage === "login" && (
             <form
               className="bestemd-new-form"
-              onSubmit={loginMethod === "whatsapp" ? (event) => event.preventDefault() : loginMethod === "password" ? signIn : submitEmailCode}
+              onSubmit={loginMethod === "whatsapp" && !whatsappEnabled ? (event) => event.preventDefault() : loginMethod === "password" ? signIn : submitEmailCode}
             >
               <span className="bestemd-new-icon"><LockKeyhole size={22} /></span>
               <h1>Welkom terug.</h1>
@@ -325,13 +331,17 @@ export default function CentralLogin() {
                         setEmailToken("");
                         setMessage("");
                       }}>
-                        Ander e-mailadres
+                        {loginMethod === "whatsapp" ? "Ander mobiel nummer" : "Ander e-mailadres"}
                       </button>
                     </div>
                   </>
                 ) : (
                   <p id={loginMethod === "whatsapp" ? "bestemd-whatsapp-info" : undefined} className="bestemd-email-code-hint">
-                    {loginMethod === "whatsapp" ? "Binnenkort ontvang je een inlogcode op het mobiele nummer dat geverifieerd aan je BESTEMD-account is gekoppeld. De functie is nog niet actief. Je Authenticator blijft verplicht." : "We sturen een code naar je e-mailadres."}
+                    {loginMethod === "whatsapp"
+                      ? whatsappEnabled
+                        ? "We sturen een code via WhatsApp naar het geverifieerde mobiele nummer van je BESTEMD-account. Daarna blijft je Authenticator verplicht."
+                        : "WhatsApp-inloggen wordt voorbereid. Gebruik voorlopig Wachtwoord of E-mailcode. Je Authenticator blijft verplicht."
+                      : "We sturen een code naar je e-mailadres."}
                   </p>
                 )}
               </div>
@@ -340,12 +350,12 @@ export default function CentralLogin() {
                 <p role="status" className="bestemd-new-error">{message}</p>
               )}
 
-              <button type="submit" className="bestemd-new-button" disabled={busy || loginMethod === "whatsapp"}>
+              <button type="submit" className="bestemd-new-button" disabled={busy || (loginMethod === "whatsapp" && !whatsappEnabled)}>
                 {busy
                   ? "Even geduld..."
                   : loginMethod === "password"
                     ? "Inloggen"
-                    : loginMethod === "whatsapp"
+                    : loginMethod === "whatsapp" && !whatsappEnabled
                       ? "Binnenkort beschikbaar"
                     : emailStep === "request"
                       ? "Verstuur inlogcode"
