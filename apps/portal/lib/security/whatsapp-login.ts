@@ -3,7 +3,10 @@ import "server-only";
 /** Never use a CRM-only phone number as proof of account ownership. */
 export function whatsappLoginEnabled() {
   return process.env.WHATSAPP_LOGIN_ENABLED === "true"
-    && process.env.WHATSAPP_SMS_HOOK_CONFIRMED === "true";
+    && process.env.WHATSAPP_SMS_HOOK_CONFIRMED === "true"
+    && Boolean(process.env.WHATSAPP_ACCESS_TOKEN)
+    && /^\\d+$/.test(process.env.WHATSAPP_PHONE_NUMBER_ID ?? "")
+    && Boolean(process.env.SUPABASE_SEND_SMS_HOOK_SECRET);
 }
 
 export function normalizeWhatsappPhone(input: unknown): string | null {
