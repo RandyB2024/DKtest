@@ -71,7 +71,9 @@ export default function CentralLogin() {
     void refresh();
     void fetch("/api/auth/whatsapp-code/status", { cache: "no-store" })
       .then(response => response.ok ? response.json() : { enabled: false })
-      .then((data: { enabled?: boolean }) => setWhatsappEnabled(data.enabled === true))
+      .then((data: unknown) => setWhatsappEnabled(
+        typeof data === "object" && data !== null && "enabled" in data && data.enabled === true,
+      ))
       .catch(() => setWhatsappEnabled(false));
   }, [refresh]);
 
