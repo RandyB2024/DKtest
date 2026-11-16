@@ -257,7 +257,7 @@ export default function CentralLogin() {
           {stage === "login" && (
             <form
               className="bestemd-new-form"
-              onSubmit={loginMethod === "password" ? signIn : submitEmailCode}
+              onSubmit={loginMethod === "whatsapp" ? (event) => event.preventDefault() : loginMethod === "password" ? signIn : submitEmailCode}
             >
               <span className="bestemd-new-icon"><LockKeyhole size={22} /></span>
               <h1>Welkom terug.</h1>
@@ -374,7 +374,7 @@ export default function CentralLogin() {
                   </>
                 ) : (
                   <p className="bestemd-email-code-hint">
-                    {loginMethod === "whatsapp" ? "We sturen alleen een code naar je geverifieerde mobiele nummer. Je wachtwoord en Authenticator blijven ongewijzigd." : "We sturen een code naar je e-mailadres."}
+                    {loginMethod === "whatsapp" ? "WhatsApp-inloggen wordt voorbereid. Gebruik voorlopig Wachtwoord of E-mailcode. Je Authenticator blijft verplicht." : "We sturen een code naar je e-mailadres."}
                   </p>
                 )}
               </div>
@@ -383,11 +383,13 @@ export default function CentralLogin() {
                 <p role="status" className="bestemd-new-error">{message}</p>
               )}
 
-              <button type="submit" className="bestemd-new-button" disabled={busy}>
+              <button type="submit" className="bestemd-new-button" disabled={busy || loginMethod === "whatsapp"}>
                 {busy
                   ? "Even geduld..."
                   : loginMethod === "password"
                     ? "Inloggen"
+                    : loginMethod === "whatsapp"
+                      ? "Binnenkort beschikbaar"
                     : emailStep === "request"
                       ? "Verstuur inlogcode"
                       : "Inloggen met code"}
