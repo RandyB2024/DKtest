@@ -10,8 +10,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Mfa from "./mfa";
-// BESTEMD_PASSKEY_95G
-import { runPasskey } from "../public/passkeys.js";
 
 type Access = {
   business?: boolean;
@@ -26,6 +24,7 @@ export default function CentralLogin() {
   const [stage, setStage] = useState<Stage>("loading");
   const [access, setAccess] = useState<Access>({});
   const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -71,55 +70,6 @@ export default function CentralLogin() {
     void refresh();
   }, [refresh]);
 
-  // BESTEMD_PASSKEY_95G
-  async function signInWithPasskey() {
-    if (busy) return;
-
-    setBusy(true);
-    setMessage("");
-
-    try {
-      const api = async (path: string, body?: unknown) => {
-        const response = await fetch(path, {
-          method: "POST",
-          credentials: "same-origin",
-          cache: "no-store",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
-        const data = (await response.json()) as {
-          error?: string;
-          authenticated?: boolean;
-        };
-
-        if (!response.ok) {
-          throw new Error(
-            data.error ?? "Passkey-inloggen is niet gelukt."
-          );
-        }
-
-        return data;
-      };
-
-      const result = await runPasskey("authentication", api);
-
-      if (!result.authenticated) {
-        throw new Error("De Passkey-aanmelding is niet bevestigd.");
-      }
-
-      setPassword("");
-      await refresh();
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Passkey-inloggen is niet gelukt."
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
   async function signIn(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -294,20 +244,26 @@ export default function CentralLogin() {
                   <MessageCircle size={17} />
                   <span>WhatsApp</span>
                 </button>
-                <button
-                  type="button"
-                  className="bestemd-login-method"
-                  onClick={() => void signInWithPasskey()}
-                  disabled={busy}
-                  title="Inloggen met een geregistreerde passkey"
-                >
-                  <ShieldCheck size={17} />
-                  <span>Passkey</span>
-                </button>
               </div>
 
               <div className="bestemd-new-fields">
-                <label htmlFor="bestemd-email">E-mailadres</label>
+                <label htmlFor={loginMethod === "whatsapp" ? "bestemd-mobile" : "bestemd-email"}>
+                  {loginMethod === "whatsapp" ? "Mobiel nummer met WhatsApp" : "E-mailadres"}
+                </label>
+                {loginMethod === "whatsapp" ? (
+                  <input
+                    id="bestemd-mobile"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    maxLength={20}
+                    placeholder="06 12345678"
+                    value={mobile}
+                    onChange={event => setMobile(event.target.value)}
+                    aria-describedby="bestemd-whatsapp-info"
+                    required
+                  />
+                ) : (
                 <input
                   id="bestemd-email"
                   type="email"
@@ -326,6 +282,7 @@ export default function CentralLogin() {
                   readOnly={loginMethod !== "password" && emailStep === "verify"}
                   required
                 />
+                )}
 
                 {loginMethod === "password" ? (
                   <>
@@ -373,8 +330,8 @@ export default function CentralLogin() {
                     </div>
                   </>
                 ) : (
-                  <p className="bestemd-email-code-hint">
-                    {loginMethod === "whatsapp" ? "WhatsApp-inloggen wordt voorbereid. Gebruik voorlopig Wachtwoord of E-mailcode. Je Authenticator blijft verplicht." : "We sturen een code naar je e-mailadres."}
+                  <p id={loginMethod === "whatsapp" ? "bestemd-whatsapp-info" : undefined} className="bestemd-email-code-hint">
+                    {loginMethod === "whatsapp" ? "Binnenkort ontvang je een inlogcode op het mobiele nummer dat geverifieerd aan je BESTEMD-account is gekoppeld. De functie is nog niet actief. Je Authenticator blijft verplicht." : "We sturen een code naar je e-mailadres."}
                   </p>
                 )}
               </div>
