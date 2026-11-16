@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness,
   Compass,
   LockKeyhole,
+  MessageCircle,
   ShieldCheck,
 } from "lucide-react";
 import Mfa from "./mfa";
@@ -29,7 +30,7 @@ export default function CentralLogin() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   // BESTEMD_EMAIL_CODE_93E
-  const [loginMethod, setLoginMethod] = useState<"password" | "email">("password");
+  const [loginMethod, setLoginMethod] = useState<"password" | "email" | "whatsapp">("password");
   const [emailStep, setEmailStep] = useState<"request" | "verify">("request");
   const [emailToken, setEmailToken] = useState("");
   const [resendSeconds, setResendSeconds] = useState(0);
@@ -152,7 +153,7 @@ export default function CentralLogin() {
     return () => window.clearTimeout(timer);
   }, [resendSeconds]);
 
-  function chooseMethod(method: "password" | "email") {
+  function chooseMethod(method: "password" | "email" | "whatsapp") {
     setLoginMethod(method);
     setEmailStep("request");
     setEmailToken("");
@@ -168,7 +169,9 @@ export default function CentralLogin() {
     try {
       const requesting = emailStep === "request";
       const response = await fetch(
-        requesting ? "/api/auth/email-code/request" : "/api/auth/email-code/verify",
+        requesting
+          ? (loginMethod === "whatsapp" ? "/api/auth/whatsapp-code/request" : "/api/auth/email-code/request")
+          : (loginMethod === "whatsapp" ? "/api/auth/whatsapp-code/verify" : "/api/auth/email-code/verify"),
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -188,7 +191,7 @@ export default function CentralLogin() {
       if (requesting) {
         setEmailStep("verify");
         setResendSeconds(60);
-        setMessage(data.message ?? "Controleer je e-mail voor de inlogcode.");
+        setMessage(data.message ?? (loginMethod === "whatsapp" ? "Als dit account in aanmerking komt, ontvang je een WhatsApp-code." : "Controleer je e-mail voor de inlogcode."));
       } else {
         setEmailToken("");
         await refresh();
@@ -206,7 +209,7 @@ export default function CentralLogin() {
     setMessage("");
 
     try {
-      const response = await fetch("/api/auth/email-code/request", {
+      const response = await fetch(loginMethod === "whatsapp" ? "/api/auth/whatsapp-code/request" : "/api/auth/email-code/request", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
@@ -214,7 +217,7 @@ export default function CentralLogin() {
       const data = (await response.json()) as { error?: string; message?: string };
       if (!response.ok) throw new Error(data.error ?? "Opnieuw verzenden is niet gelukt.");
       setResendSeconds(60);
-      setMessage(data.message ?? "Controleer je e-mail.");
+      setMessage(data.message ?? (loginMethod === "whatsapp" ? "Controleer WhatsApp." : "Controleer je e-mail."));
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Opnieuw verzenden is niet gelukt.");
     } finally {
@@ -283,6 +286,16 @@ export default function CentralLogin() {
                 </button>
                 <button
                   type="button"
+                  className={`bestemd-login-method ${loginMethod === "whatsapp" ? "bestemd-login-method-active" : ""}`}
+                  onClick={() => chooseMethod("whatsapp")}
+                  aria-pressed={loginMethod === "whatsapp"}
+                  disabled={busy}
+                >
+                  <MessageCircle size={17} />
+                  <span>WhatsApp</span>
+                </button>
+                <button
+                  type="button"
                   className="bestemd-login-method"
                   onClick={() => void signInWithPasskey()}
                   disabled={busy}
@@ -304,13 +317,13 @@ export default function CentralLogin() {
                   value={email}
                   onChange={event => {
                     setEmail(event.target.value);
-                    if (loginMethod === "email" && emailStep === "verify") {
+                    if (loginMethod !== "password" && emailStep === "verify") {
                       setEmailStep("request");
                       setEmailToken("");
                       setMessage("");
                     }
                   }}
-                  readOnly={loginMethod === "email" && emailStep === "verify"}
+                  readOnly={loginMethod !== "password" && emailStep === "verify"}
                   required
                 />
 
@@ -332,7 +345,7 @@ export default function CentralLogin() {
                   </>
                 ) : emailStep === "verify" ? (
                   <>
-                    <label htmlFor="bestemd-email-token">Inlogcode uit je e-mail</label>
+                    <label htmlFor="bestemd-email-token">{loginMethod === "whatsapp" ? "Inlogcode uit WhatsApp" : "Inlogcode uit je e-mail"}</label>
                     <input
                       id="bestemd-email-token"
                       type="text"
@@ -361,7 +374,7 @@ export default function CentralLogin() {
                   </>
                 ) : (
                   <p className="bestemd-email-code-hint">
-                    We sturen een code naar je e-mailadres.
+                    {loginMethod === "whatsapp" ? "We sturen alleen een code naar je geverifieerde mobiele nummer. Je wachtwoord en Authenticator blijven ongewijzigd." : "We sturen een code naar je e-mailadres."}
                   </p>
                 )}
               </div>
