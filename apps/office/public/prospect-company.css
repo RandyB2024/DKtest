@@ -1,0 +1,14 @@
+
+/* BESTEMD onboarding — company-specific panels, tablet and phone */
+.bestemd-company-sections{width:100%;margin:1rem 0 1.25rem;padding:1rem;border:1px solid #dae6ef;border-radius:18px;background:#f9fbfd}
+.bestemd-company-sections h3{margin:0 0 .8rem;color:#173d58;font-size:1.05rem}
+.bestemd-company-nav{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.bestemd-company-nav button{border:1px solid #c5d8e5;border-radius:12px;background:white;color:#31516a;padding:.6rem .8rem;font-weight:600;cursor:pointer}
+.bestemd-company-nav button.is-active{background:#0b7295;color:white;border-color:#0b7295}
+.bestemd-company-nav button[data-complete="true"]:after{content:" ✓";font-weight:700}
+.bestemd-company-mobile{display:none;width:100%;margin:.6rem 0 1rem;padding:.75rem;border:1px solid #bad2e1;border-radius:12px;background:white}
+.bestemd-company-field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+.bestemd-company-field{display:flex;flex-direction:column;gap:.35rem;min-width:0;color:#304a5e;font-weight:600;font-size:.87rem}
+.bestemd-company-field input,.bestemd-company-field select,.bestemd-company-field textarea{width:100%;box-sizing:border-box;min-width:0;border-radius:10px;border:1px solid #cadde8;padding:.65rem;background:#fff;color:#173750;font:inherit}
+.bestemd-company-field textarea{resize:vertical}
+@media(max-width:650px){.bestemd-company-nav{display:none}.bestemd-company-mobile{display:block}.bestemd-company-field-grid{grid-template-columns:minmax(0,1fr)}.bestemd-company-sections{padding:.75rem}}
