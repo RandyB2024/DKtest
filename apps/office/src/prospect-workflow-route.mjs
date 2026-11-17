@@ -64,7 +64,7 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
     'WRONG_MEETING_STAGE','Dit gesprek hoort niet bij de huidige trajectfase.');
   const when=text(input.scheduledAt,50);
   const parsed=Date.parse(when);
-  if(!when||!Number.isFinite(parsed)||!/^\\d{4}-\\d{2}-\\d{2}T/.test(when))
+  if(!when||!Number.isFinite(parsed)||!/^\d{4}-\d{2}-\d{2}T/.test(when))
     fail(400,'INVALID_MEETING_TIME','Gebruik een volledige datum en tijd voor de afspraak.');
   const status=text(input.meetingStatus,20);
   if(!['scheduled','completed','cancelled'].includes(status))
