@@ -1,3 +1,5 @@
+import {createClient} from '@supabase/supabase-js';
+import {startWorkflow} from './prospect-workflow-v4.mjs';
 import { OfficeError } from './auth/supabase.mjs';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,7 +17,9 @@ export async function onboardingNewCustomerRoute(
   url,
   client,
   user,
-  readBody
+  readBody,
+  config,
+  fetchImpl
 ) {
   if (
     url.pathname !== '/api/onboarding/new-customer' ||
@@ -122,6 +126,26 @@ export async function onboardingNewCustomerRoute(
     );
   }
 
+  // Create Workflow 4.0 without sending a public onboarding invitation.
+  // Older applications never receive an implicit migration.
+  if (!config?.supabaseUrl || !config?.supabaseServiceRoleKey) {
+    throw new OfficeError(503,'WORKFLOW_CONFIG','Klanttraject kan nog niet worden voorbereid.');
+  }
+  const supa=createClient(config.supabaseUrl,config.supabaseServiceRoleKey,{
+    auth:{persistSession:false,autoRefreshToken:false},global:{fetch:fetchImpl}
+  });
+  const original=await supa.from('office_onboarding_applications').select('id,applicant_data,status')
+    .eq('id',data.application_id).maybeSingle();
+  if(original.error||!original.data||original.data.status!=='draft') {
+    throw new OfficeError(503,'WORKFLOW_UNAVAILABLE','De conceptaanvraag is aangemaakt maar het klanttraject kon niet worden gestart.');
+  }
+  const applicant=original.data.applicant_data||{};
+  const updated=await supa.from('office_onboarding_applications')
+    .update({applicant_data:{...applicant,workflowV4:startWorkflow(user.id)}})
+    .eq('id',data.application_id).eq('status','draft').select('id').maybeSingle();
+  if(updated.error||!updated.data) {
+    throw new OfficeError(503,'WORKFLOW_UNAVAILABLE','De conceptaanvraag is aangemaakt maar het klanttraject kon niet worden opgeslagen.');
+  }
   return {
     status: 201,
     data: {
