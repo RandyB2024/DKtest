@@ -32,7 +32,8 @@ export function sendJson(res, status, data, code) {
 async function body(req) {
   if (!req.headers['content-type']?.startsWith('application/json')) throw new OfficeError(400, 'INVALID_REQUEST', 'Ongeldig verzoek.');
   const chunks = []; let size = 0;
-  for await (const chunk of req) { size += chunk.length; if (size > 16384) throw new OfficeError(413, 'REQUEST_TOO_LARGE', 'Verzoek te groot.'); chunks.push(chunk); }
+  const maxBytes = (req.url || '').split('?')[0] === '/api/office/prospect-workflow' ? 4_500_000 : 16384;
+  for await (const chunk of req) { size += chunk.length; if (size > maxBytes) throw new OfficeError(413, 'REQUEST_TOO_LARGE', 'Verzoek te groot.'); chunks.push(chunk); }
   try { const value = JSON.parse(Buffer.concat(chunks).toString()); if (!value || Array.isArray(value) || typeof value !== 'object') throw new Error(); return value; }
   catch { throw new OfficeError(400, 'INVALID_REQUEST', 'Ongeldig verzoek.'); }
 }
