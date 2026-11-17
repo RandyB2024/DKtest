@@ -1,3 +1,4 @@
+import {sendProspectReceipt} from './prospect-email-v4.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes, createHash } from 'node:crypto';
 import { OfficeError } from './auth/supabase.mjs';
@@ -244,7 +245,10 @@ export async function officeProspectRoute(req,url,client,user,config,fetchImpl,r
  // Workflow 4.0: an initial prospect is NOT an onboarding invitation.
  // The only route allowed to send the onboarding questionnaire is
  // /api/office/prospect-workflow with an accepted quote and verified agreement.
- return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',workflowStage:'new_request',emailSent:false}};
+ const receiptSent=await sendProspectReceipt({config,fetchImpl,applicationId,email:details.email,
+  customerName:details.firstName});
+ return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',
+  workflowStage:'new_request',emailSent:receiptSent}};
 }
 
 
