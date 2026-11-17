@@ -189,6 +189,8 @@ q('#upload').addEventListener('click',async()=>{
 
 function buildPayload(){
  syncExtraIbans();
+ const sections=onboardingV4?companySectionsUI?.collect():{};
+ if(onboardingV4&&!sections)throw Error('De vragenlijst per onderneming is niet geladen.');
  const personal={
   salutation:getValue('salutation'), initials:getValue('initials'), firstName:getValue('firstName'), lastName:getValue('lastName'), email:getValue('email'), mobile:getValue('mobile'),
   lookingFor:getValue('lookingFor'), currentChallenges:getValue('currentChallenges'), expectations:getValue('expectations'), businessGoals:getValue('businessGoals'), howCanWeHelp:getValue('howCanWeHelp'),
@@ -199,8 +201,6 @@ function buildPayload(){
   vatRequired:getValue('vatRequired'), vatFrequency:getValue('vatFrequency'), vatIdNumber:getValue('vatIdNumber'), turnoverTaxNumber:getValue('turnoverTaxNumber'), vatNumber:getValue('vatNumber'), hasFiscalUnit:getValue('hasFiscalUnit'), rsin:getValue('rsin'), iban:getValue('iban'), extraBankAccounts:getValue('extraBankAccounts'), hasCreditCard:getValue('hasCreditCard'), creditCardDetails:getValue('creditCardDetails'), hasEmployees:getValue('hasEmployees'), payrollNumber:getValue('payrollNumber')
  };
  const extra=window.BestemdExtras?.collect()||{};
- const sections=onboardingV4?companySectionsUI?.collect():{};
- if(onboardingV4&&!sections)throw Error('De vragenlijst per onderneming is niet geladen.');
  return {personal,company,...extra,...(sections||{}),...(onboardingV4?{additionalContacts:[]}: {})};
 }
 async function save(action){
