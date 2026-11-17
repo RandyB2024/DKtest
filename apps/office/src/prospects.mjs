@@ -124,8 +124,11 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  const positions=[1,...extras.map((_,i)=>i+2)];
  let sections=null;
  if(isV4){
+  if(!Array.isArray(input.companySections)){
+   throw new OfficeError(400,'COMPANY_QUESTIONNAIRE_REQUIRED','Vul de ondernemingsvragenlijst in voordat je opslaat.');
+  }
   try{
-   sections=normalizeCompanySections(input.companySections??[],positions,{submit:input.action==='submit'});
+   sections=normalizeCompanySections(input.companySections,positions,{submit:input.action==='submit'});
   }catch(error){
    throw new OfficeError(400,'INVALID_COMPANY_SECTIONS',String(error.message||'Controleer de ondernemingsvragen.'));
   }
