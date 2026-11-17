@@ -38,7 +38,7 @@ import InstallApp from "./install-app";
 import InvoiceDetailView from "./invoice-detail-view";
 import InventoryView from "./inventory-view";
 import Logout from "./logout";
-import PasskeySettings from "./passkey-settings";
+import CustomerSettings from "./customer-settings";
 import RelationsView from "./relations-view";
 import DocumentsView from "./documents-view";
 import CommunicationView from "./communication-view";
@@ -654,96 +654,7 @@ if (view === "Documenten") {
       );
     }
 
-    if (
-      view === "Instellingen"
-    ) {
-      return (
-        <>
-          <div className="heading">
-            <div>
-              <h1>
-                Instellingen
-              </h1>
-
-              <p>
-                Beheer uw profiel en
-                beveiligingsinstellingen.
-              </p>
-            </div>
-          </div>
-
-          <section className="card">
-            <h2>Uw profiel</h2>
-
-            <div className="customer-status-list">
-              <div>
-                <span>Naam</span>
-
-                <strong>
-                  {
-                    context.profile
-                      .display_name
-                  }
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  E-mailadres
-                </span>
-
-                <strong>
-                  {
-                    context.profile
-                      .email
-                  }
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Accountstatus
-                </span>
-
-                <strong>
-                  Actief
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Ondernemingen
-                </span>
-
-                <strong>
-                  {
-                    context
-                      .memberships
-                      .length
-                  }{" "}
-                  actieve koppeling
-                  {context
-                    .memberships
-                    .length === 1
-                    ? ""
-                    : "en"}
-                </strong>
-              </div>
-            </div>
-
-            <div className="notice">
-              Profielwijzigingen,
-              uitnodigingen en
-              gebruikersbeheer zijn
-              nog niet beschikbaar in
-              het klantportaal.
-            </div>
-
-            <PasskeySettings />
-          </section>
-        </>
-      );
-    }
+    if (view === "Instellingen") return <CustomerSettings />;
 
     return (
       <>

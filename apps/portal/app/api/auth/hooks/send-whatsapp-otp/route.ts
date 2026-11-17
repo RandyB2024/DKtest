@@ -4,6 +4,13 @@
  */
 import { whatsappLoginEnabled, normalizeWhatsappPhone } from "@/lib/security/whatsapp-login";
 
+function phoneEnrollmentEnabled() {
+  return process.env.WHATSAPP_PHONE_ENROLLMENT_ENABLED === "true"
+    && Boolean(process.env.WHATSAPP_ACCESS_TOKEN)
+    && /^\d+$/.test(process.env.WHATSAPP_PHONE_NUMBER_ID ?? "")
+    && Boolean(process.env.SUPABASE_SEND_SMS_HOOK_SECRET);
+}
+
 function decodeSecret(value: string): Uint8Array {
   const encoded = value.replace(/^v1,whsec_/, "").replace(/-/g, "+").replace(/_/g, "/");
   const raw = atob(encoded.padEnd(Math.ceil(encoded.length / 4) * 4, "="));
@@ -42,7 +49,7 @@ async function signedBySupabase(request: Request, payload: string) {
 }
 
 export async function POST(request: Request) {
-  if (!whatsappLoginEnabled()) return new Response(null, { status: 503 });
+  if (!whatsappLoginEnabled() && !phoneEnrollmentEnabled()) return new Response(null, { status: 503 });
   if (!request.headers.get("content-type")?.includes("application/json")) {
     return new Response(null, { status: 415 });
   }
@@ -51,11 +58,15 @@ export async function POST(request: Request) {
     return new Response(null, { status: 401 });
   }
 
-  let event: { user?: { phone?: unknown; phone_confirmed_at?: unknown }; sms?: { otp?: unknown } };
+  let event: { new_phone?: unknown; user?: { phone?: unknown; phone_change?: unknown; phone_confirmed_at?: unknown }; sms?: { otp?: unknown } };
   try { event = JSON.parse(raw); } catch { return new Response(null, { status: 400 }); }
-  const phone = normalizeWhatsappPhone(event.user?.phone);
+  const existingPhone = normalizeWhatsappPhone(event.user?.phone);
+  const pendingPhone = normalizeWhatsappPhone(event.new_phone) ?? normalizeWhatsappPhone(event.user?.phone_change);
+  const enrollment = phoneEnrollmentEnabled() && Boolean(pendingPhone) && pendingPhone !== existingPhone;
+  const phone = enrollment ? pendingPhone : existingPhone;
+  const authorizedLogin = whatsappLoginEnabled() && Boolean(event.user?.phone_confirmed_at) && Boolean(existingPhone);
   const otp = event.sms?.otp;
-  if (!phone || !event.user?.phone_confirmed_at || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
+  if ((!enrollment && !authorizedLogin) || !phone || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
     return new Response(null, { status: 403 });
   }
 
