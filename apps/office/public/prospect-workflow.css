@@ -16,3 +16,9 @@
 .bestemd-workflow h3,.bestemd-workflow h4 {margin:1.1rem 0 .6rem}
 .bestemd-workflow .mutation-error {color:#a5282f}
 @media(max-width:650px){.bestemd-workflow-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.bestemd-workflow .customer-buttons{flex-direction:column;align-items:stretch}.bestemd-workflow button{width:100%}}
+
+.bestemd-workflow-document-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.7rem;margin:1rem 0}
+.bestemd-workflow-document-status>h4{grid-column:1/-1;margin-bottom:0}
+.bestemd-workflow-company-card{padding:.8rem;background:#f8fafc;border:1px solid #d7e5ee;border-radius:12px}
+.bestemd-workflow-company-card strong{color:#173d58}
+.bestemd-workflow-company-card p{font-size:.84rem;margin:.45rem 0}
