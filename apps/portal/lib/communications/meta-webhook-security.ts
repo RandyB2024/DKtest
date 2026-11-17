@@ -26,7 +26,12 @@ export async function verifyMetaWebhookSignature(
     ["verify"],
   );
   const body = rawBody instanceof Uint8Array ? rawBody : new Uint8Array(rawBody);
-  return crypto.subtle.verify("HMAC", key, signature, body);
+  return crypto.subtle.verify(
+    "HMAC",
+    key,
+    Uint8Array.from(signature).buffer,
+    rawBody instanceof Uint8Array ? Uint8Array.from(body).buffer : rawBody,
+  );
 }
 
 /**
