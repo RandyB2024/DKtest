@@ -1,3 +1,4 @@
+import {sendProspectReceipt} from './prospect-email-v4.mjs';
 import {createClient} from '@supabase/supabase-js';
 import {startWorkflow} from './prospect-workflow-v4.mjs';
 import { OfficeError } from './auth/supabase.mjs';
@@ -146,13 +147,9 @@ export async function onboardingNewCustomerRoute(
   if(updated.error||!updated.data) {
     throw new OfficeError(503,'WORKFLOW_UNAVAILABLE','De conceptaanvraag is aangemaakt maar het klanttraject kon niet worden opgeslagen.');
   }
-  return {
-    status: 201,
-    data: {
-      relationshipId: data.relationship_id,
-      applicationId: data.application_id,
-      status: data.status,
-      emailSent: false
-    }
-  };
+  const receiptSent=await sendProspectReceipt({config,fetchImpl,applicationId:data.application_id,
+    email,customerName});
+  return {status:201,data:{relationshipId:data.relationship_id,
+    applicationId:data.application_id,status:data.status,
+    workflowStage:'new_request',emailSent:receiptSent}};
 }
