@@ -114,6 +114,12 @@ export function mountCompanySections({form,initial,getExtras}){
    for(const field of FIELDSETS[section])wrap.append(makeField(section,active,field));
    w.fields.append(wrap);
   }
+  for(const button of [...form.querySelectorAll('button')]){
+   if(/onderneming toevoegen/i.test(button.textContent||'')){
+    button.disabled=entries.length>=5;
+    button.title=entries.length>=5?'Maximaal vijf ondernemingen per aanvraag':'Onderneming toevoegen';
+   }
+  }
   refreshMarks();
  }
  function syncPrimary(){
