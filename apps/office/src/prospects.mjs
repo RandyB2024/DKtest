@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes, createHash } from 'node:crypto';
 import { OfficeError } from './auth/supabase.mjs';
+import { startWorkflow } from './prospect-workflow-v4.mjs';
 
 const VALID_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FIELDS=['firstName','lastName','email','mobile','companyName','kvk','vat','legalForm','website','street','postalCode','city','country'];
@@ -203,33 +204,20 @@ export async function officeProspectRoute(req,url,client,user,config,fetchImpl,r
  }
  if(req.method!=='POST')throw new OfficeError(405,'METHOD_NOT_ALLOWED','Methode niet toegestaan.');
  const input=await readBody(req); if(input?.action!=='create')throw new OfficeError(400,'INVALID_ACTION','Ongeldige actie.');
+ if(input.source!==undefined && (typeof input.source!=='string'||input.source.length>80))throw new OfficeError(400,'INVALID_SOURCE','Ongeldige herkomst.');
  const details=safeInput(input.data);
  const db=admin(config,fetchImpl);
  const {data,error}=await client.rpc('office_create_onboarding_new_customer',{p_customer_name:details.firstName+' '+details.lastName,p_company_name:details.companyName,p_email:details.email});
  if(error){if(error.code==='23505')throw new OfficeError(409,'PROSPECT_EXISTS','Er is al een lopende aanvraag voor dit e-mailadres.');throw new OfficeError(503,'PROSPECT_CREATE_FAILED','Prospect kon niet worden aangemaakt.');}
  const applicationId=data?.application_id;
  if(!applicationId)throw new OfficeError(503,'PROSPECT_CREATE_FAILED','Geen aanvraagnummer ontvangen.');
- const {data:updatedApplication,error:e1}=await db.from('office_onboarding_applications').update({applicant_data:{name:details.firstName+' '+details.lastName,firstName:details.firstName,lastName:details.lastName,email:details.email,mobile:details.mobile}}).eq('id',applicationId).eq('status','draft');
+ const {data:updatedApplication,error:e1}=await db.from('office_onboarding_applications').update({applicant_data:{name:details.firstName+' '+details.lastName,firstName:details.firstName,lastName:details.lastName,email:details.email,mobile:details.mobile,workflowV4:startWorkflow(user.id),leadSource:clean(input.source,80)||'office',assignedTo:user.id}}).eq('id',applicationId).eq('status','draft');
  const {error:e2}=await db.from('office_onboarding_companies').update({company_data:{name:details.companyName,companyName:details.companyName,kvk:details.kvk,website:details.website,legalForm:details.legalForm,street:details.street,postalCode:details.postalCode,city:details.city,country:details.country||'Nederland'}}).eq('application_id',applicationId).eq('position',1);
  if(e1||e2)throw new OfficeError(503,'PROSPECT_CREATE_FAILED','Aanvraag is aangemaakt, maar aanvullende gegevens konden niet worden opgeslagen.');
- if(!config.resendApiKey) return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',emailSent:false,reason:'RESEND_NOT_CONFIGURED'}};
- const token=randomBytes(32).toString('hex');
- const expires=new Date(Date.now()+7*86400000).toISOString();
- const {data:invite,error:ei}=await db.from('office_onboarding_invites').insert({application_id:applicationId,email:details.email,token_hash:digest(token),expires_at:expires,created_by:user.id}).select('id').single();
- if(ei)throw new OfficeError(503,'PROSPECT_INVITE_FAILED','Prospect is opgeslagen, maar de uitnodiging kon niet worden klaargezet.');
- const inviteUrl=config.origin+'/prospect?token='+encodeURIComponent(token);
- let response;
- try{
-  response=await fetchImpl('https://api.resend.com/emails',{
-   method:'POST',
-   headers:{Authorization:'Bearer '+config.resendApiKey,'Content-Type':'application/json','Idempotency-Key':'bestemd-prospect-'+applicationId},
-   body:JSON.stringify({from:'BESTEMD <info@mijnbestemd.nl>',to:[details.email],subject:'Welkom bij BESTEMD — vul jouw aanvraag aan',html:inviteEmailHtml(details.firstName,inviteUrl,config.origin)})
-  });
- }catch{response=null;}
- if(!response?.ok){await db.from('office_onboarding_invites').update({revoked_at:new Date().toISOString()}).eq('id',invite.id);return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',emailSent:false,reason:'EMAIL_FAILED'}};}
- const {error:statusError}=await db.from('office_onboarding_applications').update({status:'invited'}).eq('id',applicationId).eq('status','draft');
- if(statusError)throw new OfficeError(503,'PROSPECT_STATUS_FAILED','De uitnodiging is verstuurd, maar de prospectstatus kon niet worden bijgewerkt. Neem contact op met de beheerder.');
- return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'invited',emailSent:true}};
+ // Workflow 4.0: an initial prospect is NOT an onboarding invitation.
+ // The only route allowed to send the onboarding questionnaire is
+ // /api/office/prospect-workflow with an accepted quote and verified agreement.
+ return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',workflowStage:'new_request',emailSent:false}};
 }
 
 
