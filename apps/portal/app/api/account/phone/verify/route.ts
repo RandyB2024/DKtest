@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       throw new AccessError(400, "Vul de zescijferige code in.");
     }
     const { data: before } = await client.auth.getUser();
-    if (!before.user || before.user.id !== identity.id || before.user.phone_change !== phone) {
+    if (!before.user || before.user.id !== identity.id || (before.user as typeof before.user & { phone_change?: string }).phone_change !== phone) {
       throw new AccessError(403, "Dit nummer is niet voor jouw account aangevraagd.");
     }
     const { error } = await client.auth.verifyOtp({ phone, token: body.token, type: "phone_change" });
