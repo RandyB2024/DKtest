@@ -1,0 +1,29 @@
+.bestemd-insurance{max-width:1180px;width:100%;margin:auto;padding-bottom:38px;color:#17364b}
+.bestemd-insurance *{box-sizing:border-box}
+.bestemd-insurance-hero{display:flex;align-items:center;gap:22px;padding:33px 34px;margin-bottom:20px;border-radius:22px;background:linear-gradient(115deg,#0b344e,#0d5967 85%);color:#fff;box-shadow:0 12px 34px #083f5624}
+.bestemd-insurance-hero .bestemd-insurance-mark{width:66px;height:66px;border-radius:21px;display:grid;place-items:center;background:#ffffff22;color:#fff;flex-shrink:0}
+.bestemd-insurance-hero span{font-size:11px;font-weight:750;letter-spacing:.13em;color:#c4e9e4}
+.bestemd-insurance-hero h1{margin:9px 0 7px;color:#fff;font-size:clamp(23px,3vw,33px);letter-spacing:-.03em}
+.bestemd-insurance-hero p{margin:0;font-size:13px;color:#dcecea;line-height:1.65;max-width:680px}
+.bestemd-insurance-empty,.bestemd-insurance-policies{padding:30px;border-radius:19px;border:1px solid #e2ebee;background:#fff;margin-bottom:20px}
+.bestemd-insurance-empty{text-align:center;padding:48px 28px}
+.bestemd-insurance-empty-icon{width:68px;height:68px;margin:0 auto 17px;display:grid;place-items:center;border-radius:21px;color:#1c6175;background:#e8f3f4}
+.bestemd-insurance-empty h2,.bestemd-insurance-policies h2{font-size:20px;color:#164159;margin:0 0 9px}
+.bestemd-insurance-empty p{color:#718795;line-height:1.7;font-size:13px;max-width:490px;margin:0 auto}
+.bestemd-insurance-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:18px}
+.bestemd-insurance-actions button{display:flex;align-items:center;text-align:left;gap:14px;background:#fff;border:1px solid #e1eaed;border-radius:16px;padding:20px;cursor:pointer;color:#1e657b;min-width:0}
+.bestemd-insurance-actions button:hover{border-color:#91b6bf;background:#f7fbfb}
+.bestemd-insurance-actions button>span{flex:1;min-width:0}
+.bestemd-insurance-actions strong,.bestemd-insurance-actions small{display:block}
+.bestemd-insurance-actions strong{font-size:14px;color:#1f4054;margin-bottom:5px}
+.bestemd-insurance-actions small{font-size:12px;color:#768a97;line-height:1.5}
+.bestemd-insurance-disclaimer{font-size:12px;color:#81939b;line-height:1.7}
+.bestemd-insurance-list{display:grid;gap:10px;margin-top:18px}
+.bestemd-insurance-list article{display:flex;align-items:center;gap:14px;padding:14px;border-radius:12px;border:1px solid #e6eef0}
+.bestemd-insurance-list article>div{flex:1;min-width:0}
+.bestemd-insurance-list strong,.bestemd-insurance-list small{display:block}
+.bestemd-insurance-list strong{font-size:14px;color:#1a4255}
+.bestemd-insurance-list small{font-size:12px;color:#728995;margin-top:4px}
+.bestemd-insurance-list article>span:last-child{font-size:11px;color:#287268;background:#e9f6f1;border-radius:20px;padding:6px 9px}
+.bestemd-insurance-mark-small{width:39px;height:39px;display:grid;place-items:center;border-radius:11px;color:#247b73;background:#e8f5f0}
+@media(max-width:680px){.bestemd-insurance-hero{padding:25px 20px;align-items:flex-start}.bestemd-insurance-actions{grid-template-columns:1fr}.bestemd-insurance-empty{padding:32px 20px}.bestemd-insurance-list article{flex-wrap:wrap}}
