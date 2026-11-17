@@ -17,9 +17,11 @@ import {
   Target,
   Umbrella,
   WalletCards,
+  Settings,
 } from "lucide-react";
 
 import Logout from "./logout";
+import CustomerSettings from "./customer-settings";
 import PersonalLifePlan from "./personal-life-plan";
 import PersonalCoaching from "./personal-coaching";
 import PersonalAbc from "./personal-abc";
@@ -60,6 +62,7 @@ const personalNav = [
     "Mijn documenten",
     FolderOpen,
   ],
+  ["Instellingen", Settings],
 ] as const;
 
 
