@@ -1508,61 +1508,6 @@ export default function PayablesView({
                 )}
                 <p className="bestemd-supplier-notice">Alleen leveranciers van de geselecteerde onderneming. Logo’s en inloglinks verschijnen wanneer deze in de gegevensbron zijn vastgelegd; inloggegevens worden hier niet opgeslagen.</p>
               </section>
-            )}                            </strong>
-                          </div>
-
-                          <div>
-                            <small>
-                              Open facturen
-                            </small>
-
-                            <strong>
-                              {
-                                supplier.openCount
-                              }
-                            </strong>
-                          </div>
-
-                          <div>
-                            <small>
-                              Betaaltermijn
-                            </small>
-
-                            <strong>
-                              {
-                                supplier.paymentTermDays
-                              }{" "}
-                              dagen
-                            </strong>
-                          </div>
-
-                          <div>
-                            <small>
-                              Oudste vervaldatum
-                            </small>
-
-                            <strong>
-                              {date(
-                                supplier.oldestDueDate,
-                              )}
-                            </strong>
-                          </div>
-                        </article>
-                      ),
-                    )
-                  }
-
-
-                  {data.suppliers.length ===
-                    0 && (
-                    <p>
-                      Nog geen
-                      leveranciers
-                      geregistreerd.
-                    </p>
-                  )}
-                </div>
-              </section>
             )}
           </>
         )}
