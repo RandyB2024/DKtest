@@ -78,6 +78,21 @@ export async function mountProspectWorkflow(target, api, {relationshipId=null}={
    if(idx===current)li.setAttribute('aria-current','step');steps.append(li);
   });
   detail.append(steps,el('h3','Huidige fase: '+(SHORT[w.stage]||w.stage)));
+  const dossier=el('div',undefined,'bestemd-workflow-document-status');
+  dossier.append(el('h4','Dossiercontrole per onderneming'));
+  for(const company of result.companies||[]){
+   const item=el('article',undefined,'bestemd-workflow-company-card');
+   item.append(el('strong',company.name));
+   item.append(info('Financieel beeld: '+(company.financialAnswered?'Basis compleet':'Aanvullen')));
+   item.append(info('Administratieve onboarding: '+(company.administrationAnswered?'Basis compleet':'Aanvullen')));
+   item.append(info('Documenten: '+((company.documents||[]).length)+' ontvangen'));
+   if((company.missingDocuments||[]).length)item.append(info('Nog op te vragen: '+company.missingDocuments.join(', ')));
+   dossier.append(item);
+  }
+  const personal=el('article',undefined,'bestemd-workflow-company-card');
+  personal.append(el('strong','Documenten ondernemer'));
+  personal.append(info((result.personalDocuments||[]).length+' persoonsdocument(en) ontvangen; controle op rechtmatige noodzaak en autorisatie vereist.'));
+  dossier.append(personal);detail.append(dossier);
   if(w.stage==='rejected'||w.stage==='coaching'){
    detail.append(info(w.stage==='rejected'?'Traject afgesloten na afwijzing.':'Afzonderlijk coachingtraject; geen reguliere klantactivatie.'));
    return;
