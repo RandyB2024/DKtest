@@ -48,9 +48,36 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
  const companiesResult=await supa.from('office_onboarding_companies').select('position,company_data').eq('application_id',id).order('position').limit(6);
  if(companiesResult.error)fail(503,'COMPANIES_UNAVAILABLE','Ondernemingen konden niet worden geladen.');
  const companies=companiesResult.data||[];
- if(req.method==='GET')return {status:200,data:{applicationId:id,applicationStatus:app.status,relationshipId:app.customer_relationship_id,
+ if(req.method==='GET'){
+  const documentsResult=await supa.from('office_prospect_documents')
+    .select('id,filename,company_position,created_at')
+    .eq('application_id',id).order('created_at',{ascending:false}).limit(100);
+  if(documentsResult.error)fail(503,'DOCUMENTS_UNAVAILABLE','Documentenoverzicht kon niet worden geladen.');
+  const documents=documentsResult.data||[];
+  const categoryOf=d=>String(d.filename||'').split(' - ')[0].trim();
+  const personalCategories=new Set(['Aangifte inkomstenbelasting','Identiteitsbewijs ondernemer']);
+  const personalDocs=documents.filter(d=>personalCategories.has(categoryOf(d)));
+  const companyRows=companies.map(c=>{
+   const received=documents.filter(d=>Number(d.company_position)===c.position&&!personalCategories.has(categoryOf(d)));
+   const entity=String(c.company_data?.entityType||c.company_data?.legalForm||'').toLowerCase();
+   const needsVat=c.company_data?.vatRequired==='yes';
+   const required=['KvK-uittreksel','Jaarrekening','Kolommenbalans',...(needsVat?['Btw-aangifte']:[])];
+   const present=new Set(received.map(categoryOf));
+   const financial=c.company_data?.financialOnboarding||{};
+   const administrative=c.company_data?.administrativeOnboarding||{};
+   return {position:c.position,name:c.company_data?.companyName||c.company_data?.name||'Onderneming',
+     entityType:entity,documents:received,
+     missingDocuments:required.filter(category=>!present.has(category)),
+     financialAnswered:['cashBookkeeping','cashTransactions'].every(key=>['yes','no'].includes(financial[key])),
+     administrationAnswered:['vatRequired','iban'].every(key=>!!administrative[key])&&
+       (administrative.vatRequired!=='yes'||!!administrative.vatFrequency)};
+  });
+  return {status:200,data:{applicationId:id,applicationStatus:app.status,relationshipId:app.customer_relationship_id,
    legacy:workflow?.version!==WORKFLOW_VERSION,workflow:workflow?.version===WORKFLOW_VERSION?publicWorkflow(workflow):null,
-   companies:companies.map(c=>({position:c.position,name:c.company_data?.companyName||c.company_data?.name||'Onderneming'}))}};
+   companies:companyRows,personalDocuments:personalDocs,
+   // ID evidence is assessed separately; storing a full copy is not assumed lawful.
+   personalDocumentsPendingReview:true}};
+ }
  ensure(workflow?.version===WORKFLOW_VERSION,'LEGACY_READ_ONLY','Bestaande oude aanvraag wordt niet automatisch gewijzigd.');
  ensure(['draft','invited','in_progress','submitted','under_review'].includes(app.status),'WORKFLOW_CLOSED','Gesloten aanvragen kunnen niet worden gewijzigd.');
  if(!input||typeof input!=='object'||Array.isArray(input))fail(400,'INVALID_INPUT','Ongeldige aanvraag.');
