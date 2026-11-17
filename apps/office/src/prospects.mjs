@@ -100,7 +100,8 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  if(input?.action==='upload'){
   const count=await db.from('office_prospect_documents').select('id',{count:'exact',head:true}).eq('application_id',application.id);
   if(count.error)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Documentenopslag niet ingericht.');
-  if((count.count||0)>=20)throw new OfficeError(400,'TOO_MANY_DOCUMENTS','Maximaal 20 documenten per aanvraag.');
+  const maxDocuments=application.applicant_data?.workflowV4?.version===4?75:20;
+  if((count.count||0)>=maxDocuments)throw new OfficeError(400,'TOO_MANY_DOCUMENTS','Maximaal '+maxDocuments+' documenten per aanvraag.');
   const mime=clean(input.mime,80),filename=clean(input.filename,120).replace(/[\/\\\x00-\x1f]/g,'_');
   if(!filename)throw new OfficeError(400,'INVALID_DOCUMENT','Een bestandsnaam is verplicht.');
   const bytes=decodeDocument(input.base64,mime);
