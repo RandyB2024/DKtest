@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomBytes, createHash } from 'node:crypto';
 import { OfficeError } from './auth/supabase.mjs';
 import { startWorkflow } from './prospect-workflow-v4.mjs';
+import { normalizeCompanySections } from './prospect-company-sections.mjs';
 
 const VALID_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FIELDS=['firstName','lastName','email','mobile','companyName','kvk','vat','legalForm','website','street','postalCode','city','country'];
@@ -116,8 +117,19 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  const personal=input.personal,company=input.company;
  const extras=Array.isArray(input.additionalCompanies)?input.additionalCompanies:[];
  const people=Array.isArray(input.additionalContacts)?input.additionalContacts:[];
+ const isV4=application.applicant_data?.workflowV4?.version===4;
+ if(isV4&&people.length)throw new OfficeError(400,'ADDITIONAL_CONTACTS_DISABLED','Aanvullende contactpersonen worden tijdens het intakegesprek geregistreerd.');
  if(extras.length>4||people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel ondernemingen of contactpersonen.');
  for(const [i,entry] of extras.entries()){const c=entry?.companyData||{};if(Number(entry.position)!==i+2||!clean(c.companyName)||c.kvk&&!/^\d{8}$/.test(clean(c.kvk)))throw new OfficeError(400,'INVALID_COMPANY','Controleer de extra ondernemingen.');}
+ const positions=[1,...extras.map((_,i)=>i+2)];
+ let sections=null;
+ if(isV4){
+  try{
+   sections=normalizeCompanySections(input.companySections??[],positions,{submit:input.action==='submit'});
+  }catch(error){
+   throw new OfficeError(400,'INVALID_COMPANY_SECTIONS',String(error.message||'Controleer de ondernemingsvragen.'));
+  }
+ }
  const kvks=[clean(company.kvk),...extras.map(e=>clean(e.companyData?.kvk))].filter(Boolean);if(new Set(kvks).size!==kvks.length)throw new OfficeError(409,'DUPLICATE_KVK','Een KvK-nummer is meermaals ingevuld.');
  const contactRoles=['contactpersoon','ondernemer','bestuurder','administratie','facturatie','gemachtigde'];
  const allowedPositions=new Set(['all','1',...extras.map((_,i)=>String(i+2))]);
@@ -147,7 +159,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   const sign=input.signature;
   const requiredIntro=['lookingFor','currentChallenges','expectations','businessGoals','howCanWeHelp'];
   if(requiredIntro.some(k=>!clean(personal[k],1500)))throw new OfficeError(400,'SIGNATURE_REQUIRED','Beantwoord eerst alle kennismakingsvragen.');
-  if(!oneOf(clean(personal.cashBookkeeping,10),['yes','no'])||!oneOf(clean(personal.cashTransactions,10),['yes','no']))throw new OfficeError(400,'SIGNATURE_REQUIRED','Vul eerst het financiële beeld aan.');
+  if(!isV4&&(!oneOf(clean(personal.cashBookkeeping,10),['yes','no'])||!oneOf(clean(personal.cashTransactions,10),['yes','no'])))throw new OfficeError(400,'SIGNATURE_REQUIRED','Vul eerst het financiële beeld aan.');
   if(!sign||sign.accepted!==true||typeof sign.name!=='string'||clean(sign.name,200).length<3)throw new OfficeError(400,'SIGNATURE_REQUIRED','Vul je naam in en bevestig de verklaring.');
   const signer=clean(sign.name,200).replace(/\s+/g,' ').toLowerCase();
   const applicant=(clean(personal.firstName)+' '+clean(personal.lastName)).replace(/\s+/g,' ').toLowerCase();
@@ -158,7 +170,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  if(terms!==undefined&&(!terms||terms.accepted!==true||!/^[-a-zA-Z0-9._]{1,80}$/.test(String(terms.version||''))||input.action!=='submit'))throw new OfficeError(400,'INVALID_TERMS','Ongeldig akkoord op de voorwaarden.');
  const extraIbans=String(company.extraBankAccounts||'').split(/[\n,;]+/).map(x=>x.replace(/\s+/g,'').toUpperCase()).filter(Boolean);
  if(extraIbans.length>15||extraIbans.some(x=>!(/^[A-Z]{2}[0-9A-Z]{13,32}$/.test(x)))||new Set([clean(company.iban).replace(/\s+/g,'').toUpperCase(),...extraIbans]).size!==extraIbans.length+1)throw new OfficeError(400,'INVALID_IBAN','Controleer de extra zakelijke IBAN-nummers.');
- const updatedPersonal={...application.applicant_data,additionalContacts:contacts,
+ const updatedPersonal={...application.applicant_data,additionalContacts:isV4?[]:contacts,
   salutation:oneOf(clean(personal.salutation,30),['Dhr.','Mevr.','Anders','Geen aanhef']), initials:clean(personal.initials,40), firstName:clean(personal.firstName), lastName:clean(personal.lastName), name:(clean(personal.firstName)+' '+clean(personal.lastName)).trim(), email, mobile:clean(personal.mobile,24),
   serviceRequest:clean(personal.serviceRequest,1500), whatsappConsent:asBool(personal.whatsappConsent),
   lookingFor:clean(personal.lookingFor,1500), currentChallenges:clean(personal.currentChallenges,1500), expectations:clean(personal.expectations,1500), businessGoals:clean(personal.businessGoals,1500), howCanWeHelp:clean(personal.howCanWeHelp,1500),
@@ -172,11 +184,22 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   vatRequired, vatFrequency:vatRequired==='yes'?vatFrequency:'', vatIdNumber:entityType==='eenmanszaak'?clean(company.vatIdNumber,100):'', turnoverTaxNumber:entityType==='eenmanszaak'?clean(company.turnoverTaxNumber,100):'',
   vatNumber:entityType==='bv'?clean(company.vatNumber,100):'', hasFiscalUnit:entityType==='bv'?hasFiscalUnit:'', rsin:entityType==='bv'?clean(company.rsin,100):'',
   iban:clean(company.iban,100), extraBankAccounts:extraIbans.join('\n'), hasCreditCard, creditCardDetails:hasCreditCard==='yes'?clean(company.creditCardDetails,1500):'',
-  hasEmployees, payrollNumber:hasEmployees==='yes'?clean(company.payrollNumber,100):'', website:clean(company.website,200), legalForm:clean(company.legalForm,200), street:clean(company.street,200), postalCode:clean(company.postalCode,32), city:clean(company.city,120), country:clean(company.country,120)||'Nederland'
+  hasEmployees, payrollNumber:hasEmployees==='yes'?clean(company.payrollNumber,100):'', website:clean(company.website,200), legalForm:clean(company.legalForm,200), street:clean(company.street,200), postalCode:clean(company.postalCode,32), city:clean(company.city,120), country:clean(company.country,120)||'Nederland',
+  ...(isV4&&sections?.has(1)?{financialOnboarding:sections.get(1).financial,administrativeOnboarding:sections.get(1).administration}:{})
  };
  const {error:e2}=await db.from('office_onboarding_companies').update({company_data:updatedCompany}).eq('application_id',application.id).eq('position',1);
  if(e2)throw new OfficeError(503,'PROSPECT_SAVE_FAILED','Bedrijfsgegevens konden niet worden opgeslagen.');
- const extraSave=await db.rpc('office_prospect_replace_extra_companies',{p_application_id:application.id,p_companies:extras});
+ const safelyMergedExtras=extras.map((entry,i)=>({
+  ...entry,
+  companyData:{
+   ...entry.companyData,
+   ...(isV4&&sections?.has(i+2)?{
+    financialOnboarding:sections.get(i+2).financial,
+    administrativeOnboarding:sections.get(i+2).administration
+   }:{})
+  }
+ }));
+ const extraSave=await db.rpc('office_prospect_replace_extra_companies',{p_application_id:application.id,p_companies:safelyMergedExtras});
  if(extraSave.error)throw new OfficeError(503,'EXTRA_COMPANIES_SAVE_FAILED','Extra ondernemingen konden niet worden opgeslagen. Controleer de nieuwe Supabase-migratie.');
  const {data:updatedApplication,error:e1}=await db.from('office_onboarding_applications').update({applicant_data:updatedPersonal,status:input.action==='submit'?'submitted':'in_progress',submitted_at:input.action==='submit'?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',application.id).in('status',['invited','in_progress']).select('id').maybeSingle();
  if(e1||!updatedApplication)throw new OfficeError(503,'PROSPECT_SAVE_FAILED','Opslaan is niet gelukt.');
