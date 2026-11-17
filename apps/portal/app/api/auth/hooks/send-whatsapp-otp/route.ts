@@ -58,10 +58,10 @@ export async function POST(request: Request) {
     return new Response(null, { status: 401 });
   }
 
-  let event: { user?: { phone?: unknown; phone_change?: unknown; phone_confirmed_at?: unknown }; sms?: { otp?: unknown } };
+  let event: { new_phone?: unknown; user?: { phone?: unknown; phone_change?: unknown; phone_confirmed_at?: unknown }; sms?: { otp?: unknown } };
   try { event = JSON.parse(raw); } catch { return new Response(null, { status: 400 }); }
   const existingPhone = normalizeWhatsappPhone(event.user?.phone);
-  const pendingPhone = normalizeWhatsappPhone(event.user?.phone_change);
+  const pendingPhone = normalizeWhatsappPhone(event.new_phone) ?? normalizeWhatsappPhone(event.user?.phone_change);
   const enrollment = phoneEnrollmentEnabled() && Boolean(pendingPhone) && pendingPhone !== existingPhone;
   const phone = enrollment ? pendingPhone : existingPhone;
   const authorizedLogin = whatsappLoginEnabled() && Boolean(event.user?.phone_confirmed_at) && Boolean(existingPhone);
