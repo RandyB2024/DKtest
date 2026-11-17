@@ -20,6 +20,7 @@ import "./documents.css";
 import "./mobile-fixes.css";
 import "./customer-settings.css";
 import "./insurance-overview.css";
+import "./supplier-cards.css";
 
 import ServiceWorker from "@/components/service-worker";
 
