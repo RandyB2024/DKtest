@@ -96,6 +96,13 @@ export async function mountOfficeCommunication(
         >
           Archief
         </button>
+
+        <button
+          type="button"
+          data-scope="whatsapp"
+        >
+          WhatsApp
+        </button>
       </div>
 
       <p
@@ -193,7 +200,9 @@ export async function mountOfficeCommunication(
     listTitle.textContent =
       scope === 'active'
         ? 'Actieve gesprekken'
-        : 'Archief';
+        : scope === 'whatsapp'
+          ? 'WhatsApp-gesprekken'
+          : 'Archief';
 
 
     if (!conversations.length) {
@@ -292,6 +301,20 @@ export async function mountOfficeCommunication(
 
   async function loadList() {
     showError('');
+
+    if (scope === 'whatsapp') {
+      // WhatsApp events currently live in a private staging queue, not in
+      // the existing portal conversations API. Never fabricate messages or
+      // expose unassigned cross-organization events to this client.
+      conversations = [];
+      canWrite = false;
+      newButton.hidden = true;
+      count.textContent = '0';
+      listTitle.textContent = 'WhatsApp-gesprekken';
+      list.innerHTML = '<div class="office-communication-empty">WhatsApp is nog niet gekoppeld. Berichten worden pas zichtbaar na veilige verwerking en activering van het zakelijke kanaal.</div>';
+      chat.innerHTML = '<div class="office-communication-empty">WhatsApp Business — Randy: wacht op officiële Meta-koppeling. Ed: nog niet ingesteld. Bestaande portaalgesprekken blijven beschikbaar onder Inbox.</div>';
+      return;
+    }
 
     const data =
       await api(
