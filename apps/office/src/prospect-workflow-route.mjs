@@ -84,7 +84,32 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
  const action=input.action;
  const at=new Date().toISOString();
  let responseExtra={};
- if(action==='record_meeting'){
+ if(action==='upload_agreement'){
+  ensure(workflow.stage==='agreement','WRONG_STAGE','Een overeenkomst hoort bij de overeenkomstfase.');
+  const raw=input.base64;
+  if(typeof raw!=='string'||raw.length>4_200_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(raw))
+    fail(400,'INVALID_AGREEMENT','Gebruik een PDF-bestand van maximaal 3 MB.');
+  const bytes=Buffer.from(raw,'base64');
+  if(!bytes.length||bytes.length>3_000_000||bytes.subarray(0,5).toString()!=='%PDF-')
+    fail(400,'INVALID_AGREEMENT','Geen geldige PDF-overeenkomst.');
+  const key=id+'/agreement-'+randomBytes(12).toString('hex')+'.pdf';
+  const uploaded=await supa.storage.from('bestemd-prospect-private').upload(key,bytes,{
+    contentType:'application/pdf',upsert:false
+  });
+  if(uploaded.error)fail(503,'AGREEMENT_UPLOAD_FAILED','De overeenkomst kon niet veilig worden opgeslagen.');
+  const row=await supa.from('office_prospect_documents').insert({
+    application_id:id,storage_path:key,
+    filename:'Overeenkomst van opdracht - ondertekend.pdf',
+    mime_type:'application/pdf',size_bytes:bytes.length,company_position:1
+  }).select('id').single();
+  if(row.error||!row.data){
+    await supa.storage.from('bestemd-prospect-private').remove([key]);
+    fail(503,'AGREEMENT_REGISTER_FAILED','De overeenkomst kon niet aan het prospectdossier worden gekoppeld.');
+  }
+  // This is not proof of signature validity; an authorized reviewer checks
+  // all required signatures before advancing to onboarding.
+  return {status:201,data:{applicationId:id,documentId:row.data.id,uploaded:true}};
+ }else if(action==='record_meeting'){
   const kind=text(input.kind,30);
   const allowed={introduction:['introduction'],quote:['quote_discussion'],intake:['intake'],instruction:['instruction']};
   ensure(!!allowed[kind]&&allowed[kind].includes(workflow.stage),
@@ -129,8 +154,10 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
    ensure(input.signedAgreementVerified===true,'AGREEMENT_REQUIRED','Verifieer de getekende overeenkomst.');
    const docId=text(input.agreementDocumentId,50);
    if(!uuid.test(docId))fail(400,'AGREEMENT_DOCUMENT_REQUIRED','Koppel de getekende overeenkomst uit dit dossier.');
-   const document=await supa.from('office_prospect_documents').select('id,storage_path').eq('application_id',id).eq('id',docId).maybeSingle();
-   if(document.error||!document.data?.storage_path)fail(409,'AGREEMENT_DOCUMENT_REQUIRED','Ondertekende overeenkomst ontbreekt in dit dossier.');
+   const document=await supa.from('office_prospect_documents').select('id,storage_path,filename,mime_type').eq('application_id',id).eq('id',docId).maybeSingle();
+   if(document.error||!document.data?.storage_path||document.data.mime_type!=='application/pdf'||
+     !/^Overeenkomst van opdracht - /i.test(document.data.filename||''))
+     fail(409,'AGREEMENT_DOCUMENT_REQUIRED','Een beveiligd opgeslagen PDF-overeenkomst ontbreekt in dit dossier.');
    evidence={agreementFullySigned:true,agreementDocumentId:docId,agreementVerifiedBy:user.id,agreementVerifiedAt:at};
   }
   if(target==='administration_setup'){
