@@ -3,6 +3,8 @@ const q=s=>document.querySelector(s), qa=s=>Array.from(document.querySelectorAll
 const form=q('#form'), status=q('#status'), token=new URLSearchParams(location.search).get('token');
 if(!token||!/^[a-f0-9]{64}$/.test(token)){status.textContent='Deze aanvraaglink is ongeldig.';return;}
 let busy=false;
+let companySectionsUI=null;
+let onboardingV4=false;
 function showReceipt(data){
  form.hidden=true;
  const wizard=document.querySelector('.bestemd-stepper');
@@ -138,7 +140,8 @@ function showDocuments(list){
  }renderChecklist();
 }
 
-request('/api/prospect?token='+encodeURIComponent(token)).then(data=>{
+request('/api/prospect?token='+encodeURIComponent(token)).then(async data=>{
+ onboardingV4=data.personal?.workflowV4?.version===4;
  const all={...data.personal,...data.company};
  if(!all.firstName&&all.name){all.firstName=String(all.name).split(' ')[0];all.lastName=String(all.name).split(' ').slice(1).join(' ');}
  if(!all.entityType){
@@ -151,7 +154,21 @@ request('/api/prospect?token='+encodeURIComponent(token)).then(data=>{
  restoreExtraIbans(data.company?.extraBankAccounts||'');
  setValue('whatsappConsent',data.personal?.whatsappConsent===true);
  if(data.personal?.signedDeclaration){setValue('signatureName',data.personal.signedDeclaration.name||'');setValue('signatureAccepted',!!data.personal.signedDeclaration.accepted);}
- form.hidden=false; showStatus(''); showDocuments(data.documents||[]); updateConditional(); document.dispatchEvent(new CustomEvent('bestemd:prospect-loaded',{detail:data}));
+ form.hidden=false; showStatus(''); showDocuments(data.documents||[]); updateConditional();
+ if(onboardingV4){
+  try{
+   const {mountCompanySections}=await import('/prospect-company-ui.js');
+   companySectionsUI=mountCompanySections({form,initial:data,getExtras:()=>window.BestemdExtras?.collect()||{}});
+   document.querySelectorAll('button').forEach(button=>{
+    if(/contactpersoon toevoegen/i.test(button.textContent||''))button.hidden=true;
+   });
+  }catch(error){
+   showStatus('De ondernemingsvragenlijst is tijdelijk niet beschikbaar. Neem contact op met BESTEMD.');
+   form.querySelector('button[type="submit"]')?.setAttribute('disabled','');
+   console.warn('BESTEMD_COMPANY_QUESTIONNAIRE_NOT_LOADED');
+  }
+ }
+ document.dispatchEvent(new CustomEvent('bestemd:prospect-loaded',{detail:data}));
 }).catch(async error=>{if(!(await tryReceipt()))showStatus(error.message);});
 
 qa('input[name="entityType"], input[name="vatRequired"], input[name="hasEmployees"], input[name="hasCreditCard"], input[name="hasFiscalUnit"]').forEach(node=>node.addEventListener('change',updateConditional));
@@ -181,13 +198,17 @@ function buildPayload(){
   companyName:getValue('companyName'), companyEmail:getValue('companyEmail'), kvk:getValue('kvk'), transferDate:getValue('transferDate'), entityType:getValue('entityType'), website:getValue('website'), legalForm:getValue('legalForm'), street:getValue('street'), postalCode:getValue('postalCode'), city:getValue('city'), country:getValue('country'),
   vatRequired:getValue('vatRequired'), vatFrequency:getValue('vatFrequency'), vatIdNumber:getValue('vatIdNumber'), turnoverTaxNumber:getValue('turnoverTaxNumber'), vatNumber:getValue('vatNumber'), hasFiscalUnit:getValue('hasFiscalUnit'), rsin:getValue('rsin'), iban:getValue('iban'), extraBankAccounts:getValue('extraBankAccounts'), hasCreditCard:getValue('hasCreditCard'), creditCardDetails:getValue('creditCardDetails'), hasEmployees:getValue('hasEmployees'), payrollNumber:getValue('payrollNumber')
  };
- return {personal,company,...(window.BestemdExtras?.collect()||{})};
+ const extra=window.BestemdExtras?.collect()||{};
+ const sections=onboardingV4?companySectionsUI?.collect():{};
+ if(onboardingV4&&!sections)throw Error('De vragenlijst per onderneming is niet geladen.');
+ return {personal,company,...extra,...(sections||{}),...(onboardingV4?{additionalContacts:[]}: {})};
 }
 async function save(action){
  if(busy)return;
  updateConditional();
  if(!form.reportValidity()){showStatus('Controleer de verplichte velden. Je wordt naar het ontbrekende veld geleid.');form.querySelector(':invalid')?.scrollIntoView({behavior:'smooth',block:'center'});return;}
- const payload=buildPayload();
+ let payload;
+ try{payload=buildPayload();}catch(error){showStatus(error.message||'De ondernemingsvragenlijst ontbreekt.');return;}
  if(action==='submit'){
   if(!termsState.ready){showStatus('Aanvraag indienen is nog niet mogelijk: de definitieve Algemene voorwaarden en Privacyverklaring zijn niet gekoppeld. Neem contact op met BESTEMD.');termsBlock?.scrollIntoView({behavior:'smooth',block:'center'});return;}
   if(!termsCheckbox?.checked){showStatus('Accepteer eerst de Algemene voorwaarden en Privacyverklaring.');termsBlock?.scrollIntoView({behavior:'smooth',block:'center'});return;}
