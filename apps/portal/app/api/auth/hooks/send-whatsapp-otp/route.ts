@@ -60,9 +60,13 @@ export async function POST(request: Request) {
 
   let event: { user?: { phone?: unknown; phone_change?: unknown; phone_confirmed_at?: unknown }; sms?: { otp?: unknown } };
   try { event = JSON.parse(raw); } catch { return new Response(null, { status: 400 }); }
-  const phone = normalizeWhatsappPhone(event.user?.phone);
+  const existingPhone = normalizeWhatsappPhone(event.user?.phone);
+  const pendingPhone = normalizeWhatsappPhone(event.user?.phone_change);
+  const enrollment = phoneEnrollmentEnabled() && Boolean(pendingPhone) && pendingPhone !== existingPhone;
+  const phone = enrollment ? pendingPhone : existingPhone;
+  const authorizedLogin = whatsappLoginEnabled() && Boolean(event.user?.phone_confirmed_at) && Boolean(existingPhone);
   const otp = event.sms?.otp;
-  if (!phone || !event.user?.phone_confirmed_at || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
+  if ((!enrollment && !authorizedLogin) || !phone || typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
     return new Response(null, { status: 403 });
   }
 
