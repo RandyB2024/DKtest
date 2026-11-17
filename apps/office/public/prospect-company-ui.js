@@ -31,26 +31,36 @@ export function mountCompanySections({form,initial,getExtras}){
  const state=new Map();
  const initialCompany=initial.company||{};
  const oldFinancial=initial.personal||{};
+ const companyKey=(data,position)=>{
+  if(position===1)return 'primary';
+  const kvk=String(data?.kvk||'').replace(/\s+/g,'').trim();
+  if(/^\d{8}$/.test(kvk))return 'kvk:'+kvk;
+  const name=String(data?.companyName||data?.name||'').trim().toLocaleLowerCase('nl');
+  return name?'name:'+name:'draft:'+position;
+ };
  for(const [i,row] of (initial.companies||[]).entries()){
   const pos=posOf(row,i-1);
   const data=row.company_data||row.companyData||{};
-  state.set(pos,{
+  state.set(companyKey(data,pos),{
    financial:{...pick('financial',pos===1?oldFinancial:{}),...pick('financial',data.financialOnboarding)},
    administration:{...pick('administration',pos===1?initialCompany:{}),...pick('administration',data.administrativeOnboarding)}
   });
  }
- if(!state.has(1))state.set(1,{financial:pick('financial',oldFinancial),administration:pick('administration',initialCompany)});
+ if(!state.has('primary'))state.set('primary',{financial:pick('financial',oldFinancial),administration:pick('administration',initialCompany)});
  let active=1;
  function list(){
   const extra=getExtras?.()?.additionalCompanies||[];
   const positions=[{position:1,companyData:{...initialCompany,companyName:
    form.elements.namedItem('companyName')?.value||initialCompany.companyName||'Onderneming 1'}},...extra];
   return positions.slice(0,5).map((row,i)=>({position:i+1,
+   key:companyKey(row.companyData||{},i+1),
    name:String(row.companyData?.companyName||row.companyData?.name||'Onderneming '+(i+1)).trim()||'Onderneming '+(i+1)}));
  }
  function ensure(position){
-  if(!state.has(position))state.set(position,{financial:{},administration:{}});
-  return state.get(position);
+  const key=list().find(row=>row.position===position)?.key;
+  if(!key)throw Error('De geselecteerde onderneming bestaat niet meer.');
+  if(!state.has(key))state.set(key,{financial:{},administration:{}});
+  return state.get(key);
  }
  function makeField(section,position,[key,label,type]){
   const outer=node('label');outer.className='bestemd-company-field';outer.append(node('span',label));
@@ -134,6 +144,8 @@ export function mountCompanySections({form,initial,getExtras}){
   }
  }
  function collect(){
+  const keys=list().map(x=>x.key);
+  if(new Set(keys).size!==keys.length)throw Error('Gebruik unieke KvK-nummers of ondernemingsnamen om gegevens gescheiden te houden.');
   syncPrimary();
   return {companySections:list().map(x=>({position:x.position,financial:{...ensure(x.position).financial},
    administration:{...ensure(x.position).administration}}))};
