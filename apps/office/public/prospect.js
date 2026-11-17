@@ -117,10 +117,39 @@ function updateConditional(){
 }
 function showStatus(message){status.textContent=message||'';if(message&&/controleer|mislukt|niet|ongeldig|ontbreekt/i.test(message))status.setAttribute('role','alert');else status.setAttribute('role','status');}
 let currentDocuments=[];
-function renderChecklist(){const target=q('#documentChecklist');if(!target)return;const categories=['Jaarrekening','Kolommenbalans','Btw-aangifte','Aangifte inkomstenbelasting','Bedrijfslogo'];if(getValue('entityType')==='bv')categories.push('Aandeelhoudersregister','Oprichtingsakte','Aandeelhoudersovereenkomst','Managementovereenkomst','Rekening-courantovereenkomst','Arbeidsovereenkomst DGA','UBO-documentatie','Beschikking fiscale eenheid');target.replaceChildren();for(const category of categories){const found=currentDocuments.some(d=>String(d.filename||'').startsWith(category+' - '));const row=document.createElement('div');row.className='bestemd-doc-checklist-row';const name=document.createElement('span');name.textContent=category;const status=document.createElement('span');status.textContent=found?'Ontvangen':'Nog niet aangeleverd';status.className=found?'is-received':'is-missing';row.append(name,status);target.append(row);}}
+const personalCategories=new Set(['Aangifte inkomstenbelasting','Identiteitsbewijs ondernemer']);
+const documentCategory=item=>String(item?.filename||'').split(' - ')[0].trim();
+const activeDocumentCompany=()=>Math.max(1,Math.min(5,Number(window.BestemdExtras?.collect()?.uploadCompanyPosition||1)||1));
+function renderChecklist(){
+ const target=q('#documentChecklist');if(!target)return;
+ if(!onboardingV4){
+  const categories=['Jaarrekening','Kolommenbalans','Btw-aangifte','Aangifte inkomstenbelasting','Bedrijfslogo'];
+  if(getValue('entityType')==='bv')categories.push('Aandeelhoudersregister','Oprichtingsakte','Aandeelhoudersovereenkomst','Managementovereenkomst','Rekening-courantovereenkomst','Arbeidsovereenkomst DGA','UBO-documentatie','Beschikking fiscale eenheid');
+  target.replaceChildren();
+  for(const category of categories){const found=currentDocuments.some(d=>documentCategory(d)===category);const row=document.createElement('div');row.className='bestemd-doc-checklist-row';const name=document.createElement('span');name.textContent=category;const status=document.createElement('span');status.textContent=found?'Ontvangen':'Nog niet aangeleverd';status.className=found?'is-received':'is-missing';row.append(name,status);target.append(row);}
+  return;
+ }
+ const position=activeDocumentCompany();
+ const categories=['KvK-uittreksel','Jaarrekening','Kolommenbalans','Btw-aangifte','Bedrijfslogo','Overige bestanden'];
+ const personal=['Aangifte inkomstenbelasting','Identiteitsbewijs ondernemer'];
+ const createHeading=title=>{const h=document.createElement('h4');h.textContent=title;target.append(h);};
+ const createRow=(category,byPerson=false)=>{
+  const found=currentDocuments.some(d=>documentCategory(d)===category&&(byPerson||Number(d.company_position)===position));
+  const row=document.createElement('div');row.className='bestemd-doc-checklist-row';
+  const name=document.createElement('span');name.textContent=category+(category==='Identiteitsbewijs ondernemer'?' (alleen als rechtmatig vereist)':'');
+  const state=document.createElement('span');state.textContent=found?'Ontvangen':'Nog niet aangeleverd';state.className=found?'is-received':'is-missing';
+  row.append(name,state);target.append(row);
+ };
+ target.replaceChildren();
+ createHeading('Documenten onderneming '+position);
+ for(const category of categories)createRow(category);
+ createHeading('Documenten ondernemer — persoonsgebonden');
+ for(const category of personal)createRow(category,true);
+}
 function showDocuments(list){
  currentDocuments=Array.isArray(list)?list:[];const ul=q('#documents');ul.replaceChildren();
  for(const item of currentDocuments){
+  if(onboardingV4&&!personalCategories.has(documentCategory(item))&&Number(item.company_position)!==activeDocumentCompany())continue;
   const li=document.createElement('li');
   const name=document.createElement('span');name.textContent=item.filename||'Document';li.append(name);
   if(item.id && !String(item.filename||'').toLowerCase().includes('handtekening')){
@@ -173,6 +202,12 @@ request('/api/prospect?token='+encodeURIComponent(token)).then(async data=>{
 
 qa('input[name="entityType"], input[name="vatRequired"], input[name="hasEmployees"], input[name="hasCreditCard"], input[name="hasFiscalUnit"]').forEach(node=>node.addEventListener('change',updateConditional));
 
+form.addEventListener('change',event=>{
+ if(!onboardingV4)return;
+ if(event.target?.closest('section.card')===[...form.querySelectorAll(':scope > section.card')][5]){
+  showDocuments(currentDocuments);
+ }
+});
 q('#upload').addEventListener('click',async()=>{
  if(busy)return;
  const file=q('#document').files?.[0];
