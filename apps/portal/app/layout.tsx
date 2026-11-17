@@ -19,6 +19,7 @@ import "./banking.css";
 import "./documents.css";
 import "./mobile-fixes.css";
 import "./customer-settings.css";
+import "./insurance-overview.css";
 
 import ServiceWorker from "@/components/service-worker";
 
