@@ -1,5 +1,6 @@
 import { officeProspectReviewRoute } from './prospect-review.mjs';
 import { officeProspectRoute } from './prospects.mjs';
+import { officeProspectWorkflowRoute } from './prospect-workflow-route.mjs';
 import { bankingRoute } from './banking.mjs';
 import { paymentMonitoringRoute } from './payment-monitoring.mjs';
 import { communicationRoute } from './communication.mjs';
@@ -881,6 +882,11 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     );
     if (prospectReview) return sendJson(res, prospectReview.status, prospectReview.data);
 
+    const customerWorkflow = await officeProspectWorkflowRoute(
+      req, url, client, user, config, fetchImpl, body
+    );
+    if (customerWorkflow) return sendJson(res, customerWorkflow.status, customerWorkflow.data);
+
     const prospect = await officeProspectRoute(
       req, url, client, user, config, fetchImpl, body
     );
@@ -1109,7 +1115,7 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     if (profile) return sendJson(res,profile.status,profile.data);
     const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);
     if (intake) return sendJson(res,intake.status,intake.data);
-    const newCustomerOnboarding = await onboardingNewCustomerRoute(req, url, client, user, body);
+    const newCustomerOnboarding = await onboardingNewCustomerRoute(req, url, client, user, body, config, fetchImpl);
     if (newCustomerOnboarding) return sendJson(res, newCustomerOnboarding.status, newCustomerOnboarding.data);
     const onboarding = await onboardingDraftRoute(req, url, client, user, body);
     if (onboarding) return sendJson(res, onboarding.status, onboarding.data);
