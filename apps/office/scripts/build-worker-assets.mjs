@@ -6,7 +6,7 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const source = join(root, 'public');
 const destination = join(root, 'worker-public');
 const files = [
-  'offline.html', 'styles.css', 'intake.css', 'supabase.css',
+  'offline.html', 'styles.css', 'intake.css', 'supabase.css', 'prospect-workflow.css',
   'supabase-app.js', 'prospect-workflow-ui.js', 'passkeys.js', 'kvk-intake.js', 'customer-profile.js', 'personal-portal-access.js', 'profile-fields.js', 'client-workspace.js', 'intake-fields.js', 'intake-form.js', 'tasks.js', 'documents-readonly.js', 'banking.js', 'payment-monitoring.js', 'tax-returns.js', 'communication.js', 'wize-admin.js', 'wize-office.js', 'sw.js', 'manifest.webmanifest',
   'assets/logo.png', 'assets/icon.png', 'assets/icon-192.png', 'assets/icon-512.png', 'assets/office-login-background.webp',
 ];
