@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startWorkflow,advanceWorkflow,canActivateClient,canSendOnboarding,validateCompanyCount} from '../src/prospect-workflow-v4.mjs';
+import {startWorkflow,advanceWorkflow,canActivateClient,canSendOnboarding,validateCompanyCount,documentDeadline} from '../src/prospect-workflow-v4.mjs';
 const actor='office-user';
 const next=(w,to,evidence={})=>advanceWorkflow(w,to,{actorId:actor,evidence});
 test('alleen 1, 2 of 5 ondernemingen; nooit 6',()=>{
@@ -30,4 +30,9 @@ test('afwijzing en coaching sluiten traject zonder volledige activatie',()=>{
  let w=next(startWorkflow(actor),'introduction');
  assert.equal(next(w,'rejected').stage,'rejected');
  assert.throws(()=>next(next(w,'rejected'),'quote'));
+});
+
+test('aanlevertermijn is tien werkdagen na indiening',()=>{
+ assert.equal(documentDeadline('2026-11-17T12:00:00.000Z',10),'2026-12-01T12:00:00.000Z');
+ assert.equal(documentDeadline('2026-11-20T12:00:00.000Z',1),'2026-11-23T12:00:00.000Z');
 });
