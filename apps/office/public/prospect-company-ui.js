@@ -24,6 +24,7 @@ const FIELDSETS={
 };
 const node=(tag,text)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;return el;};
 const posOf=(e,i)=>Number(e?.position??(i+2));
+const pick=(section,source)=>Object.fromEntries(FIELDSETS[section].filter(([key])=>source?.[key]!==undefined).map(([key])=>[key,String(source[key])]));
 export function mountCompanySections({form,initial,getExtras}){
  const sections=[...form.querySelectorAll(':scope > section.card')];
  if(sections.length<6)throw Error('De bestaande vragenlijst heeft een andere indeling.');
@@ -34,11 +35,11 @@ export function mountCompanySections({form,initial,getExtras}){
   const pos=posOf(row,i-1);
   const data=row.company_data||row.companyData||{};
   state.set(pos,{
-   financial:{...(pos===1?oldFinancial:{}),...(data.financialOnboarding||{})},
-   administration:{...(pos===1?initialCompany:{}),...(data.administrativeOnboarding||{})}
+   financial:{...pick('financial',pos===1?oldFinancial:{}),...pick('financial',data.financialOnboarding)},
+   administration:{...pick('administration',pos===1?initialCompany:{}),...pick('administration',data.administrativeOnboarding)}
   });
  }
- if(!state.has(1))state.set(1,{financial:{...oldFinancial},administration:{...initialCompany}});
+ if(!state.has(1))state.set(1,{financial:pick('financial',oldFinancial),administration:pick('administration',initialCompany)});
  let active=1;
  function list(){
   const extra=getExtras?.()?.additionalCompanies||[];
