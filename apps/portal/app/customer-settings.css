@@ -40,3 +40,27 @@
 .bestemd-settings-success{border-color:#bddfd1;background:#f0fbf6;color:#226a4f}
 @media(max-width:850px){.bestemd-settings-grid{grid-template-columns:1fr}.bestemd-settings-hero{padding:27px 24px}.bestemd-settings-panel{padding:22px}}
 @media(max-width:480px){.bestemd-settings-hero{border-radius:15px;padding:24px 18px}.bestemd-settings-panel{border-radius:15px;padding:18px}.bestemd-settings-hero h1{font-size:25px}}
+
+/* 2026 visual refinement: compact, light, premium office design */
+.bestemd-settings{max-width:1240px;color:#18384b}
+.bestemd-settings-hero{position:relative;overflow:hidden;border:1px solid #dce8e9;border-radius:18px;padding:25px 30px;background:linear-gradient(120deg,#ffffff 0%,#f3faf9 62%,#e8f5f1 100%);box-shadow:0 10px 32px rgba(27,66,79,.045);margin-bottom:18px}
+.bestemd-settings-hero:after{content:"";position:absolute;pointer-events:none;right:-65px;top:-90px;width:270px;height:270px;border:1px solid #94cbc34d;border-radius:50%;box-shadow:0 0 0 34px #76bdab10,0 0 0 78px #76bdab0a}
+.bestemd-settings-eyebrow{color:#27746e;opacity:1;font-size:10px;letter-spacing:.16em}
+.bestemd-settings-hero h1{color:#153b4d;font-weight:760;font-size:clamp(24px,2.7vw,30px);margin:10px 0 6px}
+.bestemd-settings-hero p{color:#66808b;font-size:13px}
+.bestemd-settings-tags{margin-top:16px;gap:8px}
+.bestemd-settings-tags span{background:#ffffffbd;border:1px solid #dcebea;color:#376f74;padding:7px 10px;font-size:11px;font-weight:650}
+.bestemd-settings-grid{gap:16px}
+.bestemd-settings-panel{padding:24px 25px;border-radius:17px;border-color:#e5eef0;box-shadow:0 5px 24px rgba(24,55,71,.035)}
+.bestemd-settings-panel header{margin-bottom:19px}
+.bestemd-settings-panel header h2{font-size:17px;letter-spacing:-.025em;color:#173e50}
+.bestemd-settings-icon{border-radius:12px;width:42px;height:42px;flex-basis:42px}
+.bestemd-settings-panel input:not([type="checkbox"]){background:#fff;border-color:#dfe9ec;border-radius:9px;min-height:43px}
+.bestemd-settings-primary{background:#11616d;border-color:#11616d;border-radius:9px}
+.bestemd-settings-primary:hover{background:#0b4755}
+.bestemd-settings-secondary{border-radius:9px;background:#eff6f5;color:#175d64;border-color:#dfeae9}
+.bestemd-settings-check label{font-size:12.5px}
+.bestemd-settings-security{padding:12px 0}
+.bestemd-settings-status{border:1px solid #dcece7;background:#f3faf7;border-radius:9px}
+@media(max-width:850px){.bestemd-settings-hero{padding:24px}.bestemd-settings-panel{padding:22px}}
+@media(max-width:480px){.bestemd-settings-hero{padding:20px 18px}.bestemd-settings-hero:after{display:none}.bestemd-settings-panel{padding:19px}}
