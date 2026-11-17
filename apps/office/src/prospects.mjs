@@ -115,7 +115,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  const personal=input.personal,company=input.company;
  const extras=Array.isArray(input.additionalCompanies)?input.additionalCompanies:[];
  const people=Array.isArray(input.additionalContacts)?input.additionalContacts:[];
- if(extras.length>9||people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel ondernemingen of contactpersonen.');
+ if(extras.length>4||people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel ondernemingen of contactpersonen.');
  for(const [i,entry] of extras.entries()){const c=entry?.companyData||{};if(Number(entry.position)!==i+2||!clean(c.companyName)||c.kvk&&!/^\d{8}$/.test(clean(c.kvk)))throw new OfficeError(400,'INVALID_COMPANY','Controleer de extra ondernemingen.');}
  const kvks=[clean(company.kvk),...extras.map(e=>clean(e.companyData?.kvk))].filter(Boolean);if(new Set(kvks).size!==kvks.length)throw new OfficeError(409,'DUPLICATE_KVK','Een KvK-nummer is meermaals ingevuld.');
  const contactRoles=['contactpersoon','ondernemer','bestuurder','administratie','facturatie','gemachtigde'];
