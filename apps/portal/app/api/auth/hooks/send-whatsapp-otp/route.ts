@@ -30,7 +30,7 @@ async function signedBySupabase(request: Request, payload: string) {
   if (!secret || !id || !timestamp || !/^\d{10}$/.test(timestamp) || !signature) return false;
   if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
   try {
-    const key = await crypto.subtle.importKey("raw", decodeSecret(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+    const key = await crypto.subtle.importKey("raw", Uint8Array.from(decodeSecret(secret)).buffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
     const digest = new Uint8Array(await crypto.subtle.sign(
       "HMAC", key, new TextEncoder().encode(`${id}.${timestamp}.${payload}`),
     ));
