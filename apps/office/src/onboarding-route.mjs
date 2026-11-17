@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+import { startWorkflow } from './prospect-workflow-v4.mjs';
 import { OfficeError } from './auth/supabase.mjs';
 
 const uuidPattern =
@@ -86,7 +88,9 @@ export async function onboardingDraftRoute(
   url,
   client,
   user,
-  readBody
+  readBody,
+  config,
+  fetchImpl
 ) {
   if (
     url.pathname !== '/api/onboarding/drafts' ||
@@ -158,12 +162,28 @@ export async function onboardingDraftRoute(
     );
   }
 
-  return {
-    status: 201,
-    data: {
-      applicationId: data.application_id,
-      status: data.status,
-      emailSent: false
-    }
-  };
+  // Each newly prepared draft starts in kennismaking, never in onboarding.
+  // Historical applications are not migrated on read.
+  if (!config?.supabaseUrl || !config?.supabaseServiceRoleKey) {
+    throw new OfficeError(503,'WORKFLOW_CONFIG',
+      'Concept aangemaakt, maar klanttraject kan niet worden voorbereid.');
+  }
+  const supa = createClient(config.supabaseUrl,config.supabaseServiceRoleKey,{
+    auth:{persistSession:false,autoRefreshToken:false},global:{fetch:fetchImpl}
+  });
+  const existing = await supa.from('office_onboarding_applications')
+    .select('id,status,applicant_data').eq('id',data.application_id).maybeSingle();
+  if(existing.error||!existing.data||existing.data.status!=='draft') {
+    throw new OfficeError(503,'WORKFLOW_UNAVAILABLE',
+      'Concept aangemaakt, maar workflow kon niet worden gestart.');
+  }
+  const updated=await supa.from('office_onboarding_applications')
+    .update({applicant_data:{...(existing.data.applicant_data||{}),workflowV4:startWorkflow(user.id)}})
+    .eq('id',data.application_id).eq('status','draft').select('id').maybeSingle();
+  if(updated.error||!updated.data) {
+    throw new OfficeError(503,'WORKFLOW_UNAVAILABLE',
+      'Concept aangemaakt, maar workflow kon niet worden opgeslagen.');
+  }
+  return {status:201,data:{applicationId:data.application_id,
+    status:data.status,workflowStage:'new_request',emailSent:false}};
 }
