@@ -1,0 +1,40 @@
+name: BESTEMD Office Workflow 4.0 CI
+on:
+  push:
+    branches:
+      - feature/prospect-multi-company-intake-20261117
+  pull_request:
+    paths:
+      - 'apps/office/**'
+      - '.github/workflows/bestemd-office-workflow-v4.yml'
+permissions:
+  contents: read
+jobs:
+  office-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/office
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/office/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Existing Office tests and workflow 4.0 tests
+        run: npm test
+      - name: Production Worker assets build (no deployment)
+        run: npm run build:worker
+      - name: Module syntax
+        run: |
+          node --check src/prospects.mjs
+          node --check src/prospect-workflow-v4.mjs
+          node --check src/prospect-workflow-route.mjs
+          node --check src/prospect-company-sections.mjs
+          node --check public/prospect.js
+          node --check public/prospect-company-ui.js
+          node --check public/prospect-workflow-ui.js
