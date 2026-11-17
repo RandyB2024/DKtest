@@ -7,7 +7,7 @@ import { whatsappLoginEnabled, normalizeWhatsappPhone } from "@/lib/security/wha
 function phoneEnrollmentEnabled() {
   return process.env.WHATSAPP_PHONE_ENROLLMENT_ENABLED === "true"
     && Boolean(process.env.WHATSAPP_ACCESS_TOKEN)
-    && /^\\d+$/.test(process.env.WHATSAPP_PHONE_NUMBER_ID ?? "")
+    && /^\d+$/.test(process.env.WHATSAPP_PHONE_NUMBER_ID ?? "")
     && Boolean(process.env.SUPABASE_SEND_SMS_HOOK_SECRET);
 }
 
