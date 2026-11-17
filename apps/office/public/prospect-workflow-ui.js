@@ -148,14 +148,52 @@ export async function mountProspectWorkflow(target, api, {relationshipId=null}={
   const actions=el('div',undefined,'customer-buttons');
   for(const to of ADVANCE[w.stage]||[]){
    if(to==='onboarding'){
-    const agreement=formField('Document-ID van ondertekende overeenkomst');
-    const verified=el('input');verified.type='checkbox';const vl=el('label','Ik heb gecontroleerd dat alle vereiste partijen hebben ondertekend');vl.prepend(verified);
-    actions.append(agreement.l,vl);
+    const uploadWrap=el('div');
+    const uploadLabel=el('label','Ondertekende overeenkomst (PDF, maximaal 3 MB)');
+    const file=el('input');file.type='file';file.accept='application/pdf,.pdf';uploadLabel.append(file);
+    const upload=el('button','Overeenkomst beveiligd uploaden');upload.type='button';
+    upload.onclick=async()=>{
+     const pdf=file.files?.[0];
+     if(!pdf||pdf.size>3_000_000||pdf.size===0||
+       (pdf.type&&pdf.type!=='application/pdf')){
+       status.textContent='Selecteer een PDF-overeenkomst van maximaal 3 MB.';return;
+     }
+     upload.disabled=true;status.textContent='Overeenkomst beveiligd opslaan…';
+     try{
+      const base64=await new Promise((resolve,reject)=>{
+       const reader=new FileReader();
+       reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
+       reader.onerror=reject;reader.readAsDataURL(pdf);
+      });
+      await api('/api/office/prospect-workflow',{applicationId:select.value,
+       action:'upload_agreement',base64});
+      if(alive()){status.textContent='Overeenkomst opgeslagen; controleer nu alle handtekeningen.';await load();}
+     }catch(err){fail(err);}finally{upload.disabled=false;}
+    };
+    uploadWrap.append(uploadLabel,upload);actions.append(uploadWrap);
+    const agreementSelect=el('select');
+    agreementSelect.setAttribute('aria-label','Kies de opgeslagen ondertekende overeenkomst');
+    const docs=(result.companies||[]).flatMap(c=>c.documents||[])
+     .filter(d=>/^Overeenkomst van opdracht - /i.test(d.filename||''));
+    const placeholder=el('option',docs.length?'Kies een getekende overeenkomst':'Nog geen PDF-overeenkomst opgeslagen');
+    placeholder.value='';agreementSelect.append(placeholder);
+    for(const doc of docs){
+     const option=el('option',doc.filename+' ('+new Date(doc.created_at).toLocaleDateString('nl-NL')+')');
+     option.value=doc.id;agreementSelect.append(option);
+    }
+    const agreementLabel=el('label','Opgeslagen overeenkomst');agreementLabel.append(agreementSelect);
+    const verified=el('input');verified.type='checkbox';
+    const vl=el('label','Ik heb gecontroleerd dat alle vereiste partijen hebben ondertekend');vl.prepend(verified);
+    actions.append(agreementLabel,vl);
     const b=el('button','Ondertekende overeenkomst controleren en doorgaan');b.type='button';
+    b.disabled=!docs.length;
     b.onclick=async()=>{
-     if(!agreement.i.value.trim()||!verified.checked){status.textContent='Controleer eerst de overeenkomst en het documentnummer.';return;}
+     if(!agreementSelect.value||!verified.checked){
+      status.textContent='Selecteer de getekende overeenkomst en bevestig de controle.';return;
+     }
      b.disabled=true;
-     try{await api('/api/office/prospect-workflow',{applicationId:select.value,action:'advance',to:'onboarding',signedAgreementVerified:true,agreementDocumentId:agreement.i.value.trim()});
+     try{await api('/api/office/prospect-workflow',{applicationId:select.value,action:'advance',
+       to:'onboarding',signedAgreementVerified:true,agreementDocumentId:agreementSelect.value});
        if(alive()){status.textContent='Overeenkomst geregistreerd.';await load();}}
      catch(err){fail(err);}finally{b.disabled=false;}
     };actions.append(b);
