@@ -67,7 +67,25 @@ type Supplier = {
   outstandingCents: number;
   openCount: number;
   oldestDueDate: string | null;
+  logoUrl?: string | null;
+  logo_url?: string | null;
+  loginUrl?: string | null;
+  login_url?: string | null;
+  portalUrl?: string | null;
+  portal_url?: string | null;
+  website?: string | null;
+  websiteUrl?: string | null;
 };
+
+function safeSupplierLink(value: unknown): string | null {
+  if (typeof value !== "string" || value.length > 2048) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && !url.username && !url.password ? url.href : null;
+  } catch {
+    return null;
+  }
+}
 
 
 type ExpectedCost = {
@@ -1452,63 +1470,45 @@ export default function PayablesView({
             )}
 
 
-            {tab ===
-              "suppliers" && (
-              <section className="card">
+            {tab === "suppliers" && (
+              <section className="card bestemd-supplier-directory">
                 <div className="section-heading">
-                  <div>
-                    <h2>
-                      Leveranciers
-                    </h2>
-
-                    <p>
-                      Leveranciersstamgegevens
-                      en actuele
-                      verplichtingen.
-                    </p>
-                  </div>
-
+                  <div><h2>Mijn leveranciers</h2><p>Jouw leveranciers, facturen en eventuele inlogportalen op één plek.</p></div>
                   <Landmark />
                 </div>
-
-
-                <div className="invoice-list">
-                  {
-                    data.suppliers.map(
-                      (
-                        supplier,
-                      ) => (
-                        <article
-                          key={
-                            supplier.id
-                          }
-                          className="invoice-row"
-                        >
-                          <div>
-                            <strong>
-                              {
-                                supplier.name
-                              }
-                            </strong>
-
-                            <small>
-                              {
-                                supplier.iban ??
-                                "Geen IBAN geregistreerd"
-                              }
-                            </small>
+                {data.suppliers.length === 0 ? (
+                  <div className="bestemd-supplier-empty">Nog geen leveranciers voor deze onderneming geregistreerd.</div>
+                ) : (
+                  <div className="bestemd-supplier-grid">
+                    {data.suppliers.map(supplier => {
+                      const logo = safeSupplierLink(supplier.logoUrl ?? supplier.logo_url);
+                      const login = safeSupplierLink(supplier.loginUrl ?? supplier.login_url ?? supplier.portalUrl ?? supplier.portal_url);
+                      const website = safeSupplierLink(supplier.websiteUrl ?? supplier.website);
+                      return (
+                        <article className="bestemd-supplier-card" key={supplier.id}>
+                          <div className="bestemd-supplier-top">
+                            <div className="bestemd-supplier-logo">
+                              {logo ? <img src={logo} alt={`Logo van ${supplier.name}`} loading="lazy" referrerPolicy="no-referrer" /> : <span aria-hidden="true">{supplier.name.slice(0,2).toUpperCase()}</span>}
+                            </div>
+                            <div><strong>{supplier.name}</strong><small>{supplier.email ?? "Leverancier"}</small></div>
                           </div>
-
-                          <div>
-                            <small>
-                              Openstaand
-                            </small>
-
-                            <strong>
-                              {money(
-                                supplier.outstandingCents,
-                              )}
-                            </strong>
+                          <div className="bestemd-supplier-metrics">
+                            <div><span>Openstaand</span><strong>{money(supplier.outstandingCents)}</strong></div>
+                            <div><span>Facturen</span><strong>{supplier.openCount}</strong></div>
+                          </div>
+                          <div className="bestemd-supplier-links">
+                            {login ? <a href={login} target="_blank" rel="noopener noreferrer">Naar leveranciersportaal ↗</a>
+                              : website ? <a href={website} target="_blank" rel="noopener noreferrer">Website leverancier ↗</a>
+                              : <span>Inloglink nog niet gekoppeld</span>}
+                          </div>
+                        </article>
+                      );
+                    })}
+                  </div>
+                )}
+                <p className="bestemd-supplier-notice">Alleen leveranciers van de geselecteerde onderneming. Logo’s en inloglinks verschijnen wanneer deze in de gegevensbron zijn vastgelegd; inloggegevens worden hier niet opgeslagen.</p>
+              </section>
+            )}                            </strong>
                           </div>
 
                           <div>
