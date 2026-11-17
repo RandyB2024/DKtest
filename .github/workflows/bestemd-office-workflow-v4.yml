@@ -25,10 +25,10 @@ jobs:
           cache-dependency-path: apps/office/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Existing Office tests and workflow 4.0 tests
-        run: npm test
       - name: Production Worker assets build (no deployment)
         run: npm run build:worker
+      - name: Existing Office tests and workflow 4.0 tests
+        run: npm test
       - name: Module syntax
         run: |
           node --check src/prospects.mjs
