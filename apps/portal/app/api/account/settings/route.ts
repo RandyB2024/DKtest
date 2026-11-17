@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       email: user.email ?? profile.email,
       phone: user.phone_confirmed_at ? (user.phone ?? "") : "",
       phoneVerified: Boolean(user.phone && user.phone_confirmed_at),
-      phonePending: Boolean(user.phone_change),
+      phonePending: Boolean((user as typeof user & { phone_change?: string }).phone_change),
       chatConsent: user.user_metadata?.bestemd_whatsapp_chat_consent === true,
       otpLoginReady: process.env.WHATSAPP_LOGIN_ENABLED === "true",
       enrollmentReady: process.env.WHATSAPP_PHONE_ENROLLMENT_ENABLED === "true",
