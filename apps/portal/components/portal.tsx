@@ -39,6 +39,7 @@ import InvoiceDetailView from "./invoice-detail-view";
 import InventoryView from "./inventory-view";
 import Logout from "./logout";
 import CustomerSettings from "./customer-settings";
+import InsuranceOverview from "./insurance-overview";
 import RelationsView from "./relations-view";
 import DocumentsView from "./documents-view";
 import CommunicationView from "./communication-view";
@@ -653,6 +654,8 @@ if (view === "Documenten") {
         />
       );
     }
+
+    if (view === "Verzekeringen") return <InsuranceOverview context={context} organization={organization} onGo={setView} />;
 
     if (view === "Instellingen") return <CustomerSettings />;
 
