@@ -1117,7 +1117,7 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     if (intake) return sendJson(res,intake.status,intake.data);
     const newCustomerOnboarding = await onboardingNewCustomerRoute(req, url, client, user, body, config, fetchImpl);
     if (newCustomerOnboarding) return sendJson(res, newCustomerOnboarding.status, newCustomerOnboarding.data);
-    const onboarding = await onboardingDraftRoute(req, url, client, user, body);
+    const onboarding = await onboardingDraftRoute(req, url, client, user, body, config, fetchImpl);
     if (onboarding) return sendJson(res, onboarding.status, onboarding.data);
     const mutation = await customerMutation(req, url, client, user, body);
     if (mutation) return sendJson(res, mutation.status, mutation.data);
