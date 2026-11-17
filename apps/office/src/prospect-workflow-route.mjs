@@ -15,7 +15,7 @@ function text(value,max=1500){return typeof value==='string'?value.trim().slice(
 function ensure(condition,code,message){if(!condition)fail(409,code,message);}
 const digest=s=>createHash('sha256').update(s).digest('hex');
 function encode(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));}
-function publicWorkflow(w){return {version:w.version,stage:w.stage,history:w.history,evidence:w.evidence,quote:w.quote||[],notes:w.notes||'',responsibleEmployeeId:w.responsibleEmployeeId||null};}
+function publicWorkflow(w){return {version:w.version,stage:w.stage,history:w.history,evidence:w.evidence,quote:w.quote||[],activities:w.activities||[],notes:w.notes||'',responsibleEmployeeId:w.responsibleEmployeeId||null};}
 function nextWorkflow(w,to,{actorId,notes='',evidence={}}){
  try{return advanceWorkflow(w,to,{actorId,notes,evidence});}
  catch(error){fail(409,'INVALID_WORKFLOW_TRANSITION',error.message);}
@@ -57,7 +57,25 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
  const action=input.action;
  const at=new Date().toISOString();
  let responseExtra={};
- if(action==='save_quote'){
+ if(action==='record_meeting'){
+  const kind=text(input.kind,30);
+  const allowed={introduction:['introduction'],quote:['quote_discussion'],intake:['intake'],instruction:['instruction']};
+  ensure(!!allowed[kind]&&allowed[kind].includes(workflow.stage),
+    'WRONG_MEETING_STAGE','Dit gesprek hoort niet bij de huidige trajectfase.');
+  const when=text(input.scheduledAt,50);
+  const parsed=Date.parse(when);
+  if(!when||!Number.isFinite(parsed)||!/^\\d{4}-\\d{2}-\\d{2}T/.test(when))
+    fail(400,'INVALID_MEETING_TIME','Gebruik een volledige datum en tijd voor de afspraak.');
+  const status=text(input.meetingStatus,20);
+  if(!['scheduled','completed','cancelled'].includes(status))
+    fail(400,'INVALID_MEETING_STATUS','Ongeldige afspraakstatus.');
+  const note=text(input.notes,1500);
+  const activities=Array.isArray(workflow.activities)?workflow.activities:[];
+  if(activities.length>=150)fail(409,'TOO_MANY_ACTIVITIES','Maximaal aantal activiteiten bereikt.');
+  workflow={...workflow,activities:[...activities,{kind,scheduledAt:new Date(parsed).toISOString(),
+   status,notes:note,recordedBy:user.id,recordedAt:at}],
+   history:[...workflow.history,{from:workflow.stage,to:workflow.stage,actorId:user.id,at,notes:'Gesprek geregistreerd: '+kind+' ('+status+')'}]};
+ }else if(action==='save_quote'){
   ensure(workflow.stage==='quote','WRONG_STAGE','Prijsafspraken horen bij de offertefase.');
   validateCompanyCount(companies);
   if(!Array.isArray(input.lines)||input.lines.length!==companies.length)fail(400,'INVALID_QUOTE','Vul per onderneming een prijsafspraak in.');
