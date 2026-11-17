@@ -73,3 +73,20 @@ export function advanceWorkflow(workflow, to, {actorId, evidence = {}, notes = '
       'Activatievoorwaarden zijn niet allemaal vervuld.');
   return next;
 }
+
+/**
+ * Add weekdays after submission for document follow-up. Dutch public holidays
+ * are not automatically inferred; Office can extend the review deadline.
+ */
+export function documentDeadline(submittedAt, workingDays = 10) {
+  const date = new Date(submittedAt);
+  required(!Number.isNaN(date.getTime()), 'Ongeldige indieningsdatum.');
+  required(Number.isInteger(workingDays) && workingDays >= 1 && workingDays <= 60,
+    'Ongeldige aanlevertermijn.');
+  let completed = 0;
+  while (completed < workingDays) {
+    date.setUTCDate(date.getUTCDate() + 1);
+    if (date.getUTCDay() !== 0 && date.getUTCDay() !== 6) completed++;
+  }
+  return date.toISOString();
+}
