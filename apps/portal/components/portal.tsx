@@ -37,6 +37,7 @@ import CustomerDashboard from "./customer-dashboard";
 import InstallApp from "./install-app";
 import InvoiceDetailView from "./invoice-detail-view";
 import InventoryView from "./inventory-view";
+import KlaasVisInsurance from "./klaas-vis-insurance";
 import Logout from "./logout";
 import CustomerSettings from "./customer-settings";
 import RelationsView from "./relations-view";
@@ -652,6 +653,10 @@ if (view === "Documenten") {
           organization={organization}
         />
       );
+    }
+
+    if (view === "Verzekeringen") {
+      return <KlaasVisInsurance context={context} organization={organization} />;
     }
 
     if (view === "Instellingen") return <CustomerSettings />;
