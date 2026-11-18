@@ -1,7 +1,7 @@
 import {createClient} from '@supabase/supabase-js';
 import {randomBytes,createHash} from 'node:crypto';
 import {OfficeError} from './auth/supabase.mjs';
-import {WORKFLOW_VERSION,advanceWorkflow,canSendOnboarding,startWorkflow,validateCompanyCount} from './prospect-workflow-v4.mjs';
+import {WORKFLOW_VERSION,advanceWorkflow,canSendOnboarding,startWorkflow,validateCompanyCount,validateAdministrationPreparation,isAdministrationReady} from './prospect-workflow-v4.mjs';
 
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const validEmail=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,7 +15,7 @@ function text(value,max=1500){return typeof value==='string'?value.trim().slice(
 function ensure(condition,code,message){if(!condition)fail(409,code,message);}
 const digest=s=>createHash('sha256').update(s).digest('hex');
 function encode(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));}
-function publicWorkflow(w){return {version:w.version,stage:w.stage,history:w.history,evidence:w.evidence,quote:w.quote||[],activities:w.activities||[],notes:w.notes||'',responsibleEmployeeId:w.responsibleEmployeeId||null};}
+function publicWorkflow(w){return {version:w.version,stage:w.stage,history:w.history,evidence:w.evidence,quote:w.quote||[],activities:w.activities||[],administrationPreparation:w.administrationPreparation||[],notes:w.notes||'',responsibleEmployeeId:w.responsibleEmployeeId||null};}
 function nextWorkflow(w,to,{actorId,notes='',evidence={}}){
  try{return advanceWorkflow(w,to,{actorId,notes,evidence});}
  catch(error){fail(409,'INVALID_WORKFLOW_TRANSITION',error.message);}
@@ -84,7 +84,15 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
  const action=input.action;
  const at=new Date().toISOString();
  let responseExtra={};
- if(action==='upload_agreement'){
+ if(action==='save_administration_preparation'){
+  ensure(workflow.stage==='administration_setup','WRONG_STAGE','De administratie is nog niet in de inrichtingsfase.');
+  let preparation;
+  try{preparation=validateAdministrationPreparation(input.companies,companies);}
+  catch(error){fail(400,'INVALID_PREPARATION',error.message);}
+  workflow={...workflow,administrationPreparation:preparation,
+   history:[...workflow.history,{from:workflow.stage,to:workflow.stage,
+     actorId:user.id,at,notes:'Voorbereiding per onderneming gecontroleerd'}]};
+ }else if(action==='upload_agreement'){
   ensure(workflow.stage==='agreement','WRONG_STAGE','Een overeenkomst hoort bij de overeenkomstfase.');
   const raw=input.base64;
   if(typeof raw!=='string'||raw.length>4_200_000||!/^[A-Za-z0-9+/]+={0,2}$/.test(raw))
@@ -165,8 +173,24 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
     'ONBOARDING_NOT_SUBMITTED','Wacht op de ingediende onboardingvragenlijst.');
    evidence.onboardingSubmitted=true;
   }
-  if(target==='ready_for_activation'||target==='active_client'){
-   fail(409,'ACTIVATION_NOT_CONNECTED','Activatie blijft geblokkeerd tot de bestaande documentcontrole en klantactivatie veilig gekoppeld zijn.');
+  if(target==='ready_for_activation'){
+   ensure(isAdministrationReady(workflow.administrationPreparation,companies),
+    'ADMINISTRATION_NOT_READY','Controleer eerst alle voorbereidingspunten voor iedere onderneming.');
+   const review=await supa.from('office_prospect_reviews')
+     .select('decision,docs_verified,identity_verified,agreement_signed')
+     .eq('application_id',id).maybeSingle();
+   if(review.error)fail(503,'REVIEW_UNAVAILABLE','De gecontroleerde dossierbeoordeling is niet beschikbaar.');
+   ensure(review.data?.decision==='ready_for_acceptance'&&review.data.docs_verified===true&&
+    review.data.identity_verified===true&&review.data.agreement_signed===true,
+    'DOCUMENTS_NOT_VERIFIED','Documenten en identiteit moeten eerst rechtmatig gecontroleerd en goedgekeurd zijn.');
+   ensure(!!app.submitted_at&&['submitted','under_review'].includes(app.status),
+    'ONBOARDING_NOT_SUBMITTED','Onboarding moet ingediend zijn.');
+   evidence={documentsVerified:true,administrationReady:true,
+     administrationVerifiedBy:user.id,administrationVerifiedAt:at,
+     dossierReviewDecision:'ready_for_acceptance'};
+  }
+  if(target==='active_client'){
+   fail(409,'ACTIVATION_NOT_CONNECTED','Klantactivatie blijft geblokkeerd tot de bestaande activatieservice veilig gekoppeld is.');
   }
   workflow=nextWorkflow(workflow,target,{actorId:user.id,notes,evidence});
  }else if(action==='send_onboarding'){
