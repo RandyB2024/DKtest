@@ -161,10 +161,10 @@ async function renderRoute() {
     if (path === '/dashboard' || path === '/clients') {
       header(path === '/dashboard' ? `Welkom, ${currentUser.displayName}` : 'Klanten');
       const data = await api('/api/clients'); recordData = data;
-      html = (path==='/dashboard'?'<div id="dashboard-tasks" class="profile-grid"><section id="tasks-today"></section><section id="tasks-overdue"></section></div>':'')+'<div id="client-workspace"></div>';
+      html = (path==='/dashboard'?'<div id="dashboard-tasks" class="profile-grid"><section id="tasks-today"></section><section id="tasks-overdue"></section></div>':'')+'<div id="client-workspace"></div>'+(path==='/clients'&&currentUser.canManageCustomers?'<div id="office-prospect-workflow"></div>':'');
     } else if (/^\/clients\/[^/]+$/.test(path)) {
       const id = path.split('/').pop(), data = await api('/api/clients/' + id); recordData = data; header('Klantdossier');
-      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><span>Klantdossier</span></div><div id="personal-portal-access"></div><div id="customer-profile"></div>`;
+      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><span>Klantdossier</span></div><div id="personal-portal-access"></div><div id="customer-profile"></div>${currentUser.canManageCustomers?'<div id="office-prospect-workflow"></div>':''}`;
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
       const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header('Onderneming');
       html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
@@ -334,6 +334,13 @@ async function renderRoute() {
           );
         }
       }else customerControls(path, recordData);
+      if(currentUser.canManageCustomers&&document.querySelector('#office-prospect-workflow')){
+        const {mountProspectWorkflow}=await import('/prospect-workflow-ui.js');
+        if(activeGeneration===generation&&currentUser)await mountProspectWorkflow(
+          document.querySelector('#office-prospect-workflow'),api,
+          {relationshipId:recordData?.relationship?.id||null}
+        );
+      }
       if(path==='/dashboard'){const {mountTasks}=await import('/tasks.js');if(activeGeneration===generation&&currentUser)await Promise.all([mountTasks($('#tasks-today'),api,{bucket:'today'}),mountTasks($('#tasks-overdue'),api,{bucket:'overdue'})]);}
       if(
         path.startsWith('/clients/')

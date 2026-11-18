@@ -1,6 +1,10 @@
+import {isOfficeAgreementName,publicProspectDocuments,publicProspectApplicant} from './prospect-document-policy.mjs';
+import {sendProspectReceipt} from './prospect-email-v4.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes, createHash } from 'node:crypto';
 import { OfficeError } from './auth/supabase.mjs';
+import { startWorkflow } from './prospect-workflow-v4.mjs';
+import { normalizeCompanySections } from './prospect-company-sections.mjs';
 
 const VALID_EMAIL=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FIELDS=['firstName','lastName','email','mobile','companyName','kvk','vat','legalForm','website','street','postalCode','city','country'];
@@ -58,7 +62,14 @@ export async function publicProspectRoute(req,url,config,fetchImpl,readBody){
  const {application,company,companies}=await resolveInvite(db,receiptToken);
  const {data:documents,error:de}=await db.from('office_prospect_documents').select('id,filename,created_at,company_position').eq('application_id',application.id).order('created_at',{ascending:false});
  if(de)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Documenten niet beschikbaar; controleer de database-migratie.');
- return {status:200,data:{status:application.status,personal:application.applicant_data,company,companies,documents:documents||[]}};
+ // An Office-uploaded signed agreement must never be exposed through a public
+ // onboarding token or appear in customer-controlled deletion lists.
+ const publicDocuments=publicProspectDocuments(documents);
+ // Never expose internal Office history, pricing, reviewer decisions or
+ // employee identifiers through an unprivileged personal invitation link.
+ const personal=publicProspectApplicant(application.applicant_data);
+ return {status:200,data:{status:application.status,personal,
+   company,companies,documents:publicDocuments}};
 }
 
 function asBool(v){return v===true||v==='true';}
@@ -84,9 +95,11 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   const id=clean(input.documentId,80);
   if(!/^[a-f0-9-]{36}$/i.test(id))throw new OfficeError(400,'INVALID_DOCUMENT','Ongeldig document.');
   const {data:doc,error:lookupError}=await db.from('office_prospect_documents')
-   .select('id,storage_path').eq('application_id',application.id).eq('id',id).maybeSingle();
+   .select('id,storage_path,filename').eq('application_id',application.id).eq('id',id).maybeSingle();
   if(lookupError)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Document kon niet worden opgezocht.');
   if(!doc)throw new OfficeError(404,'DOCUMENT_NOT_FOUND','Document niet gevonden.');
+  if(isOfficeAgreementName(doc.filename))
+   throw new OfficeError(403,'AGREEMENT_PROTECTED','De ondertekende overeenkomst kan uitsluitend via BESTEMD Office worden beheerd.');
   if(id===application.applicant_data?.signatureDocumentId)
    throw new OfficeError(409,'SIGNATURE_PROTECTED','Gebruik Opnieuw tekenen om de handtekening te wijzigen.');
   const removed=await db.storage.from('bestemd-prospect-private').remove([doc.storage_path]);
@@ -98,9 +111,14 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  if(input?.action==='upload'){
   const count=await db.from('office_prospect_documents').select('id',{count:'exact',head:true}).eq('application_id',application.id);
   if(count.error)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Documentenopslag niet ingericht.');
-  if((count.count||0)>=20)throw new OfficeError(400,'TOO_MANY_DOCUMENTS','Maximaal 20 documenten per aanvraag.');
+  const maxDocuments=application.applicant_data?.workflowV4?.version===4?75:20;
+  if((count.count||0)>=maxDocuments)throw new OfficeError(400,'TOO_MANY_DOCUMENTS','Maximaal '+maxDocuments+' documenten per aanvraag.');
   const mime=clean(input.mime,80),filename=clean(input.filename,120).replace(/[\/\\\x00-\x1f]/g,'_');
   if(!filename)throw new OfficeError(400,'INVALID_DOCUMENT','Een bestandsnaam is verplicht.');
+  // Reserve Office-only document names so public uploads cannot impersonate
+  // an authorized agreement later used to unlock onboarding.
+  if(isOfficeAgreementName(filename))
+   throw new OfficeError(403,'RESERVED_DOCUMENT_NAME','Dit documenttype wordt uitsluitend door BESTEMD Office geregistreerd.');
   const bytes=decodeDocument(input.base64,mime);
   const fileId=randomBytes(16).toString('hex'),path=application.id+'/'+fileId+'.'+DOCUMENT_TYPES[mime];
   const position=Number(input.companyPosition??1);if(!Number.isInteger(position)||!companies.some(c=>c.position===position))throw new OfficeError(400,'INVALID_COMPANY','Kies een geldige onderneming voor het document.');
@@ -115,8 +133,22 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  const personal=input.personal,company=input.company;
  const extras=Array.isArray(input.additionalCompanies)?input.additionalCompanies:[];
  const people=Array.isArray(input.additionalContacts)?input.additionalContacts:[];
- if(extras.length>9||people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel ondernemingen of contactpersonen.');
+ const isV4=application.applicant_data?.workflowV4?.version===4;
+ if(isV4&&people.length)throw new OfficeError(400,'ADDITIONAL_CONTACTS_DISABLED','Aanvullende contactpersonen worden tijdens het intakegesprek geregistreerd.');
+ if(extras.length>4||people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel ondernemingen of contactpersonen.');
  for(const [i,entry] of extras.entries()){const c=entry?.companyData||{};if(Number(entry.position)!==i+2||!clean(c.companyName)||c.kvk&&!/^\d{8}$/.test(clean(c.kvk)))throw new OfficeError(400,'INVALID_COMPANY','Controleer de extra ondernemingen.');}
+ const positions=[1,...extras.map((_,i)=>i+2)];
+ let sections=null;
+ if(isV4){
+  if(!Array.isArray(input.companySections)){
+   throw new OfficeError(400,'COMPANY_QUESTIONNAIRE_REQUIRED','Vul de ondernemingsvragenlijst in voordat je opslaat.');
+  }
+  try{
+   sections=normalizeCompanySections(input.companySections,positions,{submit:input.action==='submit'});
+  }catch(error){
+   throw new OfficeError(400,'INVALID_COMPANY_SECTIONS',String(error.message||'Controleer de ondernemingsvragen.'));
+  }
+ }
  const kvks=[clean(company.kvk),...extras.map(e=>clean(e.companyData?.kvk))].filter(Boolean);if(new Set(kvks).size!==kvks.length)throw new OfficeError(409,'DUPLICATE_KVK','Een KvK-nummer is meermaals ingevuld.');
  const contactRoles=['contactpersoon','ondernemer','bestuurder','administratie','facturatie','gemachtigde'];
  const allowedPositions=new Set(['all','1',...extras.map((_,i)=>String(i+2))]);
@@ -146,7 +178,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   const sign=input.signature;
   const requiredIntro=['lookingFor','currentChallenges','expectations','businessGoals','howCanWeHelp'];
   if(requiredIntro.some(k=>!clean(personal[k],1500)))throw new OfficeError(400,'SIGNATURE_REQUIRED','Beantwoord eerst alle kennismakingsvragen.');
-  if(!oneOf(clean(personal.cashBookkeeping,10),['yes','no'])||!oneOf(clean(personal.cashTransactions,10),['yes','no']))throw new OfficeError(400,'SIGNATURE_REQUIRED','Vul eerst het financiële beeld aan.');
+  if(!isV4&&(!oneOf(clean(personal.cashBookkeeping,10),['yes','no'])||!oneOf(clean(personal.cashTransactions,10),['yes','no'])))throw new OfficeError(400,'SIGNATURE_REQUIRED','Vul eerst het financiële beeld aan.');
   if(!sign||sign.accepted!==true||typeof sign.name!=='string'||clean(sign.name,200).length<3)throw new OfficeError(400,'SIGNATURE_REQUIRED','Vul je naam in en bevestig de verklaring.');
   const signer=clean(sign.name,200).replace(/\s+/g,' ').toLowerCase();
   const applicant=(clean(personal.firstName)+' '+clean(personal.lastName)).replace(/\s+/g,' ').toLowerCase();
@@ -157,7 +189,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  if(terms!==undefined&&(!terms||terms.accepted!==true||!/^[-a-zA-Z0-9._]{1,80}$/.test(String(terms.version||''))||input.action!=='submit'))throw new OfficeError(400,'INVALID_TERMS','Ongeldig akkoord op de voorwaarden.');
  const extraIbans=String(company.extraBankAccounts||'').split(/[\n,;]+/).map(x=>x.replace(/\s+/g,'').toUpperCase()).filter(Boolean);
  if(extraIbans.length>15||extraIbans.some(x=>!(/^[A-Z]{2}[0-9A-Z]{13,32}$/.test(x)))||new Set([clean(company.iban).replace(/\s+/g,'').toUpperCase(),...extraIbans]).size!==extraIbans.length+1)throw new OfficeError(400,'INVALID_IBAN','Controleer de extra zakelijke IBAN-nummers.');
- const updatedPersonal={...application.applicant_data,additionalContacts:contacts,
+ const updatedPersonal={...application.applicant_data,additionalContacts:isV4?[]:contacts,
   salutation:oneOf(clean(personal.salutation,30),['Dhr.','Mevr.','Anders','Geen aanhef']), initials:clean(personal.initials,40), firstName:clean(personal.firstName), lastName:clean(personal.lastName), name:(clean(personal.firstName)+' '+clean(personal.lastName)).trim(), email, mobile:clean(personal.mobile,24),
   serviceRequest:clean(personal.serviceRequest,1500), whatsappConsent:asBool(personal.whatsappConsent),
   lookingFor:clean(personal.lookingFor,1500), currentChallenges:clean(personal.currentChallenges,1500), expectations:clean(personal.expectations,1500), businessGoals:clean(personal.businessGoals,1500), howCanWeHelp:clean(personal.howCanWeHelp,1500),
@@ -171,11 +203,22 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   vatRequired, vatFrequency:vatRequired==='yes'?vatFrequency:'', vatIdNumber:entityType==='eenmanszaak'?clean(company.vatIdNumber,100):'', turnoverTaxNumber:entityType==='eenmanszaak'?clean(company.turnoverTaxNumber,100):'',
   vatNumber:entityType==='bv'?clean(company.vatNumber,100):'', hasFiscalUnit:entityType==='bv'?hasFiscalUnit:'', rsin:entityType==='bv'?clean(company.rsin,100):'',
   iban:clean(company.iban,100), extraBankAccounts:extraIbans.join('\n'), hasCreditCard, creditCardDetails:hasCreditCard==='yes'?clean(company.creditCardDetails,1500):'',
-  hasEmployees, payrollNumber:hasEmployees==='yes'?clean(company.payrollNumber,100):'', website:clean(company.website,200), legalForm:clean(company.legalForm,200), street:clean(company.street,200), postalCode:clean(company.postalCode,32), city:clean(company.city,120), country:clean(company.country,120)||'Nederland'
+  hasEmployees, payrollNumber:hasEmployees==='yes'?clean(company.payrollNumber,100):'', website:clean(company.website,200), legalForm:clean(company.legalForm,200), street:clean(company.street,200), postalCode:clean(company.postalCode,32), city:clean(company.city,120), country:clean(company.country,120)||'Nederland',
+  ...(isV4&&sections?.has(1)?{financialOnboarding:sections.get(1).financial,administrativeOnboarding:sections.get(1).administration}:{})
  };
  const {error:e2}=await db.from('office_onboarding_companies').update({company_data:updatedCompany}).eq('application_id',application.id).eq('position',1);
  if(e2)throw new OfficeError(503,'PROSPECT_SAVE_FAILED','Bedrijfsgegevens konden niet worden opgeslagen.');
- const extraSave=await db.rpc('office_prospect_replace_extra_companies',{p_application_id:application.id,p_companies:extras});
+ const safelyMergedExtras=extras.map((entry,i)=>({
+  ...entry,
+  companyData:{
+   ...entry.companyData,
+   ...(isV4&&sections?.has(i+2)?{
+    financialOnboarding:sections.get(i+2).financial,
+    administrativeOnboarding:sections.get(i+2).administration
+   }:{})
+  }
+ }));
+ const extraSave=await db.rpc('office_prospect_replace_extra_companies',{p_application_id:application.id,p_companies:safelyMergedExtras});
  if(extraSave.error)throw new OfficeError(503,'EXTRA_COMPANIES_SAVE_FAILED','Extra ondernemingen konden niet worden opgeslagen. Controleer de nieuwe Supabase-migratie.');
  const {data:updatedApplication,error:e1}=await db.from('office_onboarding_applications').update({applicant_data:updatedPersonal,status:input.action==='submit'?'submitted':'in_progress',submitted_at:input.action==='submit'?new Date().toISOString():null,updated_at:new Date().toISOString()}).eq('id',application.id).in('status',['invited','in_progress']).select('id').maybeSingle();
  if(e1||!updatedApplication)throw new OfficeError(503,'PROSPECT_SAVE_FAILED','Opslaan is niet gelukt.');
@@ -203,33 +246,23 @@ export async function officeProspectRoute(req,url,client,user,config,fetchImpl,r
  }
  if(req.method!=='POST')throw new OfficeError(405,'METHOD_NOT_ALLOWED','Methode niet toegestaan.');
  const input=await readBody(req); if(input?.action!=='create')throw new OfficeError(400,'INVALID_ACTION','Ongeldige actie.');
+ if(input.source!==undefined && (typeof input.source!=='string'||input.source.length>80))throw new OfficeError(400,'INVALID_SOURCE','Ongeldige herkomst.');
  const details=safeInput(input.data);
  const db=admin(config,fetchImpl);
  const {data,error}=await client.rpc('office_create_onboarding_new_customer',{p_customer_name:details.firstName+' '+details.lastName,p_company_name:details.companyName,p_email:details.email});
  if(error){if(error.code==='23505')throw new OfficeError(409,'PROSPECT_EXISTS','Er is al een lopende aanvraag voor dit e-mailadres.');throw new OfficeError(503,'PROSPECT_CREATE_FAILED','Prospect kon niet worden aangemaakt.');}
  const applicationId=data?.application_id;
  if(!applicationId)throw new OfficeError(503,'PROSPECT_CREATE_FAILED','Geen aanvraagnummer ontvangen.');
- const {data:updatedApplication,error:e1}=await db.from('office_onboarding_applications').update({applicant_data:{name:details.firstName+' '+details.lastName,firstName:details.firstName,lastName:details.lastName,email:details.email,mobile:details.mobile}}).eq('id',applicationId).eq('status','draft');
+ const {data:updatedApplication,error:e1}=await db.from('office_onboarding_applications').update({applicant_data:{name:details.firstName+' '+details.lastName,firstName:details.firstName,lastName:details.lastName,email:details.email,mobile:details.mobile,workflowV4:startWorkflow(user.id),leadSource:clean(input.source,80)||'office',assignedTo:user.id}}).eq('id',applicationId).eq('status','draft');
  const {error:e2}=await db.from('office_onboarding_companies').update({company_data:{name:details.companyName,companyName:details.companyName,kvk:details.kvk,website:details.website,legalForm:details.legalForm,street:details.street,postalCode:details.postalCode,city:details.city,country:details.country||'Nederland'}}).eq('application_id',applicationId).eq('position',1);
  if(e1||e2)throw new OfficeError(503,'PROSPECT_CREATE_FAILED','Aanvraag is aangemaakt, maar aanvullende gegevens konden niet worden opgeslagen.');
- if(!config.resendApiKey) return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',emailSent:false,reason:'RESEND_NOT_CONFIGURED'}};
- const token=randomBytes(32).toString('hex');
- const expires=new Date(Date.now()+7*86400000).toISOString();
- const {data:invite,error:ei}=await db.from('office_onboarding_invites').insert({application_id:applicationId,email:details.email,token_hash:digest(token),expires_at:expires,created_by:user.id}).select('id').single();
- if(ei)throw new OfficeError(503,'PROSPECT_INVITE_FAILED','Prospect is opgeslagen, maar de uitnodiging kon niet worden klaargezet.');
- const inviteUrl=config.origin+'/prospect?token='+encodeURIComponent(token);
- let response;
- try{
-  response=await fetchImpl('https://api.resend.com/emails',{
-   method:'POST',
-   headers:{Authorization:'Bearer '+config.resendApiKey,'Content-Type':'application/json','Idempotency-Key':'bestemd-prospect-'+applicationId},
-   body:JSON.stringify({from:'BESTEMD <info@mijnbestemd.nl>',to:[details.email],subject:'Welkom bij BESTEMD — vul jouw aanvraag aan',html:inviteEmailHtml(details.firstName,inviteUrl,config.origin)})
-  });
- }catch{response=null;}
- if(!response?.ok){await db.from('office_onboarding_invites').update({revoked_at:new Date().toISOString()}).eq('id',invite.id);return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',emailSent:false,reason:'EMAIL_FAILED'}};}
- const {error:statusError}=await db.from('office_onboarding_applications').update({status:'invited'}).eq('id',applicationId).eq('status','draft');
- if(statusError)throw new OfficeError(503,'PROSPECT_STATUS_FAILED','De uitnodiging is verstuurd, maar de prospectstatus kon niet worden bijgewerkt. Neem contact op met de beheerder.');
- return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'invited',emailSent:true}};
+ // Workflow 4.0: an initial prospect is NOT an onboarding invitation.
+ // The only route allowed to send the onboarding questionnaire is
+ // /api/office/prospect-workflow with an accepted quote and verified agreement.
+ const receiptSent=await sendProspectReceipt({config,fetchImpl,applicationId,email:details.email,
+  customerName:details.firstName});
+ return {status:201,data:{applicationId,relationshipId:data.relationship_id,status:'draft',
+  workflowStage:'new_request',emailSent:receiptSent}};
 }
 
 

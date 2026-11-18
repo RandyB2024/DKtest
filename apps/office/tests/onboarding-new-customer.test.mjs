@@ -16,6 +16,7 @@ const validInput = {
 };
 
 const authorizedUser = {
+  id: '33333333-3333-4333-8333-333333333333',
   canManageCustomers: true,
   aal2: true
 };
@@ -50,7 +51,29 @@ function invoke({
     url,
     client,
     user,
-    async () => input
+    async () => input,
+    {
+      supabaseUrl: 'https://supabase.example.invalid',
+      supabaseServiceRoleKey: 'sb_secret_office_test'
+    },
+    async (url,options={}) => {
+      const method=options.method||'GET';
+      if(method==='GET'){
+        return new Response(JSON.stringify({
+          id:'22222222-2222-4222-8222-222222222222',
+          status:'draft',
+          applicant_data:{email:validInput.email}
+        }),{status:200,headers:{'Content-Type':'application/json'}});
+      }
+      if(method==='PATCH'){
+        const input=JSON.parse(options.body||'{}');
+        assert.equal(input.applicant_data?.workflowV4?.stage,'new_request');
+        assert.equal(input.applicant_data?.workflowV4?.version,4);
+        return new Response(JSON.stringify({id:'22222222-2222-4222-8222-222222222222'}),
+          {status:200,headers:{'Content-Type':'application/json'}});
+      }
+      throw new Error('Unexpected Supabase test request: '+method+' '+url);
+    }
   );
 }
 

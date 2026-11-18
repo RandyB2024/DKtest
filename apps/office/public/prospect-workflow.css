@@ -1,0 +1,24 @@
+/* BESTEMD Workflow 4.0 — compact Office dossier section */
+.bestemd-workflow {margin-block:1.25rem;max-width:100%;overflow-wrap:anywhere}
+.bestemd-workflow>h2 {margin-bottom:.25rem}
+.bestemd-workflow select,.bestemd-workflow input,.bestemd-workflow textarea {display:block;width:100%;max-width:100%;margin-block:.4rem .8rem;padding:.7rem;border:1px solid #cbdbe6;border-radius:.7rem;background:#fff;color:#103453}
+.bestemd-workflow label {display:block;font-size:.88rem;font-weight:600;color:#244358}
+.bestemd-workflow label input[type="checkbox"]{display:inline-block;width:auto;margin:.5rem .5rem .5rem 0}
+.bestemd-workflow-steps {display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem;list-style:none;padding:0;margin:1rem 0}
+.bestemd-workflow-steps li {background:#f5f8fb;color:#587184;border:1px solid #deebf2;border-radius:.7rem;padding:.65rem .75rem;font-size:.8rem;font-weight:600}
+.bestemd-workflow-steps li.done {background:#eaf6f0;border-color:#c8e3d5;color:#216045}
+.bestemd-workflow-steps li.current {background:#e9f5fc;border-color:#87badb;color:#075a88}
+.bestemd-workflow fieldset {border:1px solid #dce6ee;border-radius:.9rem;padding:1rem;margin:1rem 0}
+.bestemd-workflow legend {padding:0 .35rem;font-weight:700}
+.bestemd-workflow .customer-buttons {display:flex;flex-wrap:wrap;gap:.65rem;align-items:flex-end}
+.bestemd-workflow button {border-radius:.65rem;padding:.7rem 1rem;cursor:pointer}
+.bestemd-workflow button:disabled {opacity:.55;cursor:wait}
+.bestemd-workflow h3,.bestemd-workflow h4 {margin:1.1rem 0 .6rem}
+.bestemd-workflow .mutation-error {color:#a5282f}
+@media(max-width:650px){.bestemd-workflow-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.bestemd-workflow .customer-buttons{flex-direction:column;align-items:stretch}.bestemd-workflow button{width:100%}}
+
+.bestemd-workflow-document-status{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.7rem;margin:1rem 0}
+.bestemd-workflow-document-status>h4{grid-column:1/-1;margin-bottom:0}
+.bestemd-workflow-company-card{padding:.8rem;background:#f8fafc;border:1px solid #d7e5ee;border-radius:12px}
+.bestemd-workflow-company-card strong{color:#173d58}
+.bestemd-workflow-company-card p{font-size:.84rem;margin:.45rem 0}

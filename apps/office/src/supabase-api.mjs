@@ -1,5 +1,6 @@
 import { officeProspectReviewRoute } from './prospect-review.mjs';
 import { officeProspectRoute } from './prospects.mjs';
+import { officeProspectWorkflowRoute } from './prospect-workflow-route.mjs';
 import { bankingRoute } from './banking.mjs';
 import { paymentMonitoringRoute } from './payment-monitoring.mjs';
 import { communicationRoute } from './communication.mjs';
@@ -31,7 +32,8 @@ export function sendJson(res, status, data, code) {
 async function body(req) {
   if (!req.headers['content-type']?.startsWith('application/json')) throw new OfficeError(400, 'INVALID_REQUEST', 'Ongeldig verzoek.');
   const chunks = []; let size = 0;
-  for await (const chunk of req) { size += chunk.length; if (size > 16384) throw new OfficeError(413, 'REQUEST_TOO_LARGE', 'Verzoek te groot.'); chunks.push(chunk); }
+  const maxBytes = (req.url || '').split('?')[0] === '/api/office/prospect-workflow' ? 4_500_000 : 16384;
+  for await (const chunk of req) { size += chunk.length; if (size > maxBytes) throw new OfficeError(413, 'REQUEST_TOO_LARGE', 'Verzoek te groot.'); chunks.push(chunk); }
   try { const value = JSON.parse(Buffer.concat(chunks).toString()); if (!value || Array.isArray(value) || typeof value !== 'object') throw new Error(); return value; }
   catch { throw new OfficeError(400, 'INVALID_REQUEST', 'Ongeldig verzoek.'); }
 }
@@ -881,6 +883,11 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     );
     if (prospectReview) return sendJson(res, prospectReview.status, prospectReview.data);
 
+    const customerWorkflow = await officeProspectWorkflowRoute(
+      req, url, client, user, config, fetchImpl, body
+    );
+    if (customerWorkflow) return sendJson(res, customerWorkflow.status, customerWorkflow.data);
+
     const prospect = await officeProspectRoute(
       req, url, client, user, config, fetchImpl, body
     );
@@ -1109,9 +1116,9 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     if (profile) return sendJson(res,profile.status,profile.data);
     const intake = await kvkRoute(req,url,client,user,config,body,fetchImpl);
     if (intake) return sendJson(res,intake.status,intake.data);
-    const newCustomerOnboarding = await onboardingNewCustomerRoute(req, url, client, user, body);
+    const newCustomerOnboarding = await onboardingNewCustomerRoute(req, url, client, user, body, config, fetchImpl);
     if (newCustomerOnboarding) return sendJson(res, newCustomerOnboarding.status, newCustomerOnboarding.data);
-    const onboarding = await onboardingDraftRoute(req, url, client, user, body);
+    const onboarding = await onboardingDraftRoute(req, url, client, user, body, config, fetchImpl);
     if (onboarding) return sendJson(res, onboarding.status, onboarding.data);
     const mutation = await customerMutation(req, url, client, user, body);
     if (mutation) return sendJson(res, mutation.status, mutation.data);

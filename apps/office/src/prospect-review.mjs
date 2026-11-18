@@ -1,3 +1,4 @@
+import {documentDeadline,WORKFLOW_VERSION} from './prospect-workflow-v4.mjs';
 import {createClient} from '@supabase/supabase-js';
 import {OfficeError} from './auth/supabase.mjs';
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -21,7 +22,9 @@ export async function officeProspectReviewRoute(req,url,client,user,config,fetch
  error(a.error,'Aanvraag niet beschikbaar.');
  if(!a.data)throw new OfficeError(404,'NOT_FOUND','Aanvraag niet gevonden.');
  if(!a.data.submitted_at||!['submitted','under_review'].includes(a.data.status))throw new OfficeError(409,'NOT_SUBMITTED','De aanvraag moet eerst definitief zijn ingediend.');
- const initial=isoDate(a.data.submitted_at,14);
+ const initial=a.data.applicant_data?.workflowV4?.version===WORKFLOW_VERSION
+  ? documentDeadline(a.data.submitted_at,10)
+  : isoDate(a.data.submitted_at,14);
  const existing=await supa.from('office_prospect_reviews').select('*').eq('application_id',applicationId).maybeSingle();
  error(existing.error,'Voer eerst de Supabase-beoordelingsmigratie uit.');
  let review=existing.data;
