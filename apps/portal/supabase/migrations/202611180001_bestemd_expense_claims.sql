@@ -40,6 +40,7 @@ create table if not exists public.bestemd_expense_evidence (
  line_id uuid not null references public.bestemd_expense_lines(id) on delete restrict,
  organization_id uuid not null references public.organizations(id),
  storage_path text not null unique,
+ document_id uuid unique references public.documents(id),
  filename text not null,
  mime_type text not null check(mime_type in ('application/pdf','image/jpeg','image/png','image/heic')),
  size_bytes bigint not null check(size_bytes>0 and size_bytes<=15728640),
@@ -144,7 +145,8 @@ begin
  for v_line in select value from jsonb_array_elements(p_lines) loop
   v_amount:=(v_line->>'grossCents')::bigint;
   v_vat:=coalesce((v_line->>'vatCents')::bigint,0);
-  if v_amount<0 or v_vat<0 or v_vat>v_amount then raise exception 'Ongeldig bedrag of btw.'; end if;
+  if v_amount<0 or v_vat<0 or v_vat>v_amount or v_amount>100000000000 then raise exception 'Ongeldig bedrag of btw.'; end if;
+  if (v_line->>'date')::date < p_month - interval '3 months' or (v_line->>'date')::date > p_month + interval '4 months' then raise exception 'Datum valt buiten toegestane declaratieperiode.'; end if;
   insert into public.bestemd_expense_lines(claim_id,expense_date,supplier,category,gross_cents,vat_cents,description)
   values(v_claim.id,(v_line->>'date')::date,trim(v_line->>'supplier'),v_line->>'category',v_amount,v_vat,left(coalesce(v_line->>'description',''),1000));
   v_total:=v_total+v_amount;
@@ -164,8 +166,9 @@ begin
  if v_claim.status<>'draft' or v_claim.total_cents<=0 or not exists(select 1 from public.bestemd_expense_lines where claim_id=p_claim_id) then raise exception 'Concept kan niet worden ingediend.'; end if;
  v_status:=case when exists(
    select 1 from public.bestemd_expense_lines l
-   where l.claim_id=p_claim_id and l.category<>'kilometervergoeding'
-   and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id)
+   where l.claim_id=p_claim_id and
+   ((l.category<>'kilometervergoeding' and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id))
+   or (l.category='kilometervergoeding' and not exists(select 1 from public.bestemd_expense_mileage m where m.line_id=l.id)))
  ) then 'waiting_evidence' else 'submitted' end;
  update public.bestemd_expense_claims set status=v_status,submitted_at=now(),updated_at=now() where id=p_claim_id;
  insert into public.bestemd_expense_audit(claim_id,actor_id,event) values(p_claim_id,auth.uid(),'submitted');
@@ -174,4 +177,106 @@ end; $$;
 
 revoke all on function public.bestemd_expense_save_draft(uuid,date,text,uuid,jsonb), public.bestemd_expense_submit(uuid) from public,anon;
 grant execute on function public.bestemd_expense_save_draft(uuid,date,text,uuid,jsonb), public.bestemd_expense_submit(uuid) to authenticated;
+
+-- Existing authenticated document uploads can be attached to a single claim
+-- line without granting the customer blanket write access to evidence metadata.
+create or replace function public.bestemd_expense_attach_document(
+ p_line_id uuid, p_document_id uuid
+) returns uuid language plpgsql security definer set search_path=public as $
+declare v_line public.bestemd_expense_lines%rowtype; v_claim public.bestemd_expense_claims%rowtype;
+        v_doc public.documents%rowtype; v_new_id uuid;
+begin
+ select * into v_line from public.bestemd_expense_lines where id=p_line_id;
+ if not found then raise exception 'Kostenpost onbekend.'; end if;
+ select * into v_claim from public.bestemd_expense_claims where id=v_line.claim_id for update;
+ if not found or not public.has_aal2() or v_claim.claimant_id<>auth.uid()
+   or not public.has_org_access(v_claim.organization_id) or
+   v_claim.status not in ('draft','submitted','waiting_evidence','under_review') then
+   raise exception 'Geen toegang tot kostenpost.' using errcode='42501';
+ end if;
+ select * into v_doc from public.documents where id=p_document_id and organization_id=v_claim.organization_id;
+ if not found or v_doc.uploaded_by<>auth.uid() or
+   v_doc.mime_type not in ('application/pdf','image/jpeg','image/png','image/heic') or
+   v_doc.size_bytes>15728640 or v_doc.size_bytes<=0 then
+   raise exception 'Ongeldig of niet beschikbaar document.' using errcode='42501';
+ end if;
+ insert into public.bestemd_expense_evidence(line_id,organization_id,document_id,storage_path,filename,mime_type,size_bytes,uploaded_by)
+ values(v_line.id,v_claim.organization_id,v_doc.id,v_doc.storage_path,v_doc.filename,v_doc.mime_type,v_doc.size_bytes,auth.uid())
+ on conflict (document_id) do nothing returning id into v_new_id;
+ if v_new_id is null then raise exception 'Dit bewijsstuk is al gekoppeld.'; end if;
+ update public.bestemd_expense_lines set receipt_status='received' where id=v_line.id;
+ insert into public.bestemd_expense_audit(claim_id,actor_id,event,details)
+ values(v_claim.id,auth.uid(),'evidence_added',jsonb_build_object('line_id',v_line.id));
+ return v_new_id;
+end; $;
+
+create or replace function public.bestemd_expense_save_mileage(
+ p_line_id uuid,p_date date,p_route text,p_reason text,p_kilometers numeric,p_rate_cents integer
+) returns void language plpgsql security definer set search_path=public as $
+declare v_claim public.bestemd_expense_claims%rowtype; v_line public.bestemd_expense_lines%rowtype;
+begin
+ select * into v_line from public.bestemd_expense_lines where id=p_line_id;
+ select c.* into v_claim from public.bestemd_expense_claims c where c.id=v_line.claim_id for update;
+ if v_claim.claimant_id<>auth.uid() or not public.has_aal2() or
+   not public.has_org_access(v_claim.organization_id) or
+   v_claim.status not in ('draft','submitted','waiting_evidence','under_review') or
+   v_line.category<>'kilometervergoeding' then raise exception 'Geen toegang.' using errcode='42501'; end if;
+ if round(p_kilometers*p_rate_cents)::bigint <> v_line.gross_cents then raise exception 'Kilometerbedrag komt niet overeen.'; end if;
+ insert into public.bestemd_expense_mileage(line_id,trip_date,route,business_reason,kilometers,rate_cents)
+ values(p_line_id,p_date,p_route,p_reason,p_kilometers,p_rate_cents)
+ on conflict(line_id) do update set trip_date=excluded.trip_date,route=excluded.route,
+ business_reason=excluded.business_reason,kilometers=excluded.kilometers,rate_cents=excluded.rate_cents;
+ update public.bestemd_expense_lines set receipt_status='received' where id=p_line_id;
+ insert into public.bestemd_expense_audit(claim_id,actor_id,event)values(v_claim.id,auth.uid(),'mileage_log_saved');
+end; $;
+
+-- Office finance roles can review but no role can mark a claim as
+-- booked or paid through this function.
+create or replace function public.bestemd_expense_office_decide(
+ p_claim_id uuid,p_decision text,p_reason text default null
+) returns text language plpgsql security definer set search_path=public as $
+declare v_claim public.bestemd_expense_claims%rowtype;
+begin
+ if not public.has_aal2() or not public.is_office_user() or not exists(
+   select 1 from public.office_memberships m join public.roles r on r.id=m.role_id
+    where m.user_id=auth.uid() and m.status='active' and r.scope='office'
+    and r.code in ('owner','admin','accountant')
+ ) then raise exception 'Office beoordelingsrecht vereist.' using errcode='42501'; end if;
+ select * into v_claim from public.bestemd_expense_claims where id=p_claim_id for update;
+ if not found or v_claim.status not in ('submitted','waiting_evidence','under_review')
+    then raise exception 'Declaratie niet in behandeling.'; end if;
+ if p_decision='reject' then
+  if length(trim(coalesce(p_reason,'')))<5 then raise exception 'Toelichting vereist.'; end if;
+  update public.bestemd_expense_claims set status='rejected',rejection_reason=left(p_reason,1000),reviewed_at=now(),reviewed_by=auth.uid(),updated_at=now() where id=p_claim_id;
+ elsif p_decision='approve' then
+  if exists(select 1 from public.bestemd_expense_lines l where l.claim_id=p_claim_id
+    and ((l.category<>'kilometervergoeding' and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id and e.checked_at is not null))
+     or (l.category='kilometervergoeding' and not exists(select 1 from public.bestemd_expense_mileage m where m.line_id=l.id))))
+  then raise exception 'Bewijsstukken of rittenoverzicht moeten eerst gecontroleerd zijn.'; end if;
+  update public.bestemd_expense_claims set status='approved',reviewed_at=now(),reviewed_by=auth.uid(),updated_at=now() where id=p_claim_id;
+ else raise exception 'Ongeldige beoordeling.'; end if;
+ insert into public.bestemd_expense_audit(claim_id,actor_id,event,details) values(p_claim_id,auth.uid(),'office_'||p_decision,jsonb_build_object('reason',left(coalesce(p_reason,''),1000)));
+ return (select status from public.bestemd_expense_claims where id=p_claim_id);
+end; $;
+
+create or replace function public.bestemd_expense_office_check_evidence(p_evidence_id uuid)
+ returns boolean language plpgsql security definer set search_path=public as $
+declare v_claim_id uuid;
+begin
+ if not public.has_aal2() or not public.is_office_user() or not exists(
+   select 1 from public.office_memberships m join public.roles r on r.id=m.role_id
+   where m.user_id=auth.uid() and m.status='active' and r.scope='office' and r.code in ('owner','admin','accountant','handler')
+ ) then raise exception 'Geen Office beoordelingsrecht.' using errcode='42501'; end if;
+ select l.claim_id into v_claim_id from public.bestemd_expense_evidence e
+ join public.bestemd_expense_lines l on l.id=e.line_id where e.id=p_evidence_id;
+ if v_claim_id is null then raise exception 'Bewijsstuk niet gevonden.'; end if;
+ update public.bestemd_expense_evidence set checked_by=auth.uid(),checked_at=now() where id=p_evidence_id;
+ update public.bestemd_expense_lines set receipt_status='checked' where id=(select line_id from public.bestemd_expense_evidence where id=p_evidence_id);
+ insert into public.bestemd_expense_audit(claim_id,actor_id,event) values(v_claim_id,auth.uid(),'evidence_checked');
+ return true;
+end; $;
+
+revoke all on function public.bestemd_expense_attach_document(uuid,uuid),public.bestemd_expense_save_mileage(uuid,date,text,text,numeric,integer),public.bestemd_expense_office_decide(uuid,text,text),public.bestemd_expense_office_check_evidence(uuid) from public,anon;
+grant execute on function public.bestemd_expense_attach_document(uuid,uuid),public.bestemd_expense_save_mileage(uuid,date,text,text,numeric,integer),public.bestemd_expense_office_decide(uuid,text,text),public.bestemd_expense_office_check_evidence(uuid) to authenticated;
+
 commit;
