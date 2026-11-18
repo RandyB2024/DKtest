@@ -50,7 +50,8 @@ create table if not exists public.bestemd_expense_evidence (
  created_at timestamptz not null default now()
 );
 create table if not exists public.bestemd_expense_mileage (
- line_id uuid primary key references public.bestemd_expense_lines(id) on delete cascade,
+ id uuid primary key default gen_random_uuid(),
+ line_id uuid not null references public.bestemd_expense_lines(id) on delete cascade,
  trip_date date not null,
  route text not null,
  business_reason text not null,
@@ -146,7 +147,6 @@ begin
   v_amount:=(v_line->>'grossCents')::bigint;
   v_vat:=coalesce((v_line->>'vatCents')::bigint,0);
   if v_amount<0 or v_vat<0 or v_vat>v_amount or v_amount>100000000000 then raise exception 'Ongeldig bedrag of btw.'; end if;
-  if (v_line->>'date')::date < p_month - interval '3 months' or (v_line->>'date')::date > p_month + interval '4 months' then raise exception 'Datum valt buiten toegestane declaratieperiode.'; end if;
   insert into public.bestemd_expense_lines(claim_id,expense_date,supplier,category,gross_cents,vat_cents,description)
   values(v_claim.id,(v_line->>'date')::date,trim(v_line->>'supplier'),v_line->>'category',v_amount,v_vat,left(coalesce(v_line->>'description',''),1000));
   v_total:=v_total+v_amount;
@@ -221,11 +221,10 @@ begin
    not public.has_org_access(v_claim.organization_id) or
    v_claim.status not in ('draft','submitted','waiting_evidence','under_review') or
    v_line.category<>'kilometervergoeding' then raise exception 'Geen toegang.' using errcode='42501'; end if;
- if round(p_kilometers*p_rate_cents)::bigint <> v_line.gross_cents then raise exception 'Kilometerbedrag komt niet overeen.'; end if;
+ if (select coalesce(sum(round(kilometers*rate_cents)),0) from public.bestemd_expense_mileage where line_id=p_line_id)
+    + round(p_kilometers*p_rate_cents) > v_line.gross_cents then raise exception 'Ritten overschrijden opgegeven vergoeding.'; end if;
  insert into public.bestemd_expense_mileage(line_id,trip_date,route,business_reason,kilometers,rate_cents)
- values(p_line_id,p_date,p_route,p_reason,p_kilometers,p_rate_cents)
- on conflict(line_id) do update set trip_date=excluded.trip_date,route=excluded.route,
- business_reason=excluded.business_reason,kilometers=excluded.kilometers,rate_cents=excluded.rate_cents;
+ values(p_line_id,p_date,p_route,p_reason,p_kilometers,p_rate_cents);
  update public.bestemd_expense_lines set receipt_status='received' where id=p_line_id;
  insert into public.bestemd_expense_audit(claim_id,actor_id,event)values(v_claim.id,auth.uid(),'mileage_log_saved');
 end; $;
@@ -251,7 +250,8 @@ begin
  elsif p_decision='approve' then
   if exists(select 1 from public.bestemd_expense_lines l where l.claim_id=p_claim_id
     and ((l.category<>'kilometervergoeding' and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id and e.checked_at is not null))
-     or (l.category='kilometervergoeding' and not exists(select 1 from public.bestemd_expense_mileage m where m.line_id=l.id))))
+     or (l.category='kilometervergoeding' and
+       coalesce((select sum(round(m.kilometers*m.rate_cents)) from public.bestemd_expense_mileage m where m.line_id=l.id),0)<>l.gross_cents)))
   then raise exception 'Bewijsstukken of rittenoverzicht moeten eerst gecontroleerd zijn.'; end if;
   update public.bestemd_expense_claims set status='approved',reviewed_at=now(),reviewed_by=auth.uid(),updated_at=now() where id=p_claim_id;
  else raise exception 'Ongeldige beoordeling.'; end if;
@@ -270,6 +270,7 @@ begin
  select l.claim_id into v_claim_id from public.bestemd_expense_evidence e
  join public.bestemd_expense_lines l on l.id=e.line_id where e.id=p_evidence_id;
  if v_claim_id is null then raise exception 'Bewijsstuk niet gevonden.'; end if;
+ if (select status from public.bestemd_expense_claims where id=v_claim_id) in ('booked','paid','rejected') then raise exception 'Declaratie is afgesloten.'; end if;
  update public.bestemd_expense_evidence set checked_by=auth.uid(),checked_at=now() where id=p_evidence_id;
  update public.bestemd_expense_lines set receipt_status='checked' where id=(select line_id from public.bestemd_expense_evidence where id=p_evidence_id);
  insert into public.bestemd_expense_audit(claim_id,actor_id,event) values(v_claim_id,auth.uid(),'evidence_checked');
