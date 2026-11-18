@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck, FileText, Car, Building2, ExternalLink, Mail } from "lucide-react";
 import type { PortalContext,PortalOrganization } from "@/lib/portal-access";
+import { hasVerifiedKlaasVisInsurance } from "@/lib/insurance-visibility";
 
 /** This module is bound to the active organization's RLS-controlled insurance RPC.
  * Legacy insurance-module.tsx uses local fictional sample data and must never be mounted in production.
@@ -35,6 +36,7 @@ export default function KlaasVisInsurance({context,organization}:{
     : data?.verified===true || data?.linked===true;
   const policies=hasVerifiedLink?sourcePolicies:[];
   const documents=hasVerifiedLink?sourceDocuments:[];
+  if (!loading && (error || !hasVerifiedKlaasVisInsurance(data))) return null;
   return <div className="insurance-live-page">
     <header className="insurance-hero">
       <div className="kv-brand"><img src="/klaas-vis-logo.png" alt="Klaas Vis"/>
