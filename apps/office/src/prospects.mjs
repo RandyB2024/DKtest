@@ -98,7 +98,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  if(input?.action==='upload'){
   const count=await db.from('office_prospect_documents').select('id',{count:'exact',head:true}).eq('application_id',application.id);
   if(count.error)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Documentenopslag niet ingericht.');
-  if((count.count||0)>=20)throw new OfficeError(400,'TOO_MANY_DOCUMENTS','Maximaal 20 documenten per aanvraag.');
+  if((count.count||0)>=60)throw new OfficeError(400,'TOO_MANY_DOCUMENTS','Maximaal 60 documenten per aanvraag.');
   const mime=clean(input.mime,80),filename=clean(input.filename,120).replace(/[\/\\\x00-\x1f]/g,'_');
   if(!filename)throw new OfficeError(400,'INVALID_DOCUMENT','Een bestandsnaam is verplicht.');
   const bytes=decodeDocument(input.base64,mime);
@@ -116,7 +116,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  const extras=Array.isArray(input.additionalCompanies)?input.additionalCompanies:[];
  const people=Array.isArray(input.additionalContacts)?input.additionalContacts:[];
  if(extras.length>4)throw new OfficeError(400,'EXTRAS_TOO_MANY','Maximaal vijf ondernemingen per aanvraag, inclusief de eerste onderneming.');
- if(people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel contactpersonen.');
+ if(people.length)throw new OfficeError(400,'CONTACTS_OFFICE_ONLY','Extra contactpersonen worden tijdens het inventarisatiegesprek door BESTEMD Office geregistreerd.');
  for(const [i,entry] of extras.entries()){const c=entry?.companyData||{};if(Number(entry.position)!==i+2||!clean(c.companyName)||c.kvk&&!/^\d{8}$/.test(clean(c.kvk)))throw new OfficeError(400,'INVALID_COMPANY','Controleer de extra ondernemingen.');}
  const kvks=[clean(company.kvk),...extras.map(e=>clean(e.companyData?.kvk))].filter(Boolean);if(new Set(kvks).size!==kvks.length)throw new OfficeError(409,'DUPLICATE_KVK','Een KvK-nummer is meermaals ingevuld.');
  const contactRoles=['contactpersoon','ondernemer','bestuurder','administratie','facturatie','gemachtigde'];
@@ -124,7 +124,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  const contacts=people.map(c=>({salutation:clean(c.salutation,30),initials:clean(c.initials,40),firstName:clean(c.firstName,100),lastName:clean(c.lastName,100),email:clean(c.email,254).toLowerCase(),mobile:clean(c.mobile,24),role:clean(c.role,60),companyPosition:clean(c.companyPosition,5),invoiceRecipient:c.invoiceRecipient===true}));
  for(const c of contacts){if(!c.firstName||!c.lastName||!VALID_EMAIL.test(c.email)||!contactRoles.includes(c.role)||!allowedPositions.has(c.companyPosition))throw new OfficeError(400,'INVALID_CONTACT','Controleer de extra contactpersonen.');}
  const permittedPersonal=['salutation','initials','firstName','lastName','email','mobile','whatsappConsent','serviceRequest','lookingFor','currentChallenges','expectations','businessGoals','howCanWeHelp','cashBookkeeping','cashTransactions','previousYearTurnover','expectedYearTurnover','turnoverTrend','profitability','liquidity','outstandingDebtors','outstandingCreditors','hasFinancing','hasTaxDebt','administrationBacklog','currentBookkeeper'];
- const permittedCompany=['companyName','companyEmail','kvk','transferDate','entityType','vatRequired','vatFrequency','vatIdNumber','turnoverTaxNumber','vatNumber','hasFiscalUnit','rsin','iban','extraBankAccounts','hasCreditCard','creditCardDetails','hasEmployees','payrollNumber','website','legalForm','street','postalCode','city','country'];
+ const permittedCompany=['previousYearTurnover','expectedYearTurnover','turnoverTrend','profitability','liquidity','outstandingDebtors','outstandingCreditors','hasFinancing','financingDetails','hasTaxDebt','taxDebtDetails','cashBookkeeping','cashTransactions','financialNotes','currentBookkeeper','bookkeeperTransferDetails','administrationBacklog','companyName','companyEmail','kvk','transferDate','entityType','vatRequired','vatFrequency','vatIdNumber','turnoverTaxNumber','vatNumber','hasFiscalUnit','rsin','iban','extraBankAccounts','hasCreditCard','creditCardDetails','hasEmployees','payrollNumber','website','legalForm','street','postalCode','city','country'];
  if(Object.keys(personal).some(k=>!permittedPersonal.includes(k))||Object.keys(company).some(k=>!permittedCompany.includes(k)))throw new OfficeError(400,'INVALID_PROSPECT','Ongeldige velden.');
  const email=clean(personal.email,254).toLowerCase();
  if(!VALID_EMAIL.test(email)||!clean(personal.firstName)||!clean(personal.lastName)||!clean(personal.mobile,24)||!clean(company.companyName)||!clean(company.companyEmail,254)||!VALID_EMAIL.test(clean(company.companyEmail,254))||(company.kvk&&!/^\d{8}$/.test(clean(company.kvk)))||!clean(company.transferDate,20))throw new OfficeError(400,'INVALID_PROSPECT','Controleer de verplichte velden.');
@@ -158,7 +158,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  if(terms!==undefined&&(!terms||terms.accepted!==true||!/^[-a-zA-Z0-9._]{1,80}$/.test(String(terms.version||''))||input.action!=='submit'))throw new OfficeError(400,'INVALID_TERMS','Ongeldig akkoord op de voorwaarden.');
  const extraIbans=String(company.extraBankAccounts||'').split(/[\n,;]+/).map(x=>x.replace(/\s+/g,'').toUpperCase()).filter(Boolean);
  if(extraIbans.length>15||extraIbans.some(x=>!(/^[A-Z]{2}[0-9A-Z]{13,32}$/.test(x)))||new Set([clean(company.iban).replace(/\s+/g,'').toUpperCase(),...extraIbans]).size!==extraIbans.length+1)throw new OfficeError(400,'INVALID_IBAN','Controleer de extra zakelijke IBAN-nummers.');
- const updatedPersonal={...application.applicant_data,additionalContacts:contacts,
+ const updatedPersonal={...application.applicant_data,additionalContacts:application.applicant_data?.additionalContacts||[],
   salutation:oneOf(clean(personal.salutation,30),['Dhr.','Mevr.','Anders','Geen aanhef']), initials:clean(personal.initials,40), firstName:clean(personal.firstName), lastName:clean(personal.lastName), name:(clean(personal.firstName)+' '+clean(personal.lastName)).trim(), email, mobile:clean(personal.mobile,24),
   serviceRequest:clean(personal.serviceRequest,1500), whatsappConsent:asBool(personal.whatsappConsent),
   lookingFor:clean(personal.lookingFor,1500), currentChallenges:clean(personal.currentChallenges,1500), expectations:clean(personal.expectations,1500), businessGoals:clean(personal.businessGoals,1500), howCanWeHelp:clean(personal.howCanWeHelp,1500),
@@ -168,6 +168,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   ...(input.action==='submit'?{signedDeclaration:{name:clean(input.signature.name,200),accepted:true,signedAt:new Date().toISOString(),method:application.applicant_data?.signatureDocumentId?'drawn-signature-png':'typed-name-confirmation',textVersion:'bestemd-intake-v2'}}:{})
  };
  const updatedCompany={
+  previousYearTurnover:clean(company.previousYearTurnover,32), expectedYearTurnover:clean(company.expectedYearTurnover,32), turnoverTrend:clean(company.turnoverTrend,30), profitability:clean(company.profitability,30), liquidity:clean(company.liquidity,30), outstandingDebtors:clean(company.outstandingDebtors,32), outstandingCreditors:clean(company.outstandingCreditors,32), hasFinancing:clean(company.hasFinancing,30), financingDetails:clean(company.financingDetails,1000), hasTaxDebt:clean(company.hasTaxDebt,30), taxDebtDetails:clean(company.taxDebtDetails,1000), cashBookkeeping:clean(company.cashBookkeeping,10), cashTransactions:clean(company.cashTransactions,10), financialNotes:clean(company.financialNotes,2000), currentBookkeeper:clean(company.currentBookkeeper,200), bookkeeperTransferDetails:clean(company.bookkeeperTransferDetails,1000), administrationBacklog:clean(company.administrationBacklog,30),
   companyName:clean(company.companyName), name:clean(company.companyName), companyEmail:clean(company.companyEmail,254).toLowerCase(), kvk:clean(company.kvk,8), transferDate:clean(company.transferDate,20), entityType,
   vatRequired, vatFrequency:vatRequired==='yes'?vatFrequency:'', vatIdNumber:entityType==='eenmanszaak'?clean(company.vatIdNumber,100):'', turnoverTaxNumber:entityType==='eenmanszaak'?clean(company.turnoverTaxNumber,100):'',
   vatNumber:entityType==='bv'?clean(company.vatNumber,100):'', hasFiscalUnit:entityType==='bv'?hasFiscalUnit:'', rsin:entityType==='bv'?clean(company.rsin,100):'',
