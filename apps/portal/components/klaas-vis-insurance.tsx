@@ -8,7 +8,6 @@ import type { PortalContext,PortalOrganization } from "@/lib/portal-access";
  */
 type Row = Record<string,unknown>;
 const rows=(value:unknown):Row[]=>Array.isArray(value)?value.filter((v):v is Row=>typeof v==="object"&&v!==null&&!Array.isArray(v)):[];
-const word=(v:unknown)=>typeof v==="string"?v:"";
 const field=(v:Row,keys:string[])=>{for(const k of keys){if(typeof v[k]==="string"&&v[k])return String(v[k]);}return "";};
 const date=(v:string)=>v&&/^\d{4}-\d{2}-\d{2}/.test(v)?new Date(v.slice(0,10)+"T12:00:00").toLocaleDateString("nl-NL"):"—";
 
@@ -28,12 +27,14 @@ export default function KlaasVisInsurance({context,organization}:{
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[context.organizationId]);
-  const policies=rows(data?.policies??data?.verzekeringen);
-  const documents=rows(data?.documents??data?.polisdocumenten);
+  const sourcePolicies=rows(data?.policies??data?.verzekeringen);
+  const sourceDocuments=rows(data?.documents??data?.polisdocumenten);
   const relationship=data?.relationship;
   const hasVerifiedLink=relationship&&typeof relationship==="object"&&!Array.isArray(relationship)
     ? (relationship as Row).verified===true || !!(relationship as Row).verified_at || !!(relationship as Row).verifiedAt
     : data?.verified===true || data?.linked===true;
+  const policies=hasVerifiedLink?sourcePolicies:[];
+  const documents=hasVerifiedLink?sourceDocuments:[];
   return <div className="insurance-live-page">
     <header className="insurance-hero">
       <div className="kv-brand"><img src="/klaas-vis-logo.png" alt="Klaas Vis"/>
@@ -72,9 +73,9 @@ export default function KlaasVisInsurance({context,organization}:{
       <h2>Iets wijzigen of schade melden?</h2>
       <p>Voor poliswijzigingen, schademeldingen, offertes of advies kunt u rechtstreeks terecht bij Klaas Vis. Het versturen van een verzoek verandert de dekking niet automatisch.</p>
       <div className="insurance-action-links">
-        <a className="btn" href="https://klaasvis.nl/" target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/> Wijziging doorgeven</a>
-        <a className="btn" href="https://klaasvis.nl/" target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/> Schade melden</a>
-        <a className="btn" href="https://klaasvis.nl/" target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/> Offerte aanvragen</a>
+        <a className="btn" href="https://www.klaasvis.nl/wijziging-doorgeven/" target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/> Wijziging doorgeven</a>
+        <a className="btn" href="https://www.klaasvis.nl/schademelden/" target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/> Schade melden</a>
+        <a className="btn" href="https://www.klaasvis.nl/offerte-aanvragen/" target="_blank" rel="noopener noreferrer"><ExternalLink size={17}/> Offerte aanvragen</a>
         <a className="btn" href="mailto:info@klaasvis.nl"><Mail size={17}/> Contact</a>
       </div>
     </section>
