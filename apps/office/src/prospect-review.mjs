@@ -8,6 +8,13 @@ function db(config,fetchImpl){
 }
 function error(e,txt){if(e)throw new OfficeError(503,'REVIEW_UNAVAILABLE',txt);}
 function isoDate(base,days){return new Date(Date.parse(base)+days*day).toISOString();}
+function businessDeadline(base,workingDays=10){
+ const date=new Date(base);
+ if(Number.isNaN(date.getTime()))throw new OfficeError(500,'INVALID_SUBMISSION_DATE','Ongeldige ontvangstdatum.');
+ let added=0;
+ while(added<workingDays){date.setUTCDate(date.getUTCDate()+1);const weekday=date.getUTCDay();if(weekday!==0&&weekday!==6)added++;}
+ return date.toISOString();
+}
 export async function officeProspectReviewRoute(req,url,client,user,config,fetchImpl,readBody){
  if(url.pathname!=='/api/office/prospect-review')return null;
  if(!['GET','POST'].includes(req.method))throw new OfficeError(405,'METHOD_NOT_ALLOWED','Methode niet toegestaan.');
@@ -21,7 +28,7 @@ export async function officeProspectReviewRoute(req,url,client,user,config,fetch
  error(a.error,'Aanvraag niet beschikbaar.');
  if(!a.data)throw new OfficeError(404,'NOT_FOUND','Aanvraag niet gevonden.');
  if(!a.data.submitted_at||!['submitted','under_review'].includes(a.data.status))throw new OfficeError(409,'NOT_SUBMITTED','De aanvraag moet eerst definitief zijn ingediend.');
- const initial=isoDate(a.data.submitted_at,14);
+ const initial=businessDeadline(a.data.submitted_at,10);
  const existing=await supa.from('office_prospect_reviews').select('*').eq('application_id',applicationId).maybeSingle();
  error(existing.error,'Voer eerst de Supabase-beoordelingsmigratie uit.');
  let review=existing.data;
