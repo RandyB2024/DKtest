@@ -112,6 +112,10 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   if((count.count||0)>=maxDocuments)throw new OfficeError(400,'TOO_MANY_DOCUMENTS','Maximaal '+maxDocuments+' documenten per aanvraag.');
   const mime=clean(input.mime,80),filename=clean(input.filename,120).replace(/[\/\\\x00-\x1f]/g,'_');
   if(!filename)throw new OfficeError(400,'INVALID_DOCUMENT','Een bestandsnaam is verplicht.');
+  // Reserve Office-only document names so public uploads cannot impersonate
+  // an authorized agreement later used to unlock onboarding.
+  if(/^Overeenkomst van opdracht - /i.test(filename))
+   throw new OfficeError(403,'RESERVED_DOCUMENT_NAME','Dit documenttype wordt uitsluitend door BESTEMD Office geregistreerd.');
   const bytes=decodeDocument(input.base64,mime);
   const fileId=randomBytes(16).toString('hex'),path=application.id+'/'+fileId+'.'+DOCUMENT_TYPES[mime];
   const position=Number(input.companyPosition??1);if(!Number.isInteger(position)||!companies.some(c=>c.position===position))throw new OfficeError(400,'INVALID_COMPANY','Kies een geldige onderneming voor het document.');
