@@ -1,0 +1,15 @@
+.expenses-page{display:grid;gap:18px;max-width:1200px;margin:0 auto}
+.expenses-page .heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.expenses-page .heading h1{margin:0}
+.expenses-page .expenses-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:15px 0}
+.expenses-page .expenses-fields label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:650;color:#4c6072;min-width:0}
+.expenses-page .expenses-fields input,.expenses-page .expenses-fields select{width:100%;min-width:0;min-height:44px;padding:10px 12px;border:1px solid #c8d5df;border-radius:10px;background:#fff;color:#17364d;font:inherit;box-sizing:border-box}
+.expenses-page .expenses-fields input:disabled,.expenses-page .expenses-fields select:disabled{background:#f5f7f9}
+.expenses-page .expenses-line{border:1px solid #e0e8ed;border-radius:13px;padding:18px;margin:14px 0;background:#fcfdff}
+.expenses-page .expenses-line .section-heading{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.expenses-page .expenses-line .section-heading>span{font-size:12px;color:#7b5830}
+.expenses-page .expenses-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+.expenses-page .expenses-actions .btn,.expenses-page .heading .btn{display:inline-flex;align-items:center;gap:8px;min-height:44px}
+.expenses-page .invoice-row{width:100%;text-align:left;display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e1e8ed;border-radius:10px;padding:12px}
+.expenses-page .invoice-row span{display:flex;flex-direction:column;gap:5px}
+@media(max-width:600px){.expenses-page .expenses-fields{grid-template-columns:1fr}.expenses-page .expenses-line{padding:12px}.expenses-page .expenses-actions{display:grid}.expenses-page .expenses-actions .btn{width:100%}}
