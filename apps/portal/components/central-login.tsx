@@ -10,6 +10,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Mfa from "./mfa";
+import BestemdTurnstile from "./bestemd-turnstile";
 
 type Access = {
   business?: boolean;
@@ -27,6 +28,7 @@ export default function CentralLogin() {
   const [mobile, setMobile] = useState("");
   const [whatsappEnabled, setWhatsappEnabled] = useState(false);
   const [password, setPassword] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   // BESTEMD_EMAIL_CODE_93E
@@ -86,7 +88,7 @@ export default function CentralLogin() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, turnstileToken }),
       });
 
       const data = (await response.json()) as { error?: string };
@@ -347,6 +349,8 @@ export default function CentralLogin() {
                   </p>
                 )}
               </div>
+
+              {loginMethod === "password" && <BestemdTurnstile onToken={setTurnstileToken} />}
 
               {message && (
                 <p role="status" className="bestemd-new-error">{message}</p>
