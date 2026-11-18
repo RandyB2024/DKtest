@@ -65,7 +65,16 @@ export async function publicProspectRoute(req,url,config,fetchImpl,readBody){
  // onboarding token or appear in customer-controlled deletion lists.
  const publicDocuments=(documents||[]).filter(d=>!String(d.filename||'')
    .startsWith('Overeenkomst van opdracht - '));
- return {status:200,data:{status:application.status,personal:application.applicant_data,
+ // Never expose internal Office history, pricing, reviewer decisions or
+ // employee identifiers through an unprivileged personal invitation link.
+ const personal={...application.applicant_data};
+ if(personal.workflowV4){
+  personal.workflowV4={version:personal.workflowV4.version===4?4:null};
+ }
+ delete personal.assignedTo;
+ delete personal.leadSource;
+ delete personal.additionalContacts;
+ return {status:200,data:{status:application.status,personal,
    company,companies,documents:publicDocuments}};
 }
 
