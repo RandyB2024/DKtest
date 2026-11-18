@@ -16,7 +16,7 @@ import type {
 } from "@/lib/portal-access";
 
 import ReceivablesView from "./receivables-view";
-import PayablesView from "./payables-view";
+import SuppliersOverview from "./suppliers-overview";
 
 
 type RelationTab =
@@ -115,10 +115,9 @@ export default function RelationsView({
           onGo={onGo}
         />
       ) : (
-        <PayablesView
+        <SuppliersOverview
           context={context}
           organization={organization}
-          onGo={onGo}
         />
       )}
 
