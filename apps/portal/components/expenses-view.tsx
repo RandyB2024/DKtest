@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Save, Send, FileText, Trash2 } from "lucide-react";
 import type { PortalContext, PortalOrganization } from "@/lib/portal-access";
-import { expenseCategories, categoryName, type ExpenseCategory } from "@/lib/expense-categories";
+import { expenseCategories, type ExpenseCategory } from "@/lib/expense-categories";
 
 type Line = { id:string; date:string; supplier:string; category:ExpenseCategory; amount:string; vat:string; description:string;receipt_status?:string };
 type Claim = {id:string;month:string;status:string;total_cents:number;created_at:string;private_iban:string|null};
@@ -87,7 +87,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
     }
     setUploading(lineId);setError("");
     try{
-      const fd=new FormData();fd.set("organizationId",context.organizationId);fd.set("documentType","purchase_invoice");fd.set("file",file);
+      const fd=new FormData();fd.set("organizationId",context.organizationId);fd.set("documentType","other");fd.set("file",file);
       const upload=await fetch("/api/documents",{method:"POST",body:fd});
       const value=await upload.json() as {item?:{id:string};error?:string};
       if(!upload.ok||!value.item?.id)throw new Error(value.error||"Uploaden mislukt.");
