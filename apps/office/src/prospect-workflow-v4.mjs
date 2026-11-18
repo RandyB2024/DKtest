@@ -106,6 +106,8 @@ export function validateAdministrationPreparation(entries,companies){
   required(entry&&Number.isInteger(entry.position)&&positions.has(entry.position)&&
    !seen.has(entry.position),'Ongeldige of dubbele onderneming in de voorbereiding.');
   seen.add(entry.position);
+  required(Object.keys(entry).every(key=>key==='position'||SETUP_CHECKS.includes(key)),
+   'Onbekende voorbereidingsgegevens zijn niet toegestaan.');
   const record={position:entry.position};
   for(const key of SETUP_CHECKS){
    required(typeof entry[key]==='boolean','Alle voorbereidingscontroles moeten zijn ingevuld.');
