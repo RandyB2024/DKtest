@@ -633,7 +633,78 @@ function showQuickAction(action,c){openDialog(action,`<form id="quick-form" clas
 function showEditClient(c){openDialog('Klant bewerken',clientForm(c));wireIntakeForm();$('[data-close-form]').onclick=closeDialog;$('#client-form').onsubmit=async e=>{e.preventDefault();try{const raw=formPayload(e.target),profile={vat:raw.vat,car:raw.car,staff:raw.staff,stock:raw.stock,property:raw.property,foreign:raw.foreign,kor:raw.kor};await getJson(`/api/clients/${c.id}`,{method:'PUT',body:JSON.stringify({...raw,profile})});closeDialog();clientDetail(c.id)}catch(err){$('#form-error').textContent=err.message}}}
 function showArchiveClient(c){openDialog('Klant archiveren',`<div class="confirm-copy"><p>Deze klant en gekoppelde gegevens worden gearchiveerd. Definitieve verwijdering volgt in productie pas na de wettelijke bewaartermijn.</p><label>Typ <strong>${esc(c.name)}</strong> ter bevestiging<input id="archive-confirm"></label><div id="form-error" class="form-error"></div><div class="form-actions"><button data-close-form>Annuleren</button><button class="danger-solid" id="archive-submit">Klant archiveren</button></div></div>`);$('[data-close-form]').onclick=closeDialog;$('#archive-submit').onclick=async()=>{try{await getJson(`/api/clients/${c.id}`,{method:'DELETE',body:JSON.stringify({confirmation:$('#archive-confirm').value})});closeDialog();nav('/clients')}catch(err){$('#form-error').textContent=err.message}}}
 function showBookingForm(clientId){openDialog('Nieuwe boeking',`<form id="booking-form" class="form-grid"><label>Datum<input name="date" type="date" required value="${clock?.iso?.slice(0,10)||''}"></label><label>Omschrijving<input name="description" required></label><label>Bedrag excl. btw<input name="amount" type="number" step="0.01" required></label><label>BTW %<select name="vat"><option value="21">21%</option><option value="9">9%</option><option value="0">0%</option></select></label><label>Debetrekening<input name="debitAccount" value="4400"></label><label>Creditrekening<input name="creditAccount" value="1100"></label><label class="wide">Notitie<input name="note"></label><div id="form-error" class="form-error"></div><div class="form-actions"><button type="button" data-close-form>Annuleren</button><button class="primary">Boeking opslaan</button></div></form>`);$('[data-close-form]').onclick=closeDialog;$('#booking-form').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),amount=Number(f.get('amount')),rate=Number(f.get('vat')),vat=Math.round(amount*rate)/100,total=amount+vat;try{await getJson(`/api/clients/${clientId}/journal-entries`,{method:'POST',body:JSON.stringify({date:f.get('date'),description:f.get('description'),bookNumber:`M-${Date.now()}`,source:'handmatig',status:'Concept',note:f.get('note'),lines:[{account:f.get('debitAccount'),debit:amount,credit:0},{account:'1800',debit:vat,credit:0},{account:f.get('creditAccount'),debit:0,credit:total}]})});closeDialog();clientDetail(clientId,'Boekhouding')}catch(err){$('#form-error').textContent=err.message}}}
-async function renderRoute(){if(!sessionUser)return;const generation=++routeGeneration,p=location.pathname==='/'?'/dashboard':location.pathname;done();try{if(p==='/dashboard')await dashboard();else if(p==='/clients')await clientsPage();else if(p==='/work-queue')await workQueue();else if(p==='/administration')await administrationPage();else if(p==='/documents')await documentsPage();else if(p==='/communication')await communicationPage();else if(p==='/audit')await audit();else{const c=p.match(/^\/clients\/([^/]+)$/),o=p.match(/^\/organizations\/([^/]+)$/);if(c)await clientDetail(decodeURIComponent(c[1]));else if(o)await organizationDetail(decodeURIComponent(o[1]));else{const pages={'/tax-returns':['Aangiften','BTW-perioden worden vanuit de boekhouding voorbereid en blijven lokaal.'],'/settings':['Instellingen','Lokale database actief · Audit logging actief · Externe koppelingen niet gekoppeld.']};if(pages[p])placeholder(...pages[p]);else{history.replaceState({},'', '/dashboard');await dashboard()}}}}catch(e){if(generation===routeGeneration&&e.message!=='locked')errorView(e.message)}}
+
+async function expenseOfficePage(){
+  setHeader('Declaraties','Financieel · controle en goedkeuring');loading();
+  const d=await getJson('/api/expenses');
+  done();
+  const items=d.items||[];
+  const euros=n=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format((Number(n)||0)/100);
+  const statusMap={draft:'Concept',submitted:'Ingediend',waiting_evidence:'Wacht op bewijsstukken',
+    under_review:'In behandeling',approved:'Goedgekeurd',rejected:'Afgewezen',
+    booking_pending:'Wacht op boeking',booked:'Boekhoudkundig verwerkt',paid:'Uitbetaald'};
+  const statuses=[...new Set(items.map(x=>x.status))];
+  $('#view').innerHTML='<section class="panel"><div class="panel-head"><div><p class="eyebrow">Financieel</p><h2>Declaraties</h2><p>Controleer kostenposten en ontbrekende bewijsstukken voordat er geboekt wordt.</p></div><span class="badge">'+items.length+' declaraties</span></div>'
+    +'<div class="expense-office-filters" style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">'
+    +'<input id="claim-search" aria-label="Zoek onderneming of declarant" placeholder="Zoek onderneming-ID of declarant" style="min-width:240px;padding:10px">'
+    +'<input id="claim-month" aria-label="Maand" type="month" style="padding:10px">'
+    +'<select id="claim-status" aria-label="Status"><option value="">Alle statussen</option>'
+    +statuses.map(x=>'<option value="'+esc(x)+'">'+esc(statusMap[x]||x)+'</option>').join('')+'</select></div>'
+    +'<div id="claim-list"></div></section>';
+  const draw=()=>{
+    const q=($('#claim-search').value||'').toLowerCase().trim(),month=$('#claim-month').value,status=$('#claim-status').value;
+    const chosen=items.filter(x=>(!q||(x.organization_id||'').toLowerCase().includes(q)||(x.claimant_id||'').toLowerCase().includes(q))
+      &&(!month||(x.month||'').slice(0,7)===month)&&(!status||x.status===status));
+    $('#claim-list').innerHTML=chosen.map(x=>'<button type="button" class="item action-row" data-expense-id="'+esc(x.id)+'" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:8px 0">'
+      +'<span><strong>'+esc(x.month.slice(0,7))+'</strong><small>Onderneming: '+esc(x.organization_id)+' · Declarant: '+esc(x.claimant_id)+'</small></span>'
+      +'<span>'+esc(statusMap[x.status]||x.status)+'</span><strong>'+euros(x.total_cents)+'</strong></button>').join('')
+      ||'<p>Geen declaraties gevonden.</p>';
+    document.querySelectorAll('[data-expense-id]').forEach(b=>b.onclick=()=>expenseOfficeDetail(b.dataset.expenseId));
+  };
+  ['#claim-search','#claim-month','#claim-status'].forEach(q=>$(q).addEventListener('input',draw));
+  draw();
+}
+async function expenseOfficeDetail(id){
+  setHeader('Declaratie controleren','Financieel · bewijsstukken');loading();
+  const d=await getJson('/api/expenses/'+encodeURIComponent(id));done();
+  const c=d.claim, lines=d.lines||[], docs=d.evidence||[], trips=d.trips||[];
+  const euros=n=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format((Number(n)||0)/100);
+  const protectedState=['approved','rejected','booking_pending','booked','paid'].includes(c.status);
+  const content=lines.map(line=>{
+    const receipts=docs.filter(e=>e.line_id===line.id);
+    const trip=trips.find(t=>t.line_id===line.id);
+    const evidence=receipts.map(doc=>'<div class="item" style="display:flex;justify-content:space-between;gap:12px"><span>'+esc(doc.filename)+' · '+(doc.checked_at?'Gecontroleerd':'Bon ontvangen')+'</span>'
+      +(doc.checked_at||protectedState?'':'<button type="button" class="primary" data-check-evidence="'+esc(doc.id)+'">Controleer bon</button>')+'</div>').join('');
+    return '<article class="panel"><div class="panel-head"><div><strong>'+esc(line.supplier)+'</strong><p>'+esc(line.category)+' · '+esc(line.expense_date)+'</p></div><strong>'+euros(line.gross_cents)+'</strong></div>'
+      +'<p>BTW opgegeven: '+euros(line.vat_cents)+' · Status: '+esc(line.receipt_status)+'</p>'
+      +(trip?'<p>Rit: '+esc(trip.route)+' · '+esc(trip.business_reason)+' · '+esc(trip.kilometers)+' km</p>':'')
+      +(evidence||'<p class="muted">Nog geen bewijsstuk toegevoegd.</p>')+'</article>';
+  }).join('');
+  const bank=c.private_iban||'';
+  $('#view').innerHTML='<section class="panel"><button type="button" class="back" id="expense-back">← Alle declaraties</button>'
+    +'<h2>Declaratie '+esc(c.month.slice(0,7))+'</h2><p>Onderneming '+esc(c.organization_id)+'</p>'
+    +'<p>Status: <strong>'+esc(c.status)+'</strong> · Declarant: '+esc(c.claimant_id)+'</p>'
+    +'<p>Privé-IBAN: '+(bank?'•••• '+esc(bank.slice(-4)):'Niet ingevuld')+'</p>'
+    +'<h3>Totaal '+euros(c.total_cents)+'</h3></section>'+content
+    +(!protectedState?'<section class="panel"><label>Toelichting voor afwijzing<input id="expense-reason" placeholder="Reden (minimaal 5 tekens)"></label>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button type="button" class="primary" id="expense-approve">Goedkeuren na controle</button><button type="button" id="expense-reject">Afwijzen</button></div>'
+      +'<p id="expense-message" role="alert"></p></section>':'<section class="panel">Deze declaratie is niet vrij bewerkbaar. Goedkeuring, boeking en uitbetaling zijn afzonderlijke gebeurtenissen.</section>');
+  $('#expense-back').onclick=expenseOfficePage;
+  document.querySelectorAll('[data-check-evidence]').forEach(b=>b.onclick=async()=>{
+    try {await getJson('/api/expenses/'+encodeURIComponent(id)+'/check-evidence',{method:'POST',body:JSON.stringify({evidenceId:b.dataset.checkEvidence})});await expenseOfficeDetail(id);}
+    catch(e){alert(e.message);}
+  });
+  for(const [sel,action] of [['#expense-approve','approve'],['#expense-reject','reject']]){
+    if(!$(sel))continue;
+    $(sel).onclick=async()=>{
+      const reason=$('#expense-reason').value;
+      try{await getJson('/api/expenses/'+encodeURIComponent(id)+'/'+action,{method:'POST',body:JSON.stringify({reason})});await expenseOfficeDetail(id);}
+      catch(e){$('#expense-message').textContent=e.message;}
+    };
+  }
+}
+
+async function renderRoute(){if(!sessionUser)return;const generation=++routeGeneration,p=location.pathname==='/'?'/dashboard':location.pathname;done();try{if(p==='/dashboard')await dashboard();else if(p==='/clients')await clientsPage();else if(p==='/work-queue')await workQueue();else if(p==='/administration')await administrationPage();else if(p==='/expenses')await expenseOfficePage();else if(p==='/documents')await documentsPage();else if(p==='/communication')await communicationPage();else if(p==='/audit')await audit();else{const c=p.match(/^\/clients\/([^/]+)$/),o=p.match(/^\/organizations\/([^/]+)$/);if(c)await clientDetail(decodeURIComponent(c[1]));else if(o)await organizationDetail(decodeURIComponent(o[1]));else{const pages={'/tax-returns':['Aangiften','BTW-perioden worden vanuit de boekhouding voorbereid en blijven lokaal.'],'/settings':['Instellingen','Lokale database actief · Audit logging actief · Externe koppelingen niet gekoppeld.']};if(pages[p])placeholder(...pages[p]);else{history.replaceState({},'', '/dashboard');await dashboard()}}}}catch(e){if(generation===routeGeneration&&e.message!=='locked')errorView(e.message)}}
 document.addEventListener('click',e=>{if(e.target.closest('#new-client')){e.preventDefault();e.stopImmediatePropagation();showNewClient();return}if(e.target.closest('[data-retry]')){renderRoute();return}const l=e.target.closest('[data-route],[data-go]');if(l){e.preventDefault();nav(l.dataset.go||l.getAttribute('href'));return}const r=e.target.closest('[data-client]');if(r)nav(`/clients/${r.dataset.client}`)},true);document.addEventListener('keydown',e=>{const r=e.target.closest('[data-client]');if(r&&(e.key==='Enter'||e.key===' ')){e.preventDefault();nav(`/clients/${r.dataset.client}`)}});addEventListener('popstate',renderRoute);document.querySelectorAll('[data-user]').forEach(b=>b.onclick=async()=>{const r=await api('/api/auth/development-login',{method:'POST',body:JSON.stringify({userId:b.dataset.user})});if(r.ok){history.replaceState({},'', '/dashboard');status()}});$('#unlock').onclick=async()=>{const r=await api('/api/auth/development-unlock',{method:'POST'});if(r.ok)status()};$('#manual-lock').onclick=lock;$('#logout').onclick=logout;$('#lock-logout').onclick=logout;['pointerdown','keydown','touchstart'].forEach(e=>addEventListener(e,()=>sessionUser&&resetTimer(),{passive:true}));document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')status()});addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('#install').hidden=false});$('#install').onclick=async()=>{if(!deferredInstall)return;await deferredInstall.prompt();deferredInstall=null;$('#install').hidden=true};if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('/sw.js'));status().catch(()=>show('#login'));
 $('#menu').onclick=toggleMenu;$('#nav-overlay').onclick=closeMenu;addEventListener('resize',()=>{if(innerWidth>960)closeMenu()});addEventListener('keydown',event=>{if(event.key==='Escape')closeMenu()});
 addEventListener('error',event=>{console.error('[Office UI]',event.error||event.message);if(sessionUser&&!$('#app').hidden)errorView('Er ging iets onverwachts mis. Probeer het opnieuw.')});
