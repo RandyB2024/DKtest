@@ -23,7 +23,11 @@ export async function GET(request:Request) {
       .select("id,expense_date,supplier,category,gross_cents,vat_cents,description,receipt_status")
       .eq("claim_id",claimId).order("expense_date");
     if(lineError)throw new AccessError(503,"Kostenposten zijn tijdelijk niet beschikbaar.");
-    return Response.json({claims,lines:lines??[]});
+    const ids=(lines??[]).map(line=>line.id);
+    const ev=ids.length?await client.from("bestemd_expense_evidence").select("id,line_id,document_id,filename,mime_type,checked_at").in("line_id",ids):{data:[],error:null};
+    const mileage=ids.length?await client.from("bestemd_expense_mileage").select("line_id,trip_date,route,business_reason,kilometers,rate_cents").in("line_id",ids):{data:[],error:null};
+    if(ev.error||mileage.error)throw new AccessError(503,"Bewijsstukken zijn tijdelijk niet beschikbaar.");
+    return Response.json({claims,lines:lines??[],evidence:ev.data??[],mileage:mileage.data??[]});
   });
 }
 
@@ -33,6 +37,24 @@ export async function POST(request:Request) {
     requireAal2(identity);
     const data=await readBody(request);
     const organizationId=requireOrganization(identity,data.organizationId);
+    if(data.action==="attach") {
+      if(typeof data.lineId!=="string"||typeof data.documentId!=="string")throw new AccessError(400,"Kies een kostenpost en bewijsstuk.");
+      const result=await client.rpc("bestemd_expense_attach_document",{p_line_id:data.lineId,p_document_id:data.documentId});
+      if(result.error)throw new AccessError(400,"Het bewijsstuk kon niet worden gekoppeld.");
+      return Response.json({ok:true,evidenceId:result.data});
+    }
+    if(data.action==="mileage") {
+      if(typeof data.lineId!=="string"||typeof data.date!=="string"||typeof data.route!=="string"||typeof data.reason!=="string"||
+         typeof data.kilometers!=="number"||!Number.isFinite(data.kilometers)||
+         typeof data.rateCents!=="number"||!Number.isInteger(data.rateCents))
+         throw new AccessError(400,"Vul een geldig rittenoverzicht in.");
+      const result=await client.rpc("bestemd_expense_save_mileage",{
+        p_line_id:data.lineId,p_date:data.date,p_route:data.route,p_reason:data.reason,
+        p_kilometers:data.kilometers,p_rate_cents:data.rateCents
+      });
+      if(result.error)throw new AccessError(400,"Rittenoverzicht kon niet worden opgeslagen.");
+      return Response.json({ok:true});
+    }
     if(data.action==="submit") {
       if(typeof data.claimId!=="string")throw new AccessError(400,"Kies eerst een declaratie.");
       const {data:status,error}=await client.rpc("bestemd_expense_submit",{p_claim_id:data.claimId});
