@@ -21,7 +21,7 @@ export default function KlaasVisInsurance({context,organization}:{
     let active=true;setData(null);setError("");setLoading(true);
     if(context.organizationId==="all"){setError("Selecteer één onderneming om de bijbehorende verzekeringsgegevens te bekijken.");setLoading(false);return()=>{active=false;};}
     fetch("/api/insurance/overview?organizationId="+encodeURIComponent(context.organizationId),{cache:"no-store"})
-      .then(async r=>{const v=await r.json();if(!r.ok)throw new Error(v.error||"Verzekeringsgegevens zijn momenteel niet beschikbaar.");return v as Row;})
+      .then(async r=>{const v=(await r.json()) as {error?:string};if(!r.ok)throw new Error(v.error||"Verzekeringsgegevens zijn momenteel niet beschikbaar.");return v as Row;})
       .then(v=>{if(active)setData(v);})
       .catch(e=>{if(active)setError(e instanceof Error?e.message:"Verzekeringen konden niet worden geladen.");})
       .finally(()=>{if(active)setLoading(false);});
