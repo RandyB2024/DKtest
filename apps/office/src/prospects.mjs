@@ -1,3 +1,4 @@
+import {isOfficeAgreementName,publicProspectDocuments,publicProspectApplicant} from './prospect-document-policy.mjs';
 import {sendProspectReceipt} from './prospect-email-v4.mjs';
 import { createClient } from '@supabase/supabase-js';
 import { randomBytes, createHash } from 'node:crypto';
@@ -63,17 +64,10 @@ export async function publicProspectRoute(req,url,config,fetchImpl,readBody){
  if(de)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Documenten niet beschikbaar; controleer de database-migratie.');
  // An Office-uploaded signed agreement must never be exposed through a public
  // onboarding token or appear in customer-controlled deletion lists.
- const publicDocuments=(documents||[]).filter(d=>!String(d.filename||'')
-   .startsWith('Overeenkomst van opdracht - '));
+ const publicDocuments=publicProspectDocuments(documents);
  // Never expose internal Office history, pricing, reviewer decisions or
  // employee identifiers through an unprivileged personal invitation link.
- const personal={...application.applicant_data};
- if(personal.workflowV4){
-  personal.workflowV4={version:personal.workflowV4.version===4?4:null};
- }
- delete personal.assignedTo;
- delete personal.leadSource;
- delete personal.additionalContacts;
+ const personal=publicProspectApplicant(application.applicant_data);
  return {status:200,data:{status:application.status,personal,
    company,companies,documents:publicDocuments}};
 }
@@ -104,7 +98,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
    .select('id,storage_path,filename').eq('application_id',application.id).eq('id',id).maybeSingle();
   if(lookupError)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Document kon niet worden opgezocht.');
   if(!doc)throw new OfficeError(404,'DOCUMENT_NOT_FOUND','Document niet gevonden.');
-  if(/^Overeenkomst van opdracht - /i.test(doc.filename||''))
+  if(isOfficeAgreementName(doc.filename))
    throw new OfficeError(403,'AGREEMENT_PROTECTED','De ondertekende overeenkomst kan uitsluitend via BESTEMD Office worden beheerd.');
   if(id===application.applicant_data?.signatureDocumentId)
    throw new OfficeError(409,'SIGNATURE_PROTECTED','Gebruik Opnieuw tekenen om de handtekening te wijzigen.');
@@ -123,7 +117,7 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   if(!filename)throw new OfficeError(400,'INVALID_DOCUMENT','Een bestandsnaam is verplicht.');
   // Reserve Office-only document names so public uploads cannot impersonate
   // an authorized agreement later used to unlock onboarding.
-  if(/^Overeenkomst van opdracht - /i.test(filename))
+  if(isOfficeAgreementName(filename))
    throw new OfficeError(403,'RESERVED_DOCUMENT_NAME','Dit documenttype wordt uitsluitend door BESTEMD Office geregistreerd.');
   const bytes=decodeDocument(input.base64,mime);
   const fileId=randomBytes(16).toString('hex'),path=application.id+'/'+fileId+'.'+DOCUMENT_TYPES[mime];
