@@ -61,7 +61,12 @@ export async function publicProspectRoute(req,url,config,fetchImpl,readBody){
  const {application,company,companies}=await resolveInvite(db,receiptToken);
  const {data:documents,error:de}=await db.from('office_prospect_documents').select('id,filename,created_at,company_position').eq('application_id',application.id).order('created_at',{ascending:false});
  if(de)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Documenten niet beschikbaar; controleer de database-migratie.');
- return {status:200,data:{status:application.status,personal:application.applicant_data,company,companies,documents:documents||[]}};
+ // An Office-uploaded signed agreement must never be exposed through a public
+ // onboarding token or appear in customer-controlled deletion lists.
+ const publicDocuments=(documents||[]).filter(d=>!String(d.filename||'')
+   .startsWith('Overeenkomst van opdracht - '));
+ return {status:200,data:{status:application.status,personal:application.applicant_data,
+   company,companies,documents:publicDocuments}};
 }
 
 function asBool(v){return v===true||v==='true';}
@@ -87,9 +92,11 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
   const id=clean(input.documentId,80);
   if(!/^[a-f0-9-]{36}$/i.test(id))throw new OfficeError(400,'INVALID_DOCUMENT','Ongeldig document.');
   const {data:doc,error:lookupError}=await db.from('office_prospect_documents')
-   .select('id,storage_path').eq('application_id',application.id).eq('id',id).maybeSingle();
+   .select('id,storage_path,filename').eq('application_id',application.id).eq('id',id).maybeSingle();
   if(lookupError)throw new OfficeError(503,'DOCUMENTS_UNAVAILABLE','Document kon niet worden opgezocht.');
   if(!doc)throw new OfficeError(404,'DOCUMENT_NOT_FOUND','Document niet gevonden.');
+  if(/^Overeenkomst van opdracht - /i.test(doc.filename||''))
+   throw new OfficeError(403,'AGREEMENT_PROTECTED','De ondertekende overeenkomst kan uitsluitend via BESTEMD Office worden beheerd.');
   if(id===application.applicant_data?.signatureDocumentId)
    throw new OfficeError(409,'SIGNATURE_PROTECTED','Gebruik Opnieuw tekenen om de handtekening te wijzigen.');
   const removed=await db.storage.from('bestemd-prospect-private').remove([doc.storage_path]);
