@@ -206,7 +206,46 @@ export async function mountProspectWorkflow(target, api, {relationshipId=null}={
   if(w.stage==='onboarding'&&result.applicationStatus==='draft'){
     actions.append(actionButton('Onboardingvragenlijst verzenden',{action:'send_onboarding'},'Verstuur de beveiligde onboardingvragenlijst via Resend?'));
   }
-  if(w.stage==='administration_setup')actions.append(info('Activatie is serverzijdig geblokkeerd totdat documenten, administratie en bestaande activatieroute veilig gekoppeld zijn.'));
+  if(w.stage==='administration_setup'){
+   const checks=[
+    ['environmentPrepared','Omgeving aangemaakt'],
+    ['accountingConfigured','Boekhouding ingericht'],
+    ['taxConfigured','Btw- en fiscale instellingen gecontroleerd'],
+    ['bankAccountsRecorded','Bankrekeningen geregistreerd'],
+    ['documentsLinked','Documenten aan dossier gekoppeld'],
+    ['permissionsPrepared','Gebruikersrechten voorbereid'],
+    ['pricingLinked','Prijsafspraken gekoppeld']
+   ];
+   const box=el('form');
+   box.append(el('h4','Administratie voorbereiden — per onderneming'));
+   const rows=(result.companies||[]).map(company=>{
+    const previous=(w.administrationPreparation||[]).find(x=>x.position===company.position)||{};
+    const group=el('fieldset');group.append(el('legend',company.name));
+    const controls=checks.map(([key,label])=>{
+     const input=el('input');input.type='checkbox';input.checked=previous[key]===true;
+     const title=el('label',label);title.prepend(input);group.append(title);
+     return {key,input};
+    });
+    box.append(group);return {position:company.position,controls};
+   });
+   const saveButton=el('button','Voorbereiding opslaan');saveButton.type='submit';
+   box.append(saveButton);
+   box.onsubmit=async event=>{
+    event.preventDefault();saveButton.disabled=true;status.textContent='Voorbereiding opslaan…';
+    try{
+     await api('/api/office/prospect-workflow',{applicationId:select.value,
+       action:'save_administration_preparation',companies:rows.map(({position,controls})=>
+        ({position,...Object.fromEntries(controls.map(({key,input})=>[key,input.checked]))}))});
+     if(alive()){status.textContent='Controlelijst opgeslagen.';await load();}
+    }catch(err){fail(err);}finally{saveButton.disabled=false;}
+   };
+   detail.append(box);
+   actions.append(actionButton('Controle en inrichting afronden',{action:'advance',to:'ready_for_activation'},
+     'Bevestig dat alle ondernemingen ingericht zijn en de dossiercontrole is goedgekeurd.'));
+  }
+  if(w.stage==='ready_for_activation')actions.append(info(
+   'Dossier gereed voor de definitieve activeringscontrole. Volledige klantactivatie is nog niet aangesloten; er wordt geen account geactiveerd.'));
+
   if(actions.childNodes.length)detail.append(el('h4','Volgende actie'),actions);
  }
  select.addEventListener('change',load);
