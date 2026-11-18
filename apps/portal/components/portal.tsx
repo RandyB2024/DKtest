@@ -38,6 +38,7 @@ import InstallApp from "./install-app";
 import InvoiceDetailView from "./invoice-detail-view";
 import InventoryView from "./inventory-view";
 import KlaasVisInsurance from "./klaas-vis-insurance";
+import { hasVerifiedKlaasVisInsurance } from "@/lib/insurance-visibility";
 import Logout from "./logout";
 import CustomerSettings from "./customer-settings";
 import RelationsView from "./relations-view";
@@ -75,6 +76,22 @@ export default function Portal({
 }) {
   const [view, setView] =
     useState("Dashboard");
+
+  const [insuranceVisible, setInsuranceVisible] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setInsuranceVisible(false);
+    if (context.organizationId === "all") return () => { active = false; };
+    void fetch("/api/insurance/overview?organizationId=" + encodeURIComponent(context.organizationId), { cache: "no-store" })
+      .then(async response => response.ok ? (await response.json()) as unknown : null)
+      .then(data => { if (active) setInsuranceVisible(hasVerifiedKlaasVisInsurance(data)); })
+      .catch(() => { if (active) setInsuranceVisible(false); });
+    return () => { active = false; };
+  }, [context.organizationId]);
+
+  useEffect(() => {
+    if (view === "Verzekeringen" && !insuranceVisible) setView("Dashboard");
+  }, [insuranceVisible, view]);
 
   const [
     mobileMoreOpen,
@@ -655,7 +672,7 @@ if (view === "Documenten") {
       );
     }
 
-    if (view === "Verzekeringen") {
+    if (view === "Verzekeringen" && insuranceVisible) {
       return <KlaasVisInsurance context={context} organization={organization} />;
     }
 
@@ -758,7 +775,7 @@ if (view === "Documenten") {
           className="nav portal-grouped-nav"
           aria-label="Hoofdnavigatie"
         >
-          {businessNav.map(
+          {businessNav.filter(([label]) => label !== "Verzekeringen" || insuranceVisible).map(
             ([label, Icon]) => (
               <button
                 key={label}
