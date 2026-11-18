@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {startWorkflow,advanceWorkflow,canActivateClient,canSendOnboarding,validateCompanyCount,documentDeadline} from '../src/prospect-workflow-v4.mjs';
+import {startWorkflow,advanceWorkflow,canActivateClient,canSendOnboarding,validateCompanyCount,documentDeadline,validateAdministrationPreparation,isAdministrationReady} from '../src/prospect-workflow-v4.mjs';
 const actor='office-user';
 const next=(w,to,evidence={})=>advanceWorkflow(w,to,{actorId:actor,evidence});
 test('alleen 1, 2 of 5 ondernemingen; nooit 6',()=>{
@@ -35,4 +35,18 @@ test('afwijzing en coaching sluiten traject zonder volledige activatie',()=>{
 test('aanlevertermijn is tien werkdagen na indiening',()=>{
  assert.equal(documentDeadline('2026-11-17T12:00:00.000Z',10),'2026-12-01T12:00:00.000Z');
  assert.equal(documentDeadline('2026-11-20T12:00:00.000Z',1),'2026-11-23T12:00:00.000Z');
+});
+
+test('voorbereiding: iedere onderneming afzonderlijk en compleet',()=>{
+ const companies=[{position:1},{position:2}];
+ const required=['environmentPrepared','accountingConfigured','taxConfigured','bankAccountsRecorded',
+ 'documentsLinked','permissionsPrepared','pricingLinked'];
+ const yes=position=>Object.fromEntries([['position',position],...required.map(key=>[key,true])]);
+ const ready=[yes(1),yes(2)];
+ assert.equal(validateAdministrationPreparation(ready,companies).length,2);
+ assert.equal(isAdministrationReady(ready,companies),true);
+ assert.equal(isAdministrationReady([yes(1)],companies),false);
+ assert.equal(isAdministrationReady([yes(1),{...yes(2),pricingLinked:false}],companies),false);
+ assert.throws(()=>validateAdministrationPreparation([yes(1),yes(1)],companies));
+ assert.throws(()=>validateAdministrationPreparation([yes(1),{...yes(2),companyId:'foreign'}],companies));
 });
