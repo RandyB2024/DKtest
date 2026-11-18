@@ -135,7 +135,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
   async function submit(){
     setBusy(true);setError("");setNotice("");
     try {
-      const id=await save();
+      const id=editing?await save():claimId;
       if(!id)throw new Error("Controleer alle kostenposten en het privé-IBAN.");
       const res=await fetch("/api/financial/expenses",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"submit",organizationId:context.organizationId,claimId:id})});
       const data=await res.json() as {status?:string;error?:string};
@@ -197,6 +197,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
         <button type="button" className="btn" disabled={!valid||busy} onClick={()=>void save().then(()=>{setNotice("Concept bewaard.");void reload();}).catch(e=>setError(String(e)))}><Save size={17}/> Concept bewaren</button>
         <button type="button" className="btn primary" disabled={!valid||busy} onClick={()=>void submit()}><Send size={17}/> Indienen</button>
       </div>}
+      {!editing&&sourceLoaded&&claims.find(c=>c.id===claimId)?.status==="draft"&&<button type="button" className="btn primary" disabled={busy} onClick={()=>void submit()}><Send size={17}/> Concept indienen</button>}
       {missing>0&&<p role="status"><FileText size={16}/> {missing} kostenpost(en) hebben nog geen bewijsstuk. Een ingediende declaratie krijgt de status Wacht op bewijsstukken.</p>}
     </section>}
   </section>;
