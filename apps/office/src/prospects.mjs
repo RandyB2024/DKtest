@@ -35,7 +35,7 @@ async function resolveInvite(db, token){
  if(!invite||invite.revoked_at||invite.used_at||Date.parse(invite.expires_at)<=Date.now())fail();
  const {data:application,error:ae}=await db.from('office_onboarding_applications').select('id,status,applicant_data,customer_relationship_id').eq('id',invite.application_id).single();
  if(ae||!application||!['invited','in_progress'].includes(application.status))fail();
- const {data:companies,error:ce}=await db.from('office_onboarding_companies').select('position,company_data').eq('application_id',application.id).order('position').limit(10);
+ const {data:companies,error:ce}=await db.from('office_onboarding_companies').select('position,company_data').eq('application_id',application.id).order('position').limit(5);
  if(ce||!companies?.length)fail();
  return {invite,application,company:companies[0].company_data,companies};
 }
@@ -115,7 +115,8 @@ export async function prospectPublicSubmit(req,url,config,fetchImpl,input){
  const personal=input.personal,company=input.company;
  const extras=Array.isArray(input.additionalCompanies)?input.additionalCompanies:[];
  const people=Array.isArray(input.additionalContacts)?input.additionalContacts:[];
- if(extras.length>9||people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel ondernemingen of contactpersonen.');
+ if(extras.length>4)throw new OfficeError(400,'EXTRAS_TOO_MANY','Maximaal vijf ondernemingen per aanvraag, inclusief de eerste onderneming.');
+ if(people.length>30)throw new OfficeError(400,'EXTRAS_TOO_MANY','Te veel contactpersonen.');
  for(const [i,entry] of extras.entries()){const c=entry?.companyData||{};if(Number(entry.position)!==i+2||!clean(c.companyName)||c.kvk&&!/^\d{8}$/.test(clean(c.kvk)))throw new OfficeError(400,'INVALID_COMPANY','Controleer de extra ondernemingen.');}
  const kvks=[clean(company.kvk),...extras.map(e=>clean(e.companyData?.kvk))].filter(Boolean);if(new Set(kvks).size!==kvks.length)throw new OfficeError(409,'DUPLICATE_KVK','Een KvK-nummer is meermaals ingevuld.');
  const contactRoles=['contactpersoon','ondernemer','bestuurder','administratie','facturatie','gemachtigde'];
