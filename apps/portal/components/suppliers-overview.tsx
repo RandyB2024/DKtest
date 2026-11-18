@@ -29,7 +29,7 @@ export default function SuppliersOverview({context,organization}:{
       return ()=>{active=false;};
     }
     fetch("/api/financial/payables?organizationId="+encodeURIComponent(context.organizationId),{cache:"no-store"})
-      .then(async r=>{const v=await r.json();if(!r.ok)throw new Error(v.error||"Leveranciers konden niet worden geladen.");return v as Payables;})
+      .then(async r=>{const v=(await r.json()) as {error?:string};if(!r.ok)throw new Error(v.error||"Leveranciers konden niet worden geladen.");return v as Payables;})
       .then(v=>{if(active)setData(v);})
       .catch(e=>{if(active)setError(e instanceof Error?e.message:"Leveranciers konden niet worden geladen.");})
       .finally(()=>{if(active)setBusy(false);});
