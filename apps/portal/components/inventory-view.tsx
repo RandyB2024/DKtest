@@ -30,6 +30,7 @@ type Category =
   | "all"
   | "vehicle"
   | "machinery"
+  | "inventory"
   | "property"
   | "other";
 
@@ -42,6 +43,7 @@ type Item = {
     | "ict"
     | "furniture"
     | "machinery"
+    | "inventory"
     | "property"
     | "other";
   name: string;
@@ -63,6 +65,7 @@ type Item = {
 const categories = [
   ["all", "Alles", Boxes],
   ["machinery", "Machines", Wrench],
+  ["inventory", "Inventaris", Boxes],
   ["property", "Onroerend Goed", Building2],
   ["vehicle", "Voertuigen", Car],
   ["other", "Overig", PackageSearch],
@@ -175,7 +178,8 @@ function categoryLabel(
 
 
 function normalizeCategory(value: Item["category"]): Category {
-  if (value === "equipment" || value === "ict" || value === "machinery") return "machinery";
+  if (value === "equipment" || value === "machinery") return "machinery";
+  if (value === "ict" || value === "furniture" || value === "inventory") return "inventory";
   if (value === "property") return "property";
   if (value === "vehicle") return "vehicle";
   return "other";
