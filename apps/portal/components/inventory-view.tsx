@@ -9,11 +9,10 @@ import {
 } from "react";
 
 import {
-  Armchair,
+  Building2,
   Boxes,
   Car,
   CircleAlert,
-  Laptop,
   PackageSearch,
   Plus,
   Search,
@@ -30,9 +29,8 @@ import type {
 type Category =
   | "all"
   | "vehicle"
-  | "equipment"
-  | "ict"
-  | "furniture"
+  | "machinery"
+  | "property"
   | "other";
 
 
@@ -43,6 +41,8 @@ type Item = {
     | "equipment"
     | "ict"
     | "furniture"
+    | "machinery"
+    | "property"
     | "other";
   name: string;
   description: string | null;
@@ -62,10 +62,9 @@ type Item = {
 
 const categories = [
   ["all", "Alles", Boxes],
+  ["machinery", "Machines", Wrench],
+  ["property", "Onroerend Goed", Building2],
   ["vehicle", "Voertuigen", Car],
-  ["equipment", "Apparatuur & machines", Wrench],
-  ["ict", "ICT & elektronica", Laptop],
-  ["furniture", "Meubilair", Armchair],
   ["other", "Overig", PackageSearch],
 ] as const;
 
@@ -168,12 +167,19 @@ function categoryLabel(
   return (
     categories.find(
       ([id]) =>
-        id === category,
+        id === normalizeCategory(category),
     )?.[1] ??
-    category
+    "Overig"
   );
 }
 
+
+function normalizeCategory(value: Item["category"]): Category {
+  if (value === "equipment" || value === "ict" || value === "machinery") return "machinery";
+  if (value === "property") return "property";
+  if (value === "vehicle") return "vehicle";
+  return "other";
+}
 
 export default function InventoryView({
   context,
@@ -324,7 +330,7 @@ export default function InventoryView({
             if (
               category !==
                 "all" &&
-              item.category !==
+              normalizeCategory(item.category) !==
                 category
             ) {
               return false;
