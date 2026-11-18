@@ -7,6 +7,8 @@ import { expenseCategories, categoryName, type ExpenseCategory } from "@/lib/exp
 type Line = { id:string; date:string; supplier:string; category:ExpenseCategory; amount:string; vat:string; description:string;receipt_status?:string };
 type Claim = {id:string;month:string;status:string;total_cents:number;created_at:string;private_iban:string|null};
 type DbLine = {id:string;expense_date:string;supplier:string;category:ExpenseCategory;gross_cents:number;vat_cents:number;description:string|null;receipt_status:string};
+type Evidence = {id:string;line_id:string;document_id:string;filename:string;checked_at:string|null};
+type Mileage = {line_id:string;trip_date:string;route:string;business_reason:string;kilometers:number;rate_cents:number};
 const monthNow=()=>new Date().toISOString().slice(0,7)+"-01";
 const today=()=>new Date().toISOString().slice(0,10);
 const blankLine=():Line=>({id:crypto.randomUUID(),date:today(),supplier:"",category:"kantoorartikelen",amount:"",vat:"0",description:""});
@@ -24,6 +26,11 @@ export default function ExpensesView({context,organization}:{context:PortalConte
   const [month,setMonth]=useState(monthNow());
   const [iban,setIban]=useState("");
   const [lines,setLines]=useState<Line[]>([blankLine()]);
+  const [evidence,setEvidence]=useState<Evidence[]>([]);
+  const [mileage,setMileage]=useState<Mileage[]>([]);
+  const [sourceLoaded,setSourceLoaded]=useState(false);
+  const [uploading,setUploading]=useState<string|null>(null);
+  const [trip,setTrip]=useState<Record<string,{route:string;reason:string;km:string;rate:string}>>({});
   const [editing,setEditing]=useState(false);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
@@ -73,15 +80,56 @@ export default function ExpensesView({context,organization}:{context:PortalConte
     return()=>clearTimeout(timer);
   },[revision,month,iban,editing,valid,busy,savedRevision]);
 
+  async function uploadReceipt(lineId:string,file:File|null) {
+    if(!file||!claimId)return;
+    if(!["application/pdf","image/jpeg","image/png"].includes(file.type)||file.size>15*1024*1024||file.size===0){
+      setError("Gebruik een PDF-, JPG- of PNG-bestand van maximaal 15 MB. HEIC-conversie volgt na veilige validatie.");return;
+    }
+    setUploading(lineId);setError("");
+    try{
+      const fd=new FormData();fd.set("organizationId",context.organizationId);fd.set("documentType","purchase_invoice");fd.set("file",file);
+      const upload=await fetch("/api/documents",{method:"POST",body:fd});
+      const value=await upload.json() as {item?:{id:string};error?:string};
+      if(!upload.ok||!value.item?.id)throw new Error(value.error||"Uploaden mislukt.");
+      const linked=await fetch("/api/financial/expenses",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"attach",organizationId:context.organizationId,lineId,documentId:value.item.id})});
+      const result=await linked.json() as {error?:string};
+      if(!linked.ok)throw new Error(result.error||"Document is geüpload maar koppelen is mislukt. Neem contact op met BESTEMD.");
+      await loadEvidence();
+      setNotice("Bon gekoppeld aan de kostenpost.");
+    }catch(e){setError(e instanceof Error?e.message:"Uploaden mislukt.");}
+    finally{setUploading(null);}
+  }
+  async function loadEvidence(){
+    if(!claimId)return;
+    const r=await fetch("/api/financial/expenses?organizationId="+encodeURIComponent(context.organizationId)+"&claimId="+encodeURIComponent(claimId),{cache:"no-store"});
+    if(!r.ok)return;
+    const d=await r.json() as {evidence?:Evidence[];mileage?:Mileage[]};
+    setEvidence(d.evidence??[]);setMileage(d.mileage??[]);
+  }
+  async function saveTrip(line:Line) {
+    const row=trip[line.id];
+    if(!row||!row.route.trim()||!row.reason.trim())return setError("Vul het traject en de zakelijke reden in.");
+    const km=Number(row.km.replace(",", ".")),rate=Math.round(Number(row.rate.replace(",","."))*100);
+    if(!Number.isFinite(km)||km<=0||!Number.isFinite(rate)||rate<0) return setError("Ongeldige ritafstand of vergoeding.");
+    try{
+      const response=await fetch("/api/financial/expenses",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({
+        action:"mileage",organizationId:context.organizationId,lineId:line.id,date:line.date,route:row.route,reason:row.reason,kilometers:km,rateCents:rate
+      })});
+      const d=await response.json() as {error?:string};
+      if(!response.ok)throw new Error(d.error||"Rittenoverzicht kon niet worden opgeslagen.");
+      setNotice("Rittenoverzicht gekoppeld.");await loadEvidence();
+    }catch(e){setError(e instanceof Error?e.message:"Rit opslaan mislukt.");}
+  }
   async function openClaim(item:Claim) {
     setBusy(true);setError("");setEditing(false);
     try{
       const response=await fetch("/api/financial/expenses?organizationId="+encodeURIComponent(context.organizationId)+"&claimId="+encodeURIComponent(item.id),{cache:"no-store"});
-      const payload=await response.json() as {lines?:DbLine[];error?:string};
+      const payload=await response.json() as {lines?:DbLine[];evidence?:Evidence[];mileage?:Mileage[];error?:string};
       if(!response.ok)throw new Error(payload.error||"Declaratie niet gevonden.");
       setClaimId(item.id);setMonth(item.month);setIban(item.private_iban??"");
+      setEvidence(payload.evidence??[]);setMileage(payload.mileage??[]);setSourceLoaded(true);
       setLines((payload.lines??[]).map(row=>({id:row.id,date:row.expense_date,supplier:row.supplier,category:row.category,amount:(row.gross_cents/100).toFixed(2),vat:(row.vat_cents/100).toFixed(2),description:row.description??"",receipt_status:row.receipt_status})));
-      setRevision(0);setSavedRevision(0);setEditing(item.status==="draft");
+      setRevision(0);setSavedRevision(0);setEditing(item.status==="draft"&&(payload.evidence??[]).length===0);
     }catch(e){setError(e instanceof Error?e.message:"Openen mislukt.");}finally{setBusy(false);}
   }
   async function submit(){
@@ -93,9 +141,10 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       const data=await res.json() as {status?:string;error?:string};
       if(!res.ok)throw new Error(data.error||"Indienen mislukt.");
       setEditing(false);setNotice("Declaratie ingediend: "+statusLabel(data.status||"submitted")+".");await reload();
+      await openClaim({id,month,status:data.status||"submitted",total_cents:total,created_at:new Date().toISOString(),private_iban:iban});
     }catch(e){setError(e instanceof Error?e.message:"Indienen mislukt.");}finally{setBusy(false);}
   }
-  const start=()=>{setClaimId(null);setMonth(monthNow());setIban("");setLines([blankLine()]);setRevision(0);setSavedRevision(0);setEditing(true);setError("");setNotice("");};
+  const start=()=>{setClaimId(null);setMonth(monthNow());setIban("");setLines([blankLine()]);setEvidence([]);setMileage([]);setSourceLoaded(false);setRevision(0);setSavedRevision(0);setEditing(true);setError("");setNotice("");};
   return <section className="expenses-page">
     <div className="heading"><div><h1>Declaraties</h1><p>Privé betaalde zakelijke kosten per onderneming en maand.</p></div>
       {canEdit&&<button className="btn primary" type="button" onClick={start}><Plus size={17}/> Nieuwe declaratie</button>}
@@ -124,7 +173,24 @@ export default function ExpensesView({context,organization}:{context:PortalConte
           <label>Waarvan btw (€)<input inputMode="decimal" disabled={!editing} value={line.vat} onChange={e=>update(line.id,{vat:e.target.value})}/></label>
           <label>Toelichting<input disabled={!editing} value={line.description} onChange={e=>update(line.id,{description:e.target.value})}/></label>
         </div>
-        <p className="micro">{line.category==="kilometervergoeding"?"Een rittenoverzicht moet vóór boeking worden beoordeeld.":"Bewijsstuk kan na indiening worden toegevoegd. Boekhoudkundige verwerking blijft geblokkeerd totdat bewijs is gecontroleerd."}</p>
+        <p className="micro">{line.category==="kilometervergoeding"?"Rittenoverzicht vereist; een leveranciersfactuur is niet nodig.":"Bewijsstuk per kostenpost vereist vóór verwerking."}</p>
+        {sourceLoaded&&claimId&&line.category!=="kilometervergoeding"&&<div className="expenses-proof">
+          <strong>Bewijsstukken</strong>
+          {evidence.filter(d=>d.line_id===line.id).map(d=><a key={d.id} href={"/api/documents/"+encodeURIComponent(d.document_id)+"/download"} target="_blank" rel="noopener noreferrer">{d.filename} · {d.checked_at?"Gecontroleerd":"Bon ontvangen"}</a>)}
+          <label>Bon toevoegen (PDF, JPG, PNG)
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" disabled={uploading!==null} onChange={e=>{void uploadReceipt(line.id,e.target.files?.[0]??null);e.target.value="";}}/>
+          </label>
+        </div>}
+        {sourceLoaded&&claimId&&line.category==="kilometervergoeding"&&<div className="expenses-proof">
+          {mileage.some(m=>m.line_id===line.id)?<p>Rittenoverzicht ontvangen</p>:<p>Vul de ritgegevens in; bedrag = kilometers × tarief.</p>}
+          <div className="expenses-fields">
+            <label>Traject<input placeholder="Vertrek — bestemming" value={trip[line.id]?.route??""} onChange={e=>setTrip(v=>({...v,[line.id]:{route:e.target.value,reason:v[line.id]?.reason??"",km:v[line.id]?.km??"",rate:v[line.id]?.rate??""}}))}/></label>
+            <label>Zakelijke reden<input value={trip[line.id]?.reason??""} onChange={e=>setTrip(v=>({...v,[line.id]:{route:v[line.id]?.route??"",reason:e.target.value,km:v[line.id]?.km??"",rate:v[line.id]?.rate??""}}))}/></label>
+            <label>Kilometers<input inputMode="decimal" value={trip[line.id]?.km??""} onChange={e=>setTrip(v=>({...v,[line.id]:{route:v[line.id]?.route??"",reason:v[line.id]?.reason??"",km:e.target.value,rate:v[line.id]?.rate??""}}))}/></label>
+            <label>Tarief €/km<input inputMode="decimal" value={trip[line.id]?.rate??""} onChange={e=>setTrip(v=>({...v,[line.id]:{route:v[line.id]?.route??"",reason:v[line.id]?.reason??"",km:v[line.id]?.km??"",rate:e.target.value}}))}/></label>
+          </div>
+          <button type="button" className="btn" onClick={()=>void saveTrip(line)}>Rit vastleggen</button>
+        </div>}
       </div>)}
       {editing&&<div className="expenses-actions">
         <button type="button" className="btn" onClick={()=>changed([...lines,blankLine()])}><Plus size={17}/> Kostenpost toevoegen</button>
