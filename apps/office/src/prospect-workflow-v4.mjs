@@ -90,3 +90,34 @@ export function documentDeadline(submittedAt, workingDays = 10) {
   }
   return date.toISOString();
 }
+
+export const SETUP_CHECKS=Object.freeze([
+ 'environmentPrepared','accountingConfigured','taxConfigured',
+ 'bankAccountsRecorded','documentsLinked','permissionsPrepared','pricingLinked'
+]);
+export function validateAdministrationPreparation(entries,companies){
+ validateCompanyCount(companies);
+ required(Array.isArray(entries)&&entries.length===companies.length,
+  'Controleer de administratie per onderneming.');
+ const positions=new Set(companies.map(c=>c.position));
+ const seen=new Set();
+ const normalized=[];
+ for(const entry of entries){
+  required(entry&&Number.isInteger(entry.position)&&positions.has(entry.position)&&
+   !seen.has(entry.position),'Ongeldige of dubbele onderneming in de voorbereiding.');
+  seen.add(entry.position);
+  const record={position:entry.position};
+  for(const key of SETUP_CHECKS){
+   required(typeof entry[key]==='boolean','Alle voorbereidingscontroles moeten zijn ingevuld.');
+   record[key]=entry[key];
+  }
+  normalized.push(record);
+ }
+ return normalized;
+}
+export function isAdministrationReady(entries,companies){
+ try{
+  const rows=validateAdministrationPreparation(entries,companies);
+  return rows.every(row=>SETUP_CHECKS.every(key=>row[key]===true));
+ }catch{return false;}
+}
