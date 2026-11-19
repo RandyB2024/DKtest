@@ -106,6 +106,11 @@ test("Digitale declaraties: RLS, ontbrekend bewijs, Office-goedkeuring, duplicat
     assert.equal((await pg.query("select public.bestemd_expense_office_check_evidence($1) ok",[eid2])).rows[0].ok,true);
     assert.equal((await pg.query("select public.bestemd_expense_office_decide($1,'approve',null) status",[d])).rows[0].status,"approved");
     await assert.rejects(pg.query("select public.bestemd_expense_office_decide($1,'approve',null)",[d]),/niet in behandeling/);
+    // Booking and repayment ledgers are deliberately inaccessible to authenticated users.
+    await assert.rejects(pg.query("select state from bestemd_expense_postings"),/permission denied/);
+    await assert.rejects(pg.query("select status from bestemd_expense_repayments"),/permission denied/);
+    // Verify non-posting using the fixture database owner, not by weakening production grants.
+    await reset();
     assert.equal((await pg.query("select state from bestemd_expense_postings")).rows.length,0);
     assert.equal((await pg.query("select status from bestemd_expense_repayments")).rows.length,0);
   }finally{await pg.close();}
