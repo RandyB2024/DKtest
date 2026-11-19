@@ -245,9 +245,27 @@ export async function communicationRoute(
   const path =
     url.pathname;
 
-  if (
-    path !== '/api/communication'
-  ) {
+  // Separate staff-only inbox for signed, staged WhatsApp inbound events.
+  // Do not auto-assign unknown numbers to customer organizations.
+  if (path === '/api/communication/whatsapp-inbox') {
+    if (req.method !== 'GET') {
+      throw new OfficeError(405, 'METHOD_NOT_ALLOWED', 'Actie niet toegestaan.');
+    }
+    if (!user?.aal2 || !writableRoles.has(user.roleCode)) {
+      throw new OfficeError(403, 'WHATSAPP_INBOX_DENIED', 'Alleen bevoegde Office-medewerkers.');
+    }
+    const result = await client.rpc('bestemd_office_whatsapp_inbox', { p_limit: 100 });
+    if (result.error) {
+      throw new OfficeError(503, 'WHATSAPP_INBOX_UNAVAILABLE',
+        'WhatsApp-inbox niet beschikbaar. Controleer de databankmigratie.');
+    }
+    return {
+      status: 200,
+      data: { messages: Array.isArray(result.data) ? result.data : [], autoAssignment: false },
+    };
+  }
+
+  if (path !== '/api/communication') {
     return null;
   }
 
