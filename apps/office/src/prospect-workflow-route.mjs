@@ -1,6 +1,7 @@
 import {createClient} from '@supabase/supabase-js';
 import {randomBytes,createHash} from 'node:crypto';
 import {OfficeError} from './auth/supabase.mjs';
+import {validateQuoteLines} from './prospect-quote-policy.mjs';
 import {WORKFLOW_VERSION,advanceWorkflow,canSendOnboarding,startWorkflow,validateCompanyCount,validateAdministrationPreparation,isAdministrationReady} from './prospect-workflow-v4.mjs';
 
 const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
@@ -20,17 +21,7 @@ function nextWorkflow(w,to,{actorId,notes='',evidence={}}){
  try{return advanceWorkflow(w,to,{actorId,notes,evidence});}
  catch(error){fail(409,'INVALID_WORKFLOW_TRANSITION',error.message);}
 }
-function quoteLine(item,company){
- const price=Number(item.monthlyPriceExVat);
- const oneOff=Number(item.oneTimePriceExVat??0);
- if(!Number.isFinite(price)||price<0||price>100000||!Number.isFinite(oneOff)||oneOff<0||oneOff>100000)
-  fail(400,'INVALID_QUOTE','Controleer de prijsafspraken.');
- const service=text(item.service,1500);
- if(!service)fail(400,'INVALID_QUOTE','Beschrijf de dienstverlening.');
- return {position:company.position,companyName:text(company.company_data?.companyName||company.company_data?.name,200),service,
-  monthlyPriceExVat:Math.round(price*100)/100,oneTimePriceExVat:Math.round(oneOff*100)/100,
-  notes:text(item.notes,1000)};
-}
+
 export async function officeProspectWorkflowRoute(req,url,client,user,config,fetchImpl,readBody){
  if(url.pathname!=='/api/office/prospect-workflow')return null;
  if(!['GET','POST'].includes(req.method))fail(405,'METHOD_NOT_ALLOWED','Methode niet toegestaan.');
@@ -138,12 +129,10 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
  }else if(action==='save_quote'){
   ensure(workflow.stage==='quote','WRONG_STAGE','Prijsafspraken horen bij de offertefase.');
   validateCompanyCount(companies);
-  if(!Array.isArray(input.lines)||input.lines.length!==companies.length)fail(400,'INVALID_QUOTE','Vul per onderneming een prijsafspraak in.');
-  workflow={...workflow,quote:companies.map(c=>{
-   const line=input.lines.find(x=>Number(x.position)===c.position);
-   if(!line)fail(400,'INVALID_QUOTE','Prijsafspraak ontbreekt voor een onderneming.');
-   return quoteLine(line,c);
-  }),history:[...workflow.history,{from:workflow.stage,to:workflow.stage,actorId:user.id,at,notes:'Offerteprijzen opgeslagen'}]};
+  let prices;
+  try { prices=validateQuoteLines(input.lines,companies); }
+  catch(error) { fail(400,'INVALID_QUOTE',error.message); }
+  workflow={...workflow,quote:prices,history:[...workflow.history,{from:workflow.stage,to:workflow.stage,actorId:user.id,at,notes:'Offerteprijzen opgeslagen'}]};
  }else if(action==='advance'){
   const target=text(input.to,40);
   const notes=text(input.notes,1500);

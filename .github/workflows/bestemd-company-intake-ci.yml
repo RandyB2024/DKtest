@@ -1,0 +1,31 @@
+name: BESTEMD aanvraagformulier per onderneming
+on:
+  pull_request:
+    paths:
+      - 'apps/office/src/prospect-company-sections.mjs'
+      - 'apps/office/src/prospect-quote-policy.mjs'
+      - 'apps/office/src/prospect-workflow-route.mjs'
+      - 'apps/office/tests/prospect-quote-policy.test.mjs'
+      - 'apps/office/public/prospect-company-ui.js'
+      - 'apps/office/tests/prospect-company-sections.test.mjs'
+      - '.github/workflows/bestemd-company-intake-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Formulier-JavaScript validatie
+        run: |
+          node --check apps/office/public/prospect-company-ui.js
+          node --check apps/office/src/prospect-company-sections.mjs
+          node --check apps/office/src/prospect-workflow-route.mjs
+          node --check apps/office/src/prospect-quote-policy.mjs
+      - name: Aanvraagproces en 1-5 ondernemingen
+        working-directory: apps/office
+        run: node --test tests/prospect-company-sections.test.mjs tests/prospect-workflow-v4.test.mjs tests/prospect-quote-policy.test.mjs
