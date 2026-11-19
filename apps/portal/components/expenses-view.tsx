@@ -82,21 +82,21 @@ export default function ExpensesView({context,organization}:{context:PortalConte
 
   async function uploadReceipt(lineId:string,file:File|null) {
     if(!file||!claimId)return;
-    if(!["application/pdf","image/jpeg","image/png"].includes(file.type)||file.size>15*1024*1024||file.size===0){
-      setError("Gebruik een PDF-, JPG- of PNG-bestand van maximaal 15 MB. HEIC-conversie volgt na veilige validatie.");return;
+    const allowed=["application/pdf","image/jpeg","image/png","image/heic","image/heif"];
+    if(!allowed.includes(file.type)||file.size>15*1024*1024||file.size===0){
+      setError("Gebruik een PDF-, JPG-, PNG- of HEIC-bestand van maximaal 15 MB.");return;
     }
     setUploading(lineId);setError("");
     try{
-      const fd=new FormData();fd.set("organizationId",context.organizationId);fd.set("documentType","other");fd.set("file",file);
-      const upload=await fetch("/api/documents",{method:"POST",body:fd});
-      const value=await upload.json() as {item?:{id:string};error?:string};
-      if(!upload.ok||!value.item?.id)throw new Error(value.error||"Uploaden mislukt.");
-      const linked=await fetch("/api/financial/expenses",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({action:"attach",organizationId:context.organizationId,lineId,documentId:value.item.id})});
-      const result=await linked.json() as {error?:string};
-      if(!linked.ok)throw new Error(result.error||"Document is geüpload maar koppelen is mislukt. Neem contact op met BESTEMD.");
+      const fd=new FormData();
+      fd.set("organizationId",context.organizationId);
+      fd.set("lineId",lineId);fd.set("file",file);
+      const upload=await fetch("/api/financial/expenses/evidence",{method:"POST",body:fd});
+      const value=await upload.json() as {evidenceId?:string;error?:string};
+      if(!upload.ok||!value.evidenceId)throw new Error(value.error||"Uploaden mislukt.");
       await loadEvidence();
       setEditing(false);
-      setNotice("Bon gekoppeld. De declaratie kan nu worden ingediend; de kostenposten zijn tegen overschrijven beschermd.");
+      setNotice("Bon gekoppeld. De kostenposten zijn tegen overschrijven beschermd.");
     }catch(e){setError(e instanceof Error?e.message:"Uploaden mislukt.");}
     finally{setUploading(null);}
   }
@@ -178,8 +178,8 @@ export default function ExpensesView({context,organization}:{context:PortalConte
         {sourceLoaded&&claimId&&line.category!=="kilometervergoeding"&&<div className="expenses-proof">
           <strong>Bewijsstukken</strong>
           {evidence.filter(d=>d.line_id===line.id).map(d=><a key={d.id} href={"/api/documents/"+encodeURIComponent(d.document_id)+"/download"} target="_blank" rel="noopener noreferrer">{d.filename} · {d.checked_at?"Gecontroleerd":"Bon ontvangen"}</a>)}
-          <label>Bon toevoegen (PDF, JPG, PNG)
-            <input type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" disabled={uploading!==null} onChange={e=>{void uploadReceipt(line.id,e.target.files?.[0]??null);e.target.value="";}}/>
+          <label>Bon toevoegen (PDF, JPG, PNG, HEIC)
+            <input type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/jpeg,image/png,image/heic,image/heif" disabled={uploading!==null} onChange={e=>{void uploadReceipt(line.id,e.target.files?.[0]??null);e.target.value="";}}/>
           </label>
         </div>}
         {sourceLoaded&&claimId&&line.category==="kilometervergoeding"&&<div className="expenses-proof">
