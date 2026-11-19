@@ -307,4 +307,57 @@ end; $$;
 revoke all on function public.bestemd_expense_attach_document(uuid,uuid),public.bestemd_expense_save_mileage(uuid,date,text,text,numeric,integer),public.bestemd_expense_office_decide(uuid,text,text),public.bestemd_expense_office_check_evidence(uuid) from public,anon;
 grant execute on function public.bestemd_expense_attach_document(uuid,uuid),public.bestemd_expense_save_mileage(uuid,date,text,text,numeric,integer),public.bestemd_expense_office_decide(uuid,text,text),public.bestemd_expense_office_check_evidence(uuid) to authenticated;
 
+
+-- Read-only duplicate warnings: never create expenses or block legitimate
+-- repeated invoices merely because the supplier and amount match.
+create or replace function public.bestemd_expense_duplicate_candidates(p_claim_id uuid)
+returns jsonb language plpgsql stable security definer set search_path=public as $$
+declare c public.bestemd_expense_claims%rowtype; result jsonb;
+begin
+ if auth.uid() is null or not public.has_aal2() or not public.is_office_user()
+   then raise exception 'Office toegang vereist.' using errcode='42501'; end if;
+ select * into c from public.bestemd_expense_claims where id=p_claim_id;
+ if not found then raise exception 'Declaratie niet gevonden.'; end if;
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'lineId',l.id,'source','purchase_invoice','sourceId',i.id,'supplier',cr.name,
+   'amountCents',i.total_cents,'date',i.invoice_date
+ ) order by i.invoice_date desc),'[]'::jsonb) into result
+ from public.bestemd_expense_lines l
+ join public.purchase_invoices i on i.organization_id=c.organization_id
+   and i.archived_at is null and i.total_cents=l.gross_cents
+   and i.invoice_date between l.expense_date-7 and l.expense_date+7
+ join public.creditors cr on cr.id=i.creditor_id and cr.organization_id=i.organization_id
+ where l.claim_id=c.id and lower(trim(l.supplier))=lower(trim(cr.name));
+ return result;
+end; $$;
+
+-- Read-only bank repayment suggestions, restricted to the right private IBAN,
+-- exact outgoing amount and the claim's organization. Never mark paid here.
+create or replace function public.bestemd_expense_repayment_suggestions(p_claim_id uuid)
+returns jsonb language plpgsql stable security definer set search_path=public as $$
+declare c public.bestemd_expense_claims%rowtype; result jsonb;
+begin
+ if auth.uid() is null or not public.has_aal2() or not public.is_office_user()
+   then raise exception 'Office toegang vereist.' using errcode='42501'; end if;
+ select * into c from public.bestemd_expense_claims where id=p_claim_id;
+ if not found then raise exception 'Declaratie niet gevonden.'; end if;
+ if c.status not in ('approved','booking_pending','booked') or c.private_iban is null
+   then return '[]'::jsonb; end if;
+ select coalesce(jsonb_agg(jsonb_build_object(
+   'transactionId',t.id,'date',t.booked_at,'amountCents',t.amount_cents,
+   'counterpartyName',t.counterparty_name
+ ) order by t.booked_at desc),'[]'::jsonb) into result
+ from public.bank_transactions t
+ where t.organization_id=c.organization_id
+   and t.amount_cents=-c.total_cents
+   and upper(replace(coalesce(t.counterparty_iban,''),' ',''))=c.private_iban
+   and t.status='booked'
+   and t.reconciliation_status in ('unmatched','suggested')
+   and t.booked_at >= coalesce(c.submitted_at,c.created_at)
+   and not exists(select 1 from public.bestemd_expense_repayments r where r.bank_transaction_id=t.id and r.status='confirmed');
+ return result;
+end; $$;
+revoke all on function public.bestemd_expense_duplicate_candidates(uuid), public.bestemd_expense_repayment_suggestions(uuid) from public,anon;
+grant execute on function public.bestemd_expense_duplicate_candidates(uuid), public.bestemd_expense_repayment_suggestions(uuid) to authenticated;
+
 commit;
