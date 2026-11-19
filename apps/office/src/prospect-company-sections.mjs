@@ -34,6 +34,13 @@ export function normalizeCompanySections(input,positions,{submit=false}={}){
    normalized[section]=Object.fromEntries(fields[section]
      .filter(k=>Object.hasOwn(source,k)).map(k=>[k,clean(source[k])]));
   }
+  // Een onderneming zonder btw-plicht mag geen oude btw-gegevens uit een
+  // eerder ingevuld formulier meenemen naar het definitieve dossier.
+  if(normalized.administration.vatRequired==='no'){
+   for(const key of ['vatFrequency','kor','vatIdNumber','turnoverTaxNumber','vatNumber']){
+    normalized.administration[key]='';
+   }
+  }
   result.set(row.position,normalized);
  }
  if(submit){
