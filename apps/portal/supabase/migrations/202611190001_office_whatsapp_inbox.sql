@@ -26,34 +26,34 @@ begin
   end if;
   select coalesce(jsonb_agg(jsonb_build_object(
     'id', i.id,
+    'conversationId', i.conversation_id,
+    'organizationId', i.organization_id,
     'channel', i.channel_label,
     'channelKey', i.channel_key,
     'senderPhone', i.sender_phone,
     'receiverPhone', i.receiver_phone,
     'body', i.message_body,
-    'receivedAt', i.received_at,
-    'status', i.processing_status,
+    'receivedAt', i.created_at,
+    'status', i.delivery_status,
     'channelAccountId', i.channel_account_id
-  ) order by i.received_at desc), '[]'::jsonb)
+  ) order by i.created_at desc), '[]'::jsonb)
   into result
   from (
-    select e.id, e.received_at, e.processing_status,
-      c.id as channel_account_id, c.label as channel_label, c.channel_key,
-      left(coalesce(e.payload->>'senderPhone', ''), 25) as sender_phone,
-      left(coalesce(e.payload->>'receiverPhone', c.phone_e164, ''), 25) as receiver_phone,
-      left(coalesce(e.payload->>'body', ''), 16000) as message_body
-    from public.bestemd_wa_inbound_events e
+    select m.id, m.conversation_id, m.organization_id,
+      m.created_at, m.delivery_status, m.channel_account_id,
+      c.label as channel_label, c.channel_key,
+      left(coalesce(m.sender_phone_e164, conv.contact_phone_e164, ''), 25) as sender_phone,
+      left(coalesce(c.phone_e164, ''), 25) as receiver_phone,
+      left(coalesce(m.body, ''), 16000) as message_body
+    from public.bestemd_wa_messages m
     join public.bestemd_wa_channel_accounts c
-      on (e.provider_phone_number_id = c.provider_phone_number_id
-          or e.provider_phone_number_id = 'twilio:' || c.id::text)
-    where c.status = 'active'
-      and e.processing_status in ('pending','failed','processed')
-      and (
-        (e.payload->>'provider' = 'twilio' and e.payload ? 'messageId')
-        or (e.payload ? 'messageId' and e.payload ? 'senderPhone'
-          and not (e.payload ? 'recipientPhone'))
-      )
-    order by e.received_at desc, e.id desc
+      on c.id = m.channel_account_id
+    join public.bestemd_wa_conversations conv
+      on conv.id = m.conversation_id
+     and conv.channel_account_id = m.channel_account_id
+     and conv.organization_id is not distinct from m.organization_id
+    where c.status = 'active' and m.direction = 'inbound'
+    order by m.created_at desc, m.id desc
     limit p_limit
   ) i;
   return result;
