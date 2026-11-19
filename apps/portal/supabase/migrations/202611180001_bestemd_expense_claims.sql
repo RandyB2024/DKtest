@@ -266,7 +266,7 @@ begin
   update public.bestemd_expense_claims set status='rejected',rejection_reason=left(p_reason,1000),reviewed_at=now(),reviewed_by=auth.uid(),updated_at=now() where id=p_claim_id;
  elsif p_decision='approve' then
   if exists(select 1 from public.bestemd_expense_lines l where l.claim_id=p_claim_id
-    and ((l.category<>'kilometervergoeding' and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id and e.checked_at is not null))
+    and ((l.category<>'kilometervergoeding' and (not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id) or exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id and e.checked_at is null)))
      or (l.category='kilometervergoeding' and
        coalesce((select sum(round(m.kilometers*m.rate_cents)) from public.bestemd_expense_mileage m where m.line_id=l.id),0)<>l.gross_cents)))
   then raise exception 'Bewijsstukken of rittenoverzicht moeten eerst gecontroleerd zijn.'; end if;
@@ -289,7 +289,7 @@ begin
  if v_claim_id is null then raise exception 'Bewijsstuk niet gevonden.'; end if;
  if (select status from public.bestemd_expense_claims where id=v_claim_id) in ('booked','paid','rejected') then raise exception 'Declaratie is afgesloten.'; end if;
  update public.bestemd_expense_evidence set checked_by=auth.uid(),checked_at=now() where id=p_evidence_id;
- update public.bestemd_expense_lines set receipt_status='checked' where id=(select line_id from public.bestemd_expense_evidence where id=p_evidence_id);
+ update public.bestemd_expense_lines set receipt_status=case when exists(select 1 from public.bestemd_expense_evidence e where e.line_id=bestemd_expense_lines.id and e.checked_at is null) then 'received' else 'checked' end where id=(select line_id from public.bestemd_expense_evidence where id=p_evidence_id);
  insert into public.bestemd_expense_audit(claim_id,actor_id,event) values(v_claim_id,auth.uid(),'evidence_checked');
  return true;
 end; $$;
