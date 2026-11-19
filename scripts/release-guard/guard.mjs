@@ -11,15 +11,33 @@ export const SHA = /^[0-9a-f]{40}$/i;
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function activeDeployment(payload) {
-  if(payload?.success !== true) throw new Error("Cloudflare antwoord niet geverifieerd: publicatie geblokkeerd.");
-  const rows = payload?.result?.deployments;
-  if(!Array.isArray(rows) || !rows.length) throw new Error("Cloudflare live-deployment onbekend: publicatie geblokkeerd.");
-  const deployment = rows[0]; // Cloudflare guarantees newest (serving) first.
-  const versions = deployment?.versions;
-  if(!Array.isArray(versions)||versions.length!==1 ||
-    Number(versions[0]?.percentage)!==100 || !UUID.test(versions[0]?.version_id??""))
+  if(payload?.success!==true)throw new Error("Cloudflare API-antwoord niet geverifieerd.");
+  // Direct Cloudflare REST: result.deployments. Wrangler CLI --json: bare array.
+  const rows=Array.isArray(payload.result?.deployments)
+    ? payload.result.deployments
+    : Array.isArray(payload.result)
+      ? payload.result
+      : Array.isArray(payload.deployments)
+        ? payload.deployments
+        : null;
+  if(!rows?.length)throw new Error("Cloudflare live-deployment onbekend: publicatie geblokkeerd.");
+  // Wrangler JSON is oldest-first. Do not assume a stable array order.
+  const dated=rows.map(row=>({
+    row,
+    time:typeof row?.created_on==="string"?Date.parse(row.created_on):NaN
+  }));
+  if(dated.some(item=>!Number.isFinite(item.time)))
+    throw new Error("Cloudflare deployment mist een betrouwbare datum: geblokkeerd.");
+  dated.sort((a,b)=>b.time-a.time);
+  if(dated.length>1 && dated[0].time===dated[1].time)
+    throw new Error("Twee deployments hebben dezelfde nieuwste datum: geblokkeerd.");
+  const deployment=dated[0].row;
+  const versions=deployment?.versions;
+  if(!Array.isArray(versions)||versions.length!==1||
+     Number(versions[0]?.percentage)!==100||!UUID.test(versions[0]?.version_id??""))
     throw new Error("Cloudflare heeft geen eenduidige 100%-versie: publicatie geblokkeerd.");
-  if(!UUID.test(deployment.id??"")) throw new Error("Deployment-ID ontbreekt: publicatie geblokkeerd.");
+  if(!UUID.test(deployment.id??""))
+    throw new Error("Deployment-ID ontbreekt: publicatie geblokkeerd.");
   return Object.freeze({
     deploymentId:deployment.id,
     versionId:versions[0].version_id,
