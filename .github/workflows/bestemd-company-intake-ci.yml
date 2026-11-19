@@ -3,6 +3,9 @@ on:
   pull_request:
     paths:
       - 'apps/office/src/prospect-company-sections.mjs'
+      - 'apps/office/src/prospect-quote-policy.mjs'
+      - 'apps/office/src/prospect-workflow-route.mjs'
+      - 'apps/office/tests/prospect-quote-policy.test.mjs'
       - 'apps/office/public/prospect-company-ui.js'
       - 'apps/office/tests/prospect-company-sections.test.mjs'
       - '.github/workflows/bestemd-company-intake-ci.yml'
@@ -21,6 +24,8 @@ jobs:
         run: |
           node --check apps/office/public/prospect-company-ui.js
           node --check apps/office/src/prospect-company-sections.mjs
+          node --check apps/office/src/prospect-workflow-route.mjs
+          node --check apps/office/src/prospect-quote-policy.mjs
       - name: Aanvraagproces en 1-5 ondernemingen
         working-directory: apps/office
-        run: node --test tests/prospect-company-sections.test.mjs tests/prospect-workflow-v4.test.mjs
+        run: node --test tests/prospect-company-sections.test.mjs tests/prospect-workflow-v4.test.mjs tests/prospect-quote-policy.test.mjs
