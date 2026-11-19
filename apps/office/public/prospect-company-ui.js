@@ -78,7 +78,17 @@ export function mountCompanySections({form,initial,getExtras}){
   control.dataset.companyKey=key;
   control.value=ensure(position)[section][key]??'';
   control.addEventListener('input',()=>{ensure(position)[section][key]=control.value;refreshMarks();});
-  control.addEventListener('change',()=>{ensure(position)[section][key]=control.value;refreshMarks();});
+  control.addEventListener('change',()=>{
+   ensure(position)[section][key]=control.value;
+   if(section==='administration'&&key==='vatRequired'){
+    if(control.value==='no'){
+     for(const vatKey of ['vatFrequency','kor','vatIdNumber','turnoverTaxNumber','vatNumber']){
+      ensure(position).administration[vatKey]='';
+     }
+    }
+    render();
+   }else refreshMarks();
+  });
   outer.append(control);return outer;
  }
  const widgets={};
@@ -121,7 +131,12 @@ export function mountCompanySections({form,initial,getExtras}){
    });
    w.select.value=String(active);w.select.onchange=()=>{active=Number(w.select.value);render();};
    const wrap=node('div');wrap.className='bestemd-company-field-grid';
-   for(const field of FIELDSETS[section])wrap.append(makeField(section,active,field));
+   for(const field of FIELDSETS[section]){
+    // Bij btw-vrijstelling zijn aangiftefrequentie en btw-nummers niet van toepassing.
+    if(section==='administration' && ensure(active).administration.vatRequired==='no' &&
+       ['vatFrequency','kor','vatIdNumber','turnoverTaxNumber','vatNumber'].includes(field[0]))continue;
+    wrap.append(makeField(section,active,field));
+   }
    w.fields.append(wrap);
   }
   for(const button of [...form.querySelectorAll('button')]){
