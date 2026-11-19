@@ -10,9 +10,23 @@ const validUuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  */
 export async function officeExpenseClaimsRoute(req,url,client,user,readBody) {
   const path=url.pathname;
-  if(path!=="/api/expenses"&&!/^\/api\/expenses\/[0-9a-f-]{36}(?:\/(?:approve|reject|check-evidence))?$/.test(path))return null;
+  const evidenceDownload=path.match(/^\/api\/expenses\/([0-9a-f-]{36})\/evidence\/([0-9a-f-]{36})\/download$/);
+  if(path!=="/api/expenses"&&!/^\/api\/expenses\/[0-9a-f-]{36}(?:\/(?:approve|reject|check-evidence))?$/.test(path)&&!evidenceDownload)return null;
   if(!user?.aal2)throw new OfficeError(403,"MFA_REQUIRED","Bevestig eerst uw identiteit.");
   if(!reviewers.has(user.roleCode))throw new OfficeError(403,"EXPENSES_DENIED","Geen toegang tot declaraties.");
+  if(evidenceDownload&&req.method==="GET"){
+    const [,claimId,evidenceId]=evidenceDownload;
+    if(!validUuid.test(claimId)||!validUuid.test(evidenceId))throw new OfficeError(400,"INVALID_EVIDENCE","Ongeldige bon.");
+    const claim=checkQuery(await client.from("bestemd_expense_claims").select("id").eq("id",claimId).maybeSingle());
+    if(!claim)throw new OfficeError(404,"CLAIM_NOT_FOUND","Declaratie niet gevonden.");
+    const evidence=checkQuery(await client.from("bestemd_expense_evidence").select("id,line_id,storage_path").eq("id",evidenceId).maybeSingle());
+    if(!evidence)throw new OfficeError(404,"EVIDENCE_NOT_FOUND","Bon niet gevonden.");
+    const line=checkQuery(await client.from("bestemd_expense_lines").select("claim_id").eq("id",evidence.line_id).maybeSingle());
+    if(!line||line.claim_id!==claimId)throw new OfficeError(403,"EVIDENCE_DENIED","Geen toegang tot deze bon.");
+    const signed=await client.storage.from("documents").createSignedUrl(evidence.storage_path,60);
+    if(signed.error||!signed.data?.signedUrl)throw new OfficeError(503,"EVIDENCE_UNAVAILABLE","Bon kan niet worden geopend.");
+    return {status:200,data:{url:signed.data.signedUrl}};
+  }
   if(req.method==="GET"&&path==="/api/expenses") {
     const org=url.searchParams.get("organizationId");
     const period=url.searchParams.get("month");
