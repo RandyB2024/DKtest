@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "status": "UNINITIALIZED_DO_NOT_DEPLOY",
+  "portal": null,
+  "office": null,
+  "instructions": "Leg per Worker na handmatige verificatie worker, gitSha, versionId en deploymentId vast via beschermde PR. Vul nooit een Git-SHA op basis van alleen Cloudflare created_on in."
+}
