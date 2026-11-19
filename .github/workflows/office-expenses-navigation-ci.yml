@@ -28,6 +28,9 @@ jobs:
       - name: Office dependencies
         working-directory: apps/office
         run: npm ci --no-audit --no-fund
+      - name: Build Worker assets for Office integration tests
+        working-directory: apps/office
+        run: npm run build:worker
       - name: Office tests
         working-directory: apps/office
         run: npm test
