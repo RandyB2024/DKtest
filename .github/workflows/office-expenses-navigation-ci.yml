@@ -1,0 +1,33 @@
+name: BESTEMD Office — navigatiecontrole
+on:
+  pull_request:
+    paths:
+      - 'apps/office/public/app.js'
+      - 'apps/office/public/index.html'
+      - '.github/workflows/office-expenses-navigation-ci.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/office/package-lock.json
+      - name: Javascript syntax
+        run: node --check apps/office/public/app.js
+      - name: Declaraties zijn geen hoofdmenu
+        shell: bash
+        run: |
+          ! grep -q 'href="/expenses" data-route title="Declaraties"' apps/office/public/index.html
+          grep -q 'Declaraties in administratie' apps/office/public/app.js
+          grep -q "organizationId=" apps/office/public/app.js
+      - name: Office dependencies
+        working-directory: apps/office
+        run: npm ci --no-audit --no-fund
+      - name: Office tests
+        working-directory: apps/office
+        run: npm test
