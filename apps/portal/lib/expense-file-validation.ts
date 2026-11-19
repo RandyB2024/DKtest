@@ -16,6 +16,6 @@ export function normalizedExpenseMime(declared:string):string {
 export function safeExpenseFilename(name:string,mime:EvidenceMime):string {
   const ext=mime==="application/pdf"?"pdf":mime==="image/png"?"png":mime==="image/jpeg"?"jpg":"heic";
   const stem=name.replace(/\.[^.]*$/,"").normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
-    .replace(/[^A-Za-z0-9_-]/g,"-").replace(/-+/g,"-").slice(0,80)||"bon";
+    .replace(/[^A-Za-z0-9_-]/g,"-").replace(/-+/g,"-").replace(/^[-_]+|[-_]+$/g,"").slice(0,80)||"bon";
   return stem+"."+ext;
 }
