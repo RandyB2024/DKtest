@@ -50,3 +50,12 @@ De gebruiker heeft de uitvoer van `wrangler deployments list --json` voor beide 
 | `bestemd-office` | `7791c950-3a28-4c3f-8753-87d427915316` | `3d728689-6a3b-4ec6-bc5f-0811e72c1c90` | `2026-11-17T20:59:07.700122Z` |
 
 Deze IDs staan alleen in `.bestemd/observed-live-workers-20261119.json`. Het geverifieerde Git-SHA van de twee live Workers blijft **onbekend**. `.bestemd/release-baselines.json` blijft daarom onveranderd en de beschermde releaseprocedure blijft gesloten. De Office Worker mag niet vanaf de huidige GitHub-main worden overschreven zolang codeherkomst niet is vergeleken. 
+
+## Fase 2 — gecontroleerde broncodeherkomst en rechten (19 november 2026)
+
+- Lees uitsluitend de live versie-metadata via `scripts/release-guard/inventory-provenance.ps1`. De scriptcontrole vergelijkt **beide** Cloudflare deployment-ID's en versie-ID's met de inventaris van 19 november. Bij een afwijking stopt het script. Een eventueel aangetroffen Git-SHA is slechts een kandidaat, géén bewijs van werkelijke bronidentiteit.
+- Cloudflare Worker script-content kan met de officiële Workers Scripts Read API opgevraagd worden voor inhoudelijke vergelijking; voor een reproduceerbare bron-identificatie moeten ook statische assets, bundelproces, configuratie, bindings en build-logs worden gecontroleerd. Bewaar eventuele inhoud lokaal en deel geen geheimen.
+- Stel pas een beschermde `bestemd-production` GitHub environment in als de GitHub-planrechten daadwerkelijk vereiste reviewers en branchregels ondersteunen. Een vrij tekstveld `IK KEUR PRODUCTIE GOED` is **geen voldoende technische autorisatie** en mag niet als vervanging voor reviewers gelden.
+- In GitHub zijn secret `CLOUDFLARE_RELEASE_GUARD_READ_TOKEN` en productie-deploy-token **verschillend**. Een READ-token kan niet publiceren; deploy-token uitsluitend beschikbaar voor een later afgeschermde workflow.
+- In Cloudflare: inventariseer bestaande API-tokens, Cloudflare Workers Builds, dashboard-/accountlidmaatschappen en lokale Wrangler-aanmeldingen. Haal rechten pas weg nadat de huidige live Worker-versies en beschikbare veilige herstelopties zijn vastgelegd. Anders is beheer mogelijk onbedoeld onmogelijk.
+- **NOODSTOP:** de huidige productie-baselines blijven `null` totdat Git-bronherkomst echt bewezen is. PR #49 blijft ongemoeid. Geen code publicatie, geen rollback en geen automatische migratie.
