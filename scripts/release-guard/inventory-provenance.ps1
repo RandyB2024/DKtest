@@ -11,15 +11,52 @@ Write-Host "=== BESTEMD PROVENANCE INVENTARISATIE ==="
 Write-Host "Alleen lezen. Geen wijziging aan Workers, GitHub, Supabase of secrets."
 foreach ($target in $targets) {
   Write-Host "=== $($target.Name) ==="
-  $raw = & npx.cmd wrangler deployments list --name $target.Name --json 2>&1
-  if ($LASTEXITCODE -ne 0) { throw "Cloudflare uitlezen mislukt voor $($target.Name); STOP." }
-  $rawText = ($raw -join [Environment]::NewLine)
-  # Wrangler may add startup text; JSON extraction is constrained to bracketed array.
-  $first = $rawText.IndexOf('['); $last=$rawText.LastIndexOf(']')
-  if($first -lt 0 -or $last -le $first){ throw "Geen zuivere JSON voor $($target.Name); STOP." }
-  $deploys = @(ConvertFrom-Json -InputObject $rawText.Substring($first,$last-$first+1))
-  if($deploys.Count -eq 0){ throw "Geen deployments gevonden; STOP." }
-  $live = $deploys | Sort-Object {[DateTimeOffset]::Parse($_.created_on).UtcDateTime} -Descending | Select-Object -First 1
+  # Capture stdout separately. Wrangler warnings on stderr must not corrupt JSON.
+  $stderrFile = [System.IO.Path]::GetTempFileName()
+  try {
+    $stdoutLines = & npx.cmd wrangler deployments list --name $target.Name --json 2>$stderrFile
+    $commandStatus = $LASTEXITCODE
+    if ($commandStatus -ne 0) {
+      throw "Cloudflare uitlezen mislukt voor $($target.Name) (code $commandStatus); STOP."
+    }
+    $json = ($stdoutLines -join [Environment]::NewLine).Trim()
+    if (-not $json.StartsWith('[') -or -not $json.EndsWith(']')) {
+      throw "Wrangler leverde geen zuivere JSON-array voor $($target.Name); STOP."
+    }
+    try { $parsed = ConvertFrom-Json -InputObject $json -ErrorAction Stop }
+    catch { throw "Cloudflare JSON niet leesbaar voor $($target.Name); STOP." }
+
+    # PowerShell 5.1 and 7 enumerate JSON arrays slightly differently.
+    # Explicitly unwrap a singleton nested array if necessary.
+    $deploys = @($parsed)
+    while ($deploys.Count -eq 1 -and $deploys[0] -is [array]) {
+      $deploys = @($deploys[0])
+    }
+    if ($deploys.Count -eq 0) { throw "Geen deployments gevonden; STOP." }
+
+    $sorted = @()
+    foreach ($item in $deploys) {
+      if ($null -eq $item -or [string]::IsNullOrWhiteSpace([string]$item.id) -or
+          [string]::IsNullOrWhiteSpace([string]$item.created_on)) {
+        throw "Deployment zonder ID of datum ontvangen voor $($target.Name); STOP."
+      }
+      $timestamp = [DateTimeOffset]::MinValue
+      $culture = [System.Globalization.CultureInfo]::InvariantCulture
+      $dateStyles = [System.Globalization.DateTimeStyles]::AssumeUniversal
+      if (-not [DateTimeOffset]::TryParse([string]$item.created_on,$culture,$dateStyles,[ref]$timestamp)) {
+        throw "Deployment bevat ongeldige datum voor $($target.Name); STOP."
+      }
+      $sorted += [pscustomobject]@{ Deployment=$item; Date=$timestamp }
+    }
+    $ordered = @($sorted | Sort-Object -Property Date -Descending)
+    if ($ordered.Count -gt 1 -and $ordered[0].Date -eq $ordered[1].Date) {
+      throw "Twee deployments hebben dezelfde datum; STOP."
+    }
+    $live = $ordered[0].Deployment
+  }
+  finally {
+    Remove-Item -LiteralPath $stderrFile -Force -ErrorAction SilentlyContinue
+  }
   if($live.id -ne $target.Deployment -or @($live.versions).Count -ne 1 -or
      $live.versions[0].version_id -ne $target.Version -or [double]$live.versions[0].percentage -ne 100){
     throw "LIVE VERSIE AFGEWEKEN voor $($target.Name). NIET PUBLICEREN."
