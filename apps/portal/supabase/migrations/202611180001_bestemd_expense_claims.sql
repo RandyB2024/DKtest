@@ -6,7 +6,7 @@ begin;
 update storage.buckets
 set allowed_mime_types=(
   select array_agg(distinct mime order by mime)
-  from unnest(coalesce(allowed_mime_types,array[]::text[]) || array['image/heic']) as mime
+  from unnest(coalesce(allowed_mime_types,array['application/pdf','image/jpeg','image/png']::text[]) || array['image/heic']) as mime
 )
 where id='documents';
 
@@ -68,6 +68,7 @@ create table if not exists public.bestemd_expense_mileage (
  rate_cents integer not null check(rate_cents>=0),
  constraint mileage_length check(length(route)>3 and length(business_reason)>3)
 );
+create index if not exists bestemd_mileage_by_line on public.bestemd_expense_mileage(line_id);
 create table if not exists public.bestemd_expense_audit (
  id bigint generated always as identity primary key,
  claim_id uuid not null references public.bestemd_expense_claims(id) on delete restrict,
@@ -180,7 +181,7 @@ begin
    select 1 from public.bestemd_expense_lines l
    where l.claim_id=p_claim_id and
    ((l.category<>'kilometervergoeding' and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id))
-   or (l.category='kilometervergoeding' and not exists(select 1 from public.bestemd_expense_mileage m where m.line_id=l.id)))
+   or (l.category='kilometervergoeding' and coalesce((select sum(round(m.kilometers*m.rate_cents)) from public.bestemd_expense_mileage m where m.line_id=l.id),0)<>l.gross_cents))
  ) then 'waiting_evidence' else 'submitted' end;
  update public.bestemd_expense_claims set status=v_status,submitted_at=now(),updated_at=now() where id=p_claim_id;
  insert into public.bestemd_expense_audit(claim_id,actor_id,event) values(p_claim_id,auth.uid(),'submitted');
