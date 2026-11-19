@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-11-19",
+  "source": "User executed npx wrangler deployments list --name <worker> --json; newest is selected by created_on, not array position",
+  "verification": "Cloudflare deployment/version IDs observed in read-only Wrangler output; live-to-Git-commit mapping remains unverified",
+  "githubMainAtInventory": "fd125efa08c1aee600dc0eb02638e3fbd2e2f21f",
+  "workers": {
+    "portal": {
+      "worker": "bestemd-portal",
+      "deploymentId": "e922919a-cd05-4a6f-812a-945aa395c89a",
+      "versionId": "381ebf18-c853-480a-931a-27c4a3698d2b",
+      "createdAt": "2026-11-18T21:46:27.088083Z",
+      "trafficPercentage": 100,
+      "gitSha": null,
+      "provenanceStatus": "unknown"
+    },
+    "office": {
+      "worker": "bestemd-office",
+      "deploymentId": "7791c950-3a28-4c3f-8753-87d427915316",
+      "versionId": "3d728689-6a3b-4ec6-bc5f-0811e72c1c90",
+      "createdAt": "2026-11-17T20:59:07.700122Z",
+      "trafficPercentage": 100,
+      "gitSha": null,
+      "provenanceStatus": "unknown"
+    }
+  },
+  "note": "Observed IDs are NOT authorized deployment baselines. A future guard must reread Cloudflare and validate provenance before publication."
+}
