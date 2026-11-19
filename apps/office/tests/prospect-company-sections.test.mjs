@@ -27,3 +27,22 @@ test('volledigheid bij indienen geldt voor iedere onderneming',()=>{
 test('onbekende velden en interne organisatie-ID worden geweigerd',()=>{
  assert.throws(()=>normalizeCompanySections([{...valid(1),administration:{iban:'x',organization_id:'other'}}],[1]));
 });
+
+test('zonder btw-plicht worden btw-vragen per onderneming overgeslagen en oude antwoorden verwijderd',()=>{
+ const first=valid(1);
+ first.administration={...first.administration,vatRequired:'no',vatFrequency:'quarter',kor:'yes',
+  vatIdNumber:'NL123456789B01',turnoverTaxNumber:'123456789B01',vatNumber:'NL999999999B01'};
+ const second=valid(2);
+ const rows=normalizeCompanySections([first,second],[1,2],{submit:true});
+ const withoutVat=rows.get(1).administration;
+ assert.equal(withoutVat.vatRequired,'no');
+ for(const field of ['vatFrequency','kor','vatIdNumber','turnoverTaxNumber','vatNumber']){
+  assert.equal(withoutVat[field],'');
+ }
+ assert.equal(rows.get(2).administration.vatFrequency,'quarter');
+});
+test('een btw-plichtige onderneming moet haar eigen aangiftefrequentie kiezen',()=>{
+ const first=valid(1);
+ first.administration.vatFrequency='';
+ assert.throws(()=>normalizeCompanySections([first],[1],{submit:true}),/btw-aangiftefrequentie/);
+});
