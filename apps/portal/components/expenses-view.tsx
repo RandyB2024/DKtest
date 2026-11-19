@@ -23,6 +23,7 @@ const statusLabel=(v:string)=>({
 export default function ExpensesView({context,organization}:{context:PortalContext;organization?:PortalOrganization}) {
   const [claims,setClaims]=useState<Claim[]>([]);
   const [claimId,setClaimId]=useState<string|null>(null);
+  const [activeStatus,setActiveStatus]=useState("draft");
   const [month,setMonth]=useState(monthNow());
   const [iban,setIban]=useState("");
   const [lines,setLines]=useState<Line[]>([blankLine()]);
@@ -95,6 +96,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       const value=await upload.json() as {evidenceId?:string;error?:string};
       if(!upload.ok||!value.evidenceId)throw new Error(value.error||"Uploaden mislukt.");
       await loadEvidence();
+      setLines(rows=>rows.map(row=>row.id===lineId?{...row,receipt_status:"received"}:row));
       setEditing(false);
       setNotice("Bon gekoppeld. De kostenposten zijn tegen overschrijven beschermd.");
     }catch(e){setError(e instanceof Error?e.message:"Uploaden mislukt.");}
@@ -119,6 +121,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       const d=await response.json() as {error?:string};
       if(!response.ok)throw new Error(d.error||"Rittenoverzicht kon niet worden opgeslagen.");
       setNotice("Rittenoverzicht gekoppeld.");setEditing(false);await loadEvidence();
+      setLines(rows=>rows.map(row=>row.id===line.id?{...row,receipt_status:"received"}:row));
     }catch(e){setError(e instanceof Error?e.message:"Rit opslaan mislukt.");}
   }
   async function openClaim(item:Claim) {
@@ -127,7 +130,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       const response=await fetch("/api/financial/expenses?organizationId="+encodeURIComponent(context.organizationId)+"&claimId="+encodeURIComponent(item.id),{cache:"no-store"});
       const payload=await response.json() as {lines?:DbLine[];evidence?:Evidence[];mileage?:Mileage[];error?:string};
       if(!response.ok)throw new Error(payload.error||"Declaratie niet gevonden.");
-      setClaimId(item.id);setMonth(item.month);setIban(item.private_iban??"");
+      setClaimId(item.id);setActiveStatus(item.status);setMonth(item.month);setIban(item.private_iban??"");
       setEvidence(payload.evidence??[]);setMileage(payload.mileage??[]);setSourceLoaded(true);
       setLines((payload.lines??[]).map(row=>({id:row.id,date:row.expense_date,supplier:row.supplier,category:row.category,amount:(row.gross_cents/100).toFixed(2),vat:(row.vat_cents/100).toFixed(2),description:row.description??"",receipt_status:row.receipt_status})));
       setRevision(0);setSavedRevision(0);setEditing(item.status==="draft"&&(payload.evidence??[]).length===0&&(payload.mileage??[]).length===0);
@@ -145,7 +148,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       await openClaim({id,month,status:data.status||"submitted",total_cents:total,created_at:new Date().toISOString(),private_iban:iban});
     }catch(e){setError(e instanceof Error?e.message:"Indienen mislukt.");}finally{setBusy(false);}
   }
-  const start=()=>{setClaimId(null);setMonth(monthNow());setIban("");setLines([blankLine()]);setEvidence([]);setMileage([]);setSourceLoaded(false);setRevision(0);setSavedRevision(0);setEditing(true);setError("");setNotice("");};
+  const start=()=>{setClaimId(null);setActiveStatus("draft");setMonth(monthNow());setIban("");setLines([blankLine()]);setEvidence([]);setMileage([]);setSourceLoaded(false);setRevision(0);setSavedRevision(0);setEditing(true);setError("");setNotice("");};
   return <section className="expenses-page">
     <div className="heading"><div><h1>Declaraties</h1><p>Privé betaalde zakelijke kosten per onderneming en maand.</p></div>
       {canEdit&&<button className="btn primary" type="button" onClick={start}><Plus size={17}/> Nieuwe declaratie</button>}
@@ -175,14 +178,14 @@ export default function ExpensesView({context,organization}:{context:PortalConte
           <label>Toelichting<input disabled={!editing} value={line.description} onChange={e=>update(line.id,{description:e.target.value})}/></label>
         </div>
         <p className="micro">{line.category==="kilometervergoeding"?"Rittenoverzicht vereist; een leveranciersfactuur is niet nodig.":"Bewijsstuk per kostenpost vereist vóór verwerking."}</p>
-        {sourceLoaded&&claimId&&line.category!=="kilometervergoeding"&&<div className="expenses-proof">
+        {sourceLoaded&&claimId&&["draft","submitted","waiting_evidence","under_review"].includes(activeStatus)&&line.category!=="kilometervergoeding"&&<div className="expenses-proof">
           <strong>Bewijsstukken</strong>
           {evidence.filter(d=>d.line_id===line.id).map(d=><a key={d.id} href={"/api/documents/"+encodeURIComponent(d.document_id)+"/download"} target="_blank" rel="noopener noreferrer">{d.filename} · {d.checked_at?"Gecontroleerd":"Bon ontvangen"}</a>)}
           <label>Bon toevoegen (PDF, JPG, PNG, HEIC)
             <input type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/jpeg,image/png,image/heic,image/heif" disabled={uploading!==null} onChange={e=>{void uploadReceipt(line.id,e.target.files?.[0]??null);e.target.value="";}}/>
           </label>
         </div>}
-        {sourceLoaded&&claimId&&line.category==="kilometervergoeding"&&<div className="expenses-proof">
+        {sourceLoaded&&claimId&&["draft","submitted","waiting_evidence","under_review"].includes(activeStatus)&&line.category==="kilometervergoeding"&&<div className="expenses-proof">
           {mileage.some(m=>m.line_id===line.id)?<p>Rittenoverzicht ontvangen</p>:<p>Vul de ritgegevens in; bedrag = kilometers × tarief.</p>}
           <div className="expenses-fields">
             <label>Traject<input placeholder="Vertrek — bestemming" value={trip[line.id]?.route??""} onChange={e=>setTrip(v=>({...v,[line.id]:{route:e.target.value,reason:v[line.id]?.reason??"",km:v[line.id]?.km??"",rate:v[line.id]?.rate??""}}))}/></label>
