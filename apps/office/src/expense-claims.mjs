@@ -28,9 +28,23 @@ export async function officeExpenseClaimsRoute(req,url,client,user,readBody) {
       if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(period))throw new OfficeError(400,"INVALID_MONTH","Ongeldige maand.");
       query=query.eq("month",period+"-01");
     }
-    if(status)query=query.eq("status",status);
+    if(status){
+      if(!new Set(["draft","submitted","waiting_evidence","under_review","approved","rejected","booking_pending","booked","paid"]).has(status))
+        throw new OfficeError(400,"INVALID_STATUS","Ongeldige status.");
+      query=query.eq("status",status);
+    }
     const data=checkQuery(await query);
-    return {status:200,data:{items:data??[]}};
+    const items=data??[];
+    const orgIds=[...new Set(items.map(row=>row.organization_id))];
+    const claimantIds=[...new Set(items.map(row=>row.claimant_id))];
+    const organizations=orgIds.length?checkQuery(await client.from("organizations").select("id,name").in("id",orgIds)):[];
+    const profiles=claimantIds.length?checkQuery(await client.from("profiles").select("id,display_name").in("id",claimantIds)):[];
+    const orgNames=new Map(organizations.map(row=>[row.id,row.name]));
+    const userNames=new Map(profiles.map(row=>[row.id,row.display_name]));
+    return {status:200,data:{items:items.map(item=>({...item,
+      organization_name:orgNames.get(item.organization_id)??"Onbekende onderneming",
+      claimant_name:userNames.get(item.claimant_id)??"Onbekende declarant"
+    }))}};
   }
   const match=path.match(/^\/api\/expenses\/([0-9a-f-]{36})(?:\/(approve|reject|check-evidence))?$/);
   if(!match||!validUuid.test(match[1]))throw new OfficeError(400,"INVALID_CLAIM","Ongeldige declaratie.");
