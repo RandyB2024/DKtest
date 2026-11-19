@@ -39,3 +39,14 @@ BESTEMD Office (`bestemd-office`) en Mijn Bestemming (`bestemd-portal`) blijven 
 Deze eerste fase verhindert geen directe handmatige `wrangler deploy` met al bestaande Cloudflare-adminrechten. De blokkade wordt technisch afdwingbaar als **uitsluitend de centrale pipeline** publicatierechten heeft, branch/environment bescherming is ingesteld, en oude tokens zijn ingetrokken. Zonder die stappen niet beweren dat terugvallen onmogelijk is.
 
 De releasegeschiedenis moet niet op tijdstempels alleen vertrouwen: een nieuwere Worker-versie kan nog steeds gebouwd zijn uit **oudere code**. De Git-ancestrycontrole gebruikt daarom een via logs bewezen commit-versie-koppeling.
+
+## Gecontroleerde Cloudflare inventarisatie — 19 november 2026
+
+De gebruiker heeft de uitvoer van `wrangler deployments list --json` voor beide Workers geleverd. Deze CLI-resultaten staan **oudste eerst**. Daarom selecteert Release Guard de hoogste `created_on` in plaats van het eerste array-element. De Cloudflare REST API documenteert zijn resultaten anders; de selectie is met tests voor beide volgordes afgedekt.
+
+| Worker | Deployment-ID | Worker version-ID | UTC |
+| --- | --- | --- | --- |
+| `bestemd-portal` | `e922919a-cd05-4a6f-812a-945aa395c89a` | `381ebf18-c853-480a-931a-27c4a3698d2b` | `2026-11-18T21:46:27.088083Z` |
+| `bestemd-office` | `7791c950-3a28-4c3f-8753-87d427915316` | `3d728689-6a3b-4ec6-bc5f-0811e72c1c90` | `2026-11-17T20:59:07.700122Z` |
+
+Deze IDs staan alleen in `.bestemd/observed-live-workers-20261119.json`. Het geverifieerde Git-SHA van de twee live Workers blijft **onbekend**. `.bestemd/release-baselines.json` blijft daarom onveranderd en de beschermde releaseprocedure blijft gesloten. De Office Worker mag niet vanaf de huidige GitHub-main worden overschreven zolang codeherkomst niet is vergeleken. 
