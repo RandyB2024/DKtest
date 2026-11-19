@@ -106,6 +106,40 @@ test("Digitale declaraties: RLS, ontbrekend bewijs, Office-goedkeuring, duplicat
     assert.equal((await pg.query("select public.bestemd_expense_office_check_evidence($1) ok",[eid2])).rows[0].ok,true);
     assert.equal((await pg.query("select public.bestemd_expense_office_decide($1,'approve',null) status",[d])).rows[0].status,"approved");
     await assert.rejects(pg.query("select public.bestemd_expense_office_decide($1,'approve',null)",[d]),/niet in behandeling/);
+    // A malicious client cannot introduce negative mileage or negative rates
+    // to offset another trip. The restriction must exist in the SQL RPC itself.
+    await as(alice);
+    const mileageDraft=(await pg.query(
+      "select public.bestemd_expense_save_draft($1,$2,$3,$4,$5::jsonb) id",
+      [org,"2026-11-01","NL91ABNA0417164300",null,JSON.stringify([
+        {date:"2026-11-12",supplier:"Zakelijke rit",category:"kilometervergoeding",grossCents:2300,vatCents:0}
+      ])]
+    )).rows[0].id;
+    const mileageLine=(await pg.query(
+      "select id from public.bestemd_expense_lines where claim_id=$1",[mileageDraft]
+    )).rows[0].id;
+    await assert.rejects(pg.query(
+      "select public.bestemd_expense_save_mileage($1,$2,$3,$4,$5,$6)",
+      [mileageLine,"2026-11-12","Amsterdam - Utrecht","Klantbezoek",-100,23]
+    ),/geldige positieve kilometers/);
+    await assert.rejects(pg.query(
+      "select public.bestemd_expense_save_mileage($1,$2,$3,$4,$5,$6)",
+      [mileageLine,"2026-11-12","Amsterdam - Utrecht","Klantbezoek",100,-23]
+    ),/geldige positieve kilometers/);
+    await assert.rejects(pg.query(
+      "select public.bestemd_expense_save_mileage($1,$2,$3,$4,$5,$6)",
+      [mileageLine,"2026-11-12"," ","Klantbezoek",100,23]
+    ),/geldige positieve kilometers/);
+    await pg.query(
+      "select public.bestemd_expense_save_mileage($1,$2,$3,$4,$5,$6)",
+      [mileageLine,"2026-11-12","Amsterdam - Utrecht","Klantbezoek",100,23]
+    );
+    await assert.rejects(pg.query(
+      "select public.bestemd_expense_save_mileage($1,$2,$3,$4,$5,$6)",
+      [mileageLine,"2026-11-12","Amsterdam - Utrecht","Klantbezoek",1,23]
+    ),/Ritten overschrijden/);
+    assert.equal((await pg.query("select public.bestemd_expense_submit($1) status",[mileageDraft])).rows[0].status,"submitted");
+    await as(office);
     // Booking and repayment ledgers are deliberately inaccessible to authenticated users.
     await assert.rejects(pg.query("select state from bestemd_expense_postings"),/permission denied/);
     await assert.rejects(pg.query("select status from bestemd_expense_repayments"),/permission denied/);
