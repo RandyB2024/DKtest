@@ -29,14 +29,14 @@ export async function POST(request:Request) {
     const file=form.get("file");
     if(typeof lineId!=="string"||!UUID.test(lineId)||!(file instanceof File)) throw new AccessError(400,"Selecteer een geldige kostenpost en bon.");
     if(file.size<=0||file.size>MAX)throw new AccessError(413,"Maximaal 15 MB per bon.");
-    const [lineResult,claimResult]=await Promise.all([
-      client.from("bestemd_expense_lines").select("claim_id,category").eq("id",lineId).maybeSingle(),
-      client.from("bestemd_expense_claims").select("id,organization_id,claimant_id,status").eq("organization_id",organizationId).eq("claimant_id",identity.profile.id)
-    ]);
-    if(lineResult.error||claimResult.error)throw new AccessError(503,"Declaratiecontrole niet beschikbaar.");
-    const claim=(claimResult.data??[]).find(c=>c.id===lineResult.data?.claim_id);
-    if(!claim||!lineResult.data||lineResult.data.category==="kilometervergoeding"||
-      !["draft","submitted","waiting_evidence","under_review"].includes(claim.status))
+    const lineResult=await client.from("bestemd_expense_lines").select("claim_id,category").eq("id",lineId).maybeSingle();
+    if(lineResult.error)throw new AccessError(503,"Declaratiecontrole niet beschikbaar.");
+    if(!lineResult.data||lineResult.data.category==="kilometervergoeding")throw new AccessError(403,"Geen toegang tot deze kostenpost.");
+    const claimResult=await client.from("bestemd_expense_claims")
+      .select("id,status").eq("id",lineResult.data.claim_id)
+      .eq("organization_id",organizationId).eq("claimant_id",identity.profile.id).maybeSingle();
+    if(claimResult.error)throw new AccessError(503,"Declaratiecontrole niet beschikbaar.");
+    if(!claimResult.data||!["draft","submitted","waiting_evidence","under_review"].includes(claimResult.data.status))
       throw new AccessError(403,"Geen toegang tot deze kostenpost.");
     const bytes=new Uint8Array(await file.arrayBuffer());
     const mime=detectedMime(bytes);
