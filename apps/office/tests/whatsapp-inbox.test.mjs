@@ -33,8 +33,14 @@ test("WhatsApp Office inbox: verified staged messages are visible only with fres
   await db.query("insert into roles values ($1,'office','owner')",["44444444-4444-4444-8444-444444444444"]);
   await db.query("insert into office_memberships values($1,$2,'active')",[staff,"44444444-4444-4444-8444-444444444444"]);
   await db.query("insert into bestemd_wa_channel_accounts(id,channel_key,label,phone_e164,status) values ($1,'randy','WhatsApp Randy','+31612345678','active')",[channel]);
-  await db.query("insert into bestemd_wa_inbound_events(provider_event_key,provider_phone_number_id,payload) values($1,$2,$3::jsonb)",
-    ["twilio:SM123","twilio:"+channel,JSON.stringify({provider:"twilio",messageId:"SM123",senderPhone:"+31698765432",receiverPhone:"+31612345678",body:"Test WhatsApp"})]);
+  const conversation="55555555-5555-4555-8555-555555555555";
+  const organization="66666666-6666-4666-8666-666666666666";
+  await db.query("insert into bestemd_wa_conversations(id,organization_id,channel_account_id,contact_phone_e164) values($1,$2,$3,$4)",
+    [conversation,organization,channel,"+31698765432"]);
+  await db.query("insert into bestemd_wa_messages(organization_id,conversation_id,channel_account_id,provider_message_id,direction,sender_phone_e164,body) values($1,$2,$3,$4,'inbound',$5,$6)",
+    [organization,conversation,channel,"SM123","+31698765432","Test WhatsApp"]);
+  await db.query("insert into bestemd_wa_messages(organization_id,conversation_id,channel_account_id,provider_message_id,direction,sender_phone_e164,body) values($1,$2,$3,$4,'outbound',$5,$6)",
+    [organization,conversation,channel,"SM124","+31612345678","Niet als inkomend tonen"]);
   const setIdentity=async(id,aal)=>{
     await db.exec("reset role");
     await db.query("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:id,aal})]);
@@ -49,7 +55,7 @@ test("WhatsApp Office inbox: verified staged messages are visible only with fres
   assert.equal(response.rows[0].messages.length,1);
   assert.equal(response.rows[0].messages[0].body,"Test WhatsApp");
   assert.equal(response.rows[0].messages[0].channel,"WhatsApp Randy");
-  assert.equal(response.rows[0].messages[0].organizationId,undefined);
+  assert.equal(response.rows[0].messages[0].organizationId,organization);
   await assert.rejects(db.query("select * from bestemd_wa_inbound_events"),/permission denied/);
  } finally { await db.close(); }
 });
