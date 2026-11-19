@@ -182,7 +182,7 @@ grant execute on function public.bestemd_expense_save_draft(uuid,date,text,uuid,
 -- line without granting the customer blanket write access to evidence metadata.
 create or replace function public.bestemd_expense_attach_document(
  p_line_id uuid, p_document_id uuid
-) returns uuid language plpgsql security definer set search_path=public as $
+) returns uuid language plpgsql security definer set search_path=public as $$
 declare v_line public.bestemd_expense_lines%rowtype; v_claim public.bestemd_expense_claims%rowtype;
         v_doc public.documents%rowtype; v_new_id uuid;
 begin
@@ -208,11 +208,11 @@ begin
  insert into public.bestemd_expense_audit(claim_id,actor_id,event,details)
  values(v_claim.id,auth.uid(),'evidence_added',jsonb_build_object('line_id',v_line.id));
  return v_new_id;
-end; $;
+end; $$;
 
 create or replace function public.bestemd_expense_save_mileage(
  p_line_id uuid,p_date date,p_route text,p_reason text,p_kilometers numeric,p_rate_cents integer
-) returns void language plpgsql security definer set search_path=public as $
+) returns void language plpgsql security definer set search_path=public as $$
 declare v_claim public.bestemd_expense_claims%rowtype; v_line public.bestemd_expense_lines%rowtype;
 begin
  select * into v_line from public.bestemd_expense_lines where id=p_line_id;
@@ -227,13 +227,13 @@ begin
  values(p_line_id,p_date,p_route,p_reason,p_kilometers,p_rate_cents);
  update public.bestemd_expense_lines set receipt_status='received' where id=p_line_id;
  insert into public.bestemd_expense_audit(claim_id,actor_id,event)values(v_claim.id,auth.uid(),'mileage_log_saved');
-end; $;
+end; $$;
 
 -- Office finance roles can review but no role can mark a claim as
 -- booked or paid through this function.
 create or replace function public.bestemd_expense_office_decide(
  p_claim_id uuid,p_decision text,p_reason text default null
-) returns text language plpgsql security definer set search_path=public as $
+) returns text language plpgsql security definer set search_path=public as $$
 declare v_claim public.bestemd_expense_claims%rowtype;
 begin
  if not public.has_aal2() or not public.is_office_user() or not exists(
@@ -257,10 +257,10 @@ begin
  else raise exception 'Ongeldige beoordeling.'; end if;
  insert into public.bestemd_expense_audit(claim_id,actor_id,event,details) values(p_claim_id,auth.uid(),'office_'||p_decision,jsonb_build_object('reason',left(coalesce(p_reason,''),1000)));
  return (select status from public.bestemd_expense_claims where id=p_claim_id);
-end; $;
+end; $$;
 
 create or replace function public.bestemd_expense_office_check_evidence(p_evidence_id uuid)
- returns boolean language plpgsql security definer set search_path=public as $
+ returns boolean language plpgsql security definer set search_path=public as $$
 declare v_claim_id uuid;
 begin
  if not public.has_aal2() or not public.is_office_user() or not exists(
@@ -275,7 +275,7 @@ begin
  update public.bestemd_expense_lines set receipt_status='checked' where id=(select line_id from public.bestemd_expense_evidence where id=p_evidence_id);
  insert into public.bestemd_expense_audit(claim_id,actor_id,event) values(v_claim_id,auth.uid(),'evidence_checked');
  return true;
-end; $;
+end; $$;
 
 revoke all on function public.bestemd_expense_attach_document(uuid,uuid),public.bestemd_expense_save_mileage(uuid,date,text,text,numeric,integer),public.bestemd_expense_office_decide(uuid,text,text),public.bestemd_expense_office_check_evidence(uuid) from public,anon;
 grant execute on function public.bestemd_expense_attach_document(uuid,uuid),public.bestemd_expense_save_mileage(uuid,date,text,text,numeric,integer),public.bestemd_expense_office_decide(uuid,text,text),public.bestemd_expense_office_check_evidence(uuid) to authenticated;
