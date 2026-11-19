@@ -15,7 +15,7 @@ test("Digitale declaraties: RLS, ontbrekend bewijs, Office-goedkeuring, duplicat
       create schema auth; create schema storage;
       create table auth.users(id uuid primary key);
       create function auth.uid() returns uuid language sql stable as $$
-        select nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub'
+        select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid
       $$;
       create table public.organizations(id uuid primary key,name text);
       create table public.profiles(id uuid primary key,display_name text);
@@ -25,10 +25,10 @@ test("Digitale declaraties: RLS, ontbrekend bewijs, Office-goedkeuring, duplicat
       create function public.has_aal2() returns boolean language sql stable as $$
         select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'aal'='aal2',false)
       $$;
-      create function public.has_org_access(id uuid) returns boolean language sql stable as $$
+      create function public.has_org_access(id uuid) returns boolean language sql stable security definer as $
         select exists(select 1 from public.customer_access where user_id=auth.uid() and organization_id=id)
       $$;
-      create function public.is_office_user() returns boolean language sql stable as $$
+      create function public.is_office_user() returns boolean language sql stable security definer as $
         select exists(select 1 from public.office_memberships where user_id=auth.uid() and status='active')
       $$;
       create table public.documents(
