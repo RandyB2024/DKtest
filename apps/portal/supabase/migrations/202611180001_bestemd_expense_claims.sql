@@ -1,6 +1,15 @@
 -- BESTEMD digitale declaraties — additieve migratie, geen resets.
 begin;
 
+-- Add HEIC only to the existing private documents bucket; do not alter
+-- any other bucket, existing files or access policy.
+update storage.buckets
+set allowed_mime_types=(
+  select array_agg(distinct mime order by mime)
+  from unnest(coalesce(allowed_mime_types,array[]::text[]) || array['image/heic']) as mime
+)
+where id='documents';
+
 create table if not exists public.bestemd_expense_claims (
  id uuid primary key default gen_random_uuid(),
  organization_id uuid not null references public.organizations(id),
