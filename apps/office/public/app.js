@@ -667,7 +667,7 @@ async function expenseOfficePage(){
 async function expenseOfficeDetail(id){
   setHeader('Declaratie controleren','Financieel · bewijsstukken');loading();
   const d=await getJson('/api/expenses/'+encodeURIComponent(id));done();
-  const c=d.claim, lines=d.lines||[], docs=d.evidence||[], trips=d.trips||[];
+  const c=d.claim, lines=d.lines||[], docs=d.evidence||[], trips=d.trips||[],duplicates=d.duplicates||[],repayments=d.repaymentSuggestions||[];
   const euros=n=>new Intl.NumberFormat('nl-NL',{style:'currency',currency:'EUR'}).format((Number(n)||0)/100);
   const protectedState=['approved','rejected','booking_pending','booked','paid'].includes(c.status);
   const content=lines.map(line=>{
@@ -685,7 +685,12 @@ async function expenseOfficeDetail(id){
     +'<h2>Declaratie '+esc(c.month.slice(0,7))+'</h2><p>Onderneming '+esc(c.organization_id)+'</p>'
     +'<p>Status: <strong>'+esc(c.status)+'</strong> · Declarant: '+esc(c.claimant_id)+'</p>'
     +'<p>Privé-IBAN: '+(bank?'•••• '+esc(bank.slice(-4)):'Niet ingevuld')+'</p>'
-    +'<h3>Totaal '+euros(c.total_cents)+'</h3></section>'+content
+    +'<h3>Totaal '+euros(c.total_cents)+'</h3></section>'
+    +(duplicates.length?'<section class="panel"><h3>Controleer mogelijke dubbele kosten</h3><p>Er zijn '+duplicates.length+' mogelijke overeenkomsten in de leveranciersadministratie. Controleer dit vóór goedkeuren of boeken.</p>'
+      +duplicates.map(x=>'<div class="item"><strong>'+esc(x.supplier)+'</strong> · '+euros(x.amountCents)+' · '+esc(x.date)+'</div>').join('')+'</section>':'')
+    +(repayments.length?'<section class="panel"><h3>Mogelijke terugbetalingen</h3><p>Dit zijn alleen banksuggesties op basis van bedrag en privé-IBAN, nog geen bevestigde uitbetaling.</p>'
+      +repayments.map(x=>'<div class="item">'+esc(x.date)+' · '+euros(Math.abs(Number(x.amountCents)))+' · '+esc(x.counterpartyName||'')+'</div>').join('')+'</section>':'')
+    +content
     +(!protectedState?'<section class="panel"><label>Toelichting voor afwijzing<input id="expense-reason" placeholder="Reden (minimaal 5 tekens)"></label>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button type="button" class="primary" id="expense-approve">Goedkeuren na controle</button><button type="button" id="expense-reject">Afwijzen</button></div>'
       +'<p id="expense-message" role="alert"></p></section>':'<section class="panel">Deze declaratie is niet vrij bewerkbaar. Goedkeuring, boeking en uitbetaling zijn afzonderlijke gebeurtenissen.</section>');
