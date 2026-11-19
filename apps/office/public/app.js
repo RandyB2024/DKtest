@@ -646,17 +646,17 @@ async function expenseOfficePage(){
   const statuses=[...new Set(items.map(x=>x.status))];
   $('#view').innerHTML='<section class="panel"><div class="panel-head"><div><p class="eyebrow">Financieel</p><h2>Declaraties</h2><p>Controleer kostenposten en ontbrekende bewijsstukken voordat er geboekt wordt.</p></div><span class="badge">'+items.length+' declaraties</span></div>'
     +'<div class="expense-office-filters" style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">'
-    +'<input id="claim-search" aria-label="Zoek onderneming of declarant" placeholder="Zoek onderneming-ID of declarant" style="min-width:240px;padding:10px">'
+    +'<input id="claim-search" aria-label="Zoek onderneming of declarant" placeholder="Zoek onderneming of declarant" style="min-width:240px;padding:10px">'
     +'<input id="claim-month" aria-label="Maand" type="month" style="padding:10px">'
     +'<select id="claim-status" aria-label="Status"><option value="">Alle statussen</option>'
     +statuses.map(x=>'<option value="'+esc(x)+'">'+esc(statusMap[x]||x)+'</option>').join('')+'</select></div>'
     +'<div id="claim-list"></div></section>';
   const draw=()=>{
     const q=($('#claim-search').value||'').toLowerCase().trim(),month=$('#claim-month').value,status=$('#claim-status').value;
-    const chosen=items.filter(x=>(!q||(x.organization_id||'').toLowerCase().includes(q)||(x.claimant_id||'').toLowerCase().includes(q))
+    const chosen=items.filter(x=>(!q||(x.organization_name||'').toLowerCase().includes(q)||(x.claimant_name||'').toLowerCase().includes(q))
       &&(!month||(x.month||'').slice(0,7)===month)&&(!status||x.status===status));
     $('#claim-list').innerHTML=chosen.map(x=>'<button type="button" class="item action-row" data-expense-id="'+esc(x.id)+'" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;margin:8px 0">'
-      +'<span><strong>'+esc(x.month.slice(0,7))+'</strong><small>Onderneming: '+esc(x.organization_id)+' · Declarant: '+esc(x.claimant_id)+'</small></span>'
+      +'<span><strong>'+esc(x.month.slice(0,7))+'</strong><small>'+esc(x.organization_name)+' · '+esc(x.claimant_name)+'</small></span>'
       +'<span>'+esc(statusMap[x.status]||x.status)+'</span><strong>'+euros(x.total_cents)+'</strong></button>').join('')
       ||'<p>Geen declaraties gevonden.</p>';
     document.querySelectorAll('[data-expense-id]').forEach(b=>b.onclick=()=>expenseOfficeDetail(b.dataset.expenseId));
