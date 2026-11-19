@@ -109,6 +109,16 @@ export default function ExpensesView({context,organization}:{context:PortalConte
     const d=await r.json() as {evidence?:Evidence[];mileage?:Mileage[]};
     setEvidence(d.evidence??[]);setMileage(d.mileage??[]);
   }
+  async function openEvidence(documentId:string){
+    setError("");
+    try{
+      const response=await fetch("/api/documents/"+encodeURIComponent(documentId)+"/download?organizationId="+encodeURIComponent(context.organizationId),{cache:"no-store"});
+      const body=await response.json() as {url?:string;error?:string};
+      if(!response.ok||!body.url)throw new Error(body.error||"Bon kan niet worden geopend.");
+      // Supabase provides a short-lived signed URL after MFA and company authorization.
+      window.open(body.url,"_blank","noopener,noreferrer");
+    }catch(e){setError(e instanceof Error?e.message:"Download mislukt.");}
+  }
   async function saveTrip(line:Line) {
     const row=trip[line.id];
     if(!row||!row.route.trim()||!row.reason.trim())return setError("Vul het traject en de zakelijke reden in.");
@@ -180,7 +190,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
         <p className="micro">{line.category==="kilometervergoeding"?"Rittenoverzicht vereist; een leveranciersfactuur is niet nodig.":"Bewijsstuk per kostenpost vereist vóór verwerking."}</p>
         {sourceLoaded&&claimId&&["draft","submitted","waiting_evidence","under_review"].includes(activeStatus)&&line.category!=="kilometervergoeding"&&<div className="expenses-proof">
           <strong>Bewijsstukken</strong>
-          {evidence.filter(d=>d.line_id===line.id).map(d=><a key={d.id} href={"/api/documents/"+encodeURIComponent(d.document_id)+"/download"} target="_blank" rel="noopener noreferrer">{d.filename} · {d.checked_at?"Gecontroleerd":"Bon ontvangen"}</a>)}
+          {evidence.filter(d=>d.line_id===line.id).map(d=><button type="button" className="btn" key={d.id} onClick={()=>void openEvidence(d.document_id)}>{d.filename} · {d.checked_at?"Gecontroleerd":"Bon ontvangen"} · Openen</button>)}
           <label>Bon toevoegen (PDF, JPG, PNG, HEIC)
             <input type="file" accept=".pdf,.jpg,.jpeg,.png,.heic,.heif,application/pdf,image/jpeg,image/png,image/heic,image/heif" disabled={uploading!==null} onChange={e=>{void uploadReceipt(line.id,e.target.files?.[0]??null);e.target.value="";}}/>
           </label>
