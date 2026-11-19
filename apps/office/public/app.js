@@ -673,7 +673,8 @@ async function expenseOfficeDetail(id){
   const content=lines.map(line=>{
     const receipts=docs.filter(e=>e.line_id===line.id);
     const trip=trips.find(t=>t.line_id===line.id);
-    const evidence=receipts.map(doc=>'<div class="item" style="display:flex;justify-content:space-between;gap:12px"><span>'+esc(doc.filename)+' · '+(doc.checked_at?'Gecontroleerd':'Bon ontvangen')+'</span>'
+    const evidence=receipts.map(doc=>'<div class="item" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span>'+esc(doc.filename)+' · '+(doc.checked_at?'Gecontroleerd':'Bon ontvangen')+'</span>'
+      +'<button type="button" data-open-evidence="'+esc(doc.id)+'">Bekijk bon</button>'
       +(doc.checked_at||protectedState?'':'<button type="button" class="primary" data-check-evidence="'+esc(doc.id)+'">Controleer bon</button>')+'</div>').join('');
     return '<article class="panel"><div class="panel-head"><div><strong>'+esc(line.supplier)+'</strong><p>'+esc(line.category)+' · '+esc(line.expense_date)+'</p></div><strong>'+euros(line.gross_cents)+'</strong></div>'
       +'<p>BTW opgegeven: '+euros(line.vat_cents)+' · Status: '+esc(line.receipt_status)+'</p>'
@@ -695,6 +696,13 @@ async function expenseOfficeDetail(id){
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button type="button" class="primary" id="expense-approve">Goedkeuren na controle</button><button type="button" id="expense-reject">Afwijzen</button></div>'
       +'<p id="expense-message" role="alert"></p></section>':'<section class="panel">Deze declaratie is niet vrij bewerkbaar. Goedkeuring, boeking en uitbetaling zijn afzonderlijke gebeurtenissen.</section>');
   $('#expense-back').onclick=expenseOfficePage;
+  document.querySelectorAll('[data-open-evidence]').forEach(b=>b.onclick=async()=>{
+    try{
+      const result=await getJson('/api/expenses/'+encodeURIComponent(id)+'/evidence/'+encodeURIComponent(b.dataset.openEvidence)+'/download');
+      if(!result?.url)throw new Error('Bon kon niet worden geopend.');
+      window.open(result.url,'_blank','noopener,noreferrer');
+    }catch(e){alert(e.message);}
+  });
   document.querySelectorAll('[data-check-evidence]').forEach(b=>b.onclick=async()=>{
     try {await getJson('/api/expenses/'+encodeURIComponent(id)+'/check-evidence',{method:'POST',body:JSON.stringify({evidenceId:b.dataset.checkEvidence})});await expenseOfficeDetail(id);}
     catch(e){alert(e.message);}
