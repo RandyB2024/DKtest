@@ -98,6 +98,19 @@ export async function mountOfficeCommunication(
         </button>
       </div>
 
+      <section class="panel" aria-label="WhatsApp inkomende berichten">
+        <div class="panel-head">
+          <div>
+            <p class="eyebrow">WHATSAPP</p>
+            <h3>Inkomende berichten</h3>
+            <small>Berichten via gekoppelde WhatsApp-kanalen. Onbekende contacten worden niet automatisch aan een onderneming gekoppeld.</small>
+          </div>
+          <button type="button" data-whatsapp-refresh>Vernieuwen</button>
+        </div>
+        <p data-whatsapp-notice role="status">WhatsApp-inbox laden…</p>
+        <div data-whatsapp-messages></div>
+      </section>
+
       <p
         class="office-communication-error"
         role="alert"
@@ -166,6 +179,47 @@ export async function mountOfficeCommunication(
       '[data-new-thread]'
     );
 
+
+  const whatsappList = root.querySelector('[data-whatsapp-messages]');
+  const whatsappNotice = root.querySelector('[data-whatsapp-notice]');
+  const whatsappRefresh = root.querySelector('[data-whatsapp-refresh]');
+  let whatsappBusy = false;
+
+  async function refreshWhatsApp() {
+    if (whatsappBusy || !root.isConnected) return;
+    whatsappBusy = true;
+    whatsappRefresh.disabled = true;
+    try {
+      const data = await api('/api/communication/whatsapp-inbox');
+      const messages = Array.isArray(data.messages) ? data.messages : [];
+      whatsappNotice.textContent = messages.length
+        ? messages.length + ' ontvangen berichten — toewijzing aan onderneming vereist controle'
+        : 'Nog geen inkomende WhatsApp-berichten ontvangen.';
+      whatsappList.innerHTML = messages.map(item => `
+        <article class="item" style="margin:8px 0">
+          <strong>${esc(item.channel || 'WhatsApp')}</strong>
+          <small>${esc(item.senderPhone || 'Onbekend nummer')} · ${esc(dateTime(item.receivedAt))} · ${esc(item.status || '')}</small>
+          <p style="white-space:pre-wrap;overflow-wrap:anywhere">${esc(item.body || 'Niet-tekstbericht: handmatige beoordeling nodig.')}</p>
+        </article>
+      `).join('');
+    } catch {
+      whatsappNotice.textContent =
+        'WhatsApp-inbox nog niet beschikbaar. Controleer webhook, Supabase-migratie en kanaalinstellingen.';
+      whatsappList.textContent = '';
+    } finally {
+      whatsappBusy = false;
+      whatsappRefresh.disabled = false;
+    }
+  }
+  whatsappRefresh.onclick = refreshWhatsApp;
+  void refreshWhatsApp();
+  const whatsappPolling = setInterval(() => {
+    if (!root.isConnected) {
+      clearInterval(whatsappPolling);
+    } else if (!document.hidden) {
+      void refreshWhatsApp();
+    }
+  }, 30000);
 
   function showError(message = '') {
     errorBox.textContent =
