@@ -56,7 +56,10 @@ export async function officeExpenseClaimsRoute(req,url,client,user,readBody) {
     const ids=(lines??[]).map(l=>l.id);
     const evidence=ids.length?checkQuery(await client.from("bestemd_expense_evidence").select("id,line_id,document_id,filename,mime_type,size_bytes,checked_at").in("line_id",ids)):[];
     const trips=ids.length?checkQuery(await client.from("bestemd_expense_mileage").select("*").in("line_id",ids)):[];
-    return {status:200,data:{claim,lines:lines??[],evidence,trips}};
+    const duplicates=checkQuery(await client.rpc("bestemd_expense_duplicate_candidates",{p_claim_id:id}));
+    const repaymentSuggestions=checkQuery(await client.rpc("bestemd_expense_repayment_suggestions",{p_claim_id:id}));
+    return {status:200,data:{claim,lines:lines??[],evidence,trips,
+      duplicates:duplicates??[],repaymentSuggestions:repaymentSuggestions??[]}};
   }
   if(req.method==="POST"&&match[2]){
     const input=await readBody(req);
