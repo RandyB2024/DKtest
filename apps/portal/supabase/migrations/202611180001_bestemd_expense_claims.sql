@@ -241,6 +241,11 @@ begin
    not public.has_org_access(v_claim.organization_id) or
    v_claim.status not in ('draft','submitted','waiting_evidence','under_review') or
    v_line.category<>'kilometervergoeding' then raise exception 'Geen toegang.' using errcode='42501'; end if;
+ if p_date is null or p_route is null or length(trim(p_route))<3 or length(p_route)>500
+    or p_reason is null or length(trim(p_reason))<3 or length(p_reason)>1000
+    or p_kilometers is null or p_kilometers<=0 or p_kilometers>100000
+    or p_rate_cents is null or p_rate_cents<=0 or p_rate_cents>1000
+    then raise exception 'Vul geldige positieve kilometers, vergoeding en ritgegevens in.'; end if;
  if (select coalesce(sum(round(kilometers*rate_cents)),0) from public.bestemd_expense_mileage where line_id=p_line_id)
     + round(p_kilometers*p_rate_cents) > v_line.gross_cents then raise exception 'Ritten overschrijden opgegeven vergoeding.'; end if;
  insert into public.bestemd_expense_mileage(line_id,trip_date,route,business_reason,kilometers,rate_cents)
