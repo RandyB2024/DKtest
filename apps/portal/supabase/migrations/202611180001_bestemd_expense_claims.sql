@@ -129,6 +129,7 @@ declare v_user uuid := auth.uid(); v_claim public.bestemd_expense_claims%rowtype
 begin
  if v_user is null or not public.has_aal2() or not public.has_org_access(p_organization_id) then raise exception 'Geen toegang.' using errcode='42501'; end if;
  if p_month is null or p_month<>date_trunc('month',p_month)::date then raise exception 'Ongeldige maand.'; end if;
+ if p_lines is null then raise exception 'Kostenposten ontbreken.'; end if;
  if jsonb_typeof(p_lines)<>'array' or jsonb_array_length(p_lines)>500 then raise exception 'Ongeldige kostenposten.'; end if;
  if p_private_iban is not null and upper(replace(p_private_iban,' ','')) !~ '^[A-Z]{2}[0-9A-Z]{13,32}$' then raise exception 'Ongeldig IBAN.'; end if;
  if p_claim_id is null then
@@ -138,9 +139,10 @@ begin
   select * into v_claim from public.bestemd_expense_claims where id=p_claim_id for update;
   if not found or v_claim.claimant_id<>v_user or v_claim.organization_id<>p_organization_id or v_claim.status<>'draft' then raise exception 'Concept is niet bewerkbaar.' using errcode='42501'; end if;
   update public.bestemd_expense_claims set month=p_month,private_iban=upper(replace(p_private_iban,' ','')),updated_at=now() where id=v_claim.id;
-  -- Existing evidence cannot be silently deleted when updating a draft.
+  -- Uploaded files and mileage records cannot silently disappear on autosave.
   if exists(select 1 from public.bestemd_expense_evidence e join public.bestemd_expense_lines l on l.id=e.line_id where l.claim_id=v_claim.id)
-    then raise exception 'Concept bevat bonnen: gebruik de regelgerichte wijzigingsroute.'; end if;
+    or exists(select 1 from public.bestemd_expense_mileage m join public.bestemd_expense_lines l on l.id=m.line_id where l.claim_id=v_claim.id)
+    then raise exception 'Concept met bewijsstukken is niet meer via volledig overschrijven bewerkbaar.'; end if;
   delete from public.bestemd_expense_lines where claim_id=v_claim.id;
  end if;
  for v_line in select value from jsonb_array_elements(p_lines) loop
@@ -164,6 +166,7 @@ begin
  if not found or v_claim.claimant_id<>auth.uid() or not public.has_aal2() or not public.has_org_access(v_claim.organization_id) then raise exception 'Geen toegang.' using errcode='42501'; end if;
  if v_claim.status in ('submitted','waiting_evidence') then return v_claim.status; end if;
  if v_claim.status<>'draft' or v_claim.total_cents<=0 or not exists(select 1 from public.bestemd_expense_lines where claim_id=p_claim_id) then raise exception 'Concept kan niet worden ingediend.'; end if;
+ if v_claim.private_iban is null then raise exception 'Privé-IBAN ontbreekt.'; end if;
  v_status:=case when exists(
    select 1 from public.bestemd_expense_lines l
    where l.claim_id=p_claim_id and
@@ -205,6 +208,13 @@ begin
  on conflict (document_id) do nothing returning id into v_new_id;
  if v_new_id is null then raise exception 'Dit bewijsstuk is al gekoppeld.'; end if;
  update public.bestemd_expense_lines set receipt_status='received' where id=v_line.id;
+ if v_claim.status='waiting_evidence' and not exists(
+   select 1 from public.bestemd_expense_lines l where l.claim_id=v_claim.id and
+   ((l.category<>'kilometervergoeding' and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id)) or
+    (l.category='kilometervergoeding' and coalesce((select sum(round(m.kilometers*m.rate_cents)) from public.bestemd_expense_mileage m where m.line_id=l.id),0)<>l.gross_cents))
+ ) then
+   update public.bestemd_expense_claims set status='submitted',updated_at=now() where id=v_claim.id;
+ end if;
  insert into public.bestemd_expense_audit(claim_id,actor_id,event,details)
  values(v_claim.id,auth.uid(),'evidence_added',jsonb_build_object('line_id',v_line.id));
  return v_new_id;
@@ -226,6 +236,13 @@ begin
  insert into public.bestemd_expense_mileage(line_id,trip_date,route,business_reason,kilometers,rate_cents)
  values(p_line_id,p_date,p_route,p_reason,p_kilometers,p_rate_cents);
  update public.bestemd_expense_lines set receipt_status='received' where id=p_line_id;
+ if v_claim.status='waiting_evidence' and not exists(
+   select 1 from public.bestemd_expense_lines l where l.claim_id=v_claim.id and
+   ((l.category<>'kilometervergoeding' and not exists(select 1 from public.bestemd_expense_evidence e where e.line_id=l.id)) or
+    (l.category='kilometervergoeding' and coalesce((select sum(round(m.kilometers*m.rate_cents)) from public.bestemd_expense_mileage m where m.line_id=l.id),0)<>l.gross_cents))
+ ) then
+   update public.bestemd_expense_claims set status='submitted',updated_at=now() where id=v_claim.id;
+ end if;
  insert into public.bestemd_expense_audit(claim_id,actor_id,event)values(v_claim.id,auth.uid(),'mileage_log_saved');
 end; $$;
 
