@@ -1,0 +1,77 @@
+name: BESTEMD Release Guard 1.0 (read-only)
+on:
+  pull_request:
+    paths:
+      - 'scripts/release-guard/**'
+      - '.bestemd/release-baselines.json'
+      - '.github/workflows/bestemd-release-guard.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Inventarisatie of alleen verificatie (geen deployment)'
+        type: choice
+        options:
+          - inventory
+          - verify
+        default: inventory
+        required: true
+      worker:
+        description: 'Te controleren Worker bij verify'
+        type: choice
+        options:
+          - portal
+          - office
+        default: portal
+      approval:
+        description: 'Alleen voor verify: typ IK KEUR PRODUCTIE GOED'
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bestemd-release-guard-readonly
+  cancel-in-progress: false
+
+jobs:
+  test-guard:
+    name: Anti-rollback testcases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bewijs dat oude versies worden geweigerd
+        run: node --test scripts/release-guard/guard.test.mjs
+
+  inspect-workers:
+    if: github.event_name == 'workflow_dispatch'
+    name: Inventariseer Cloudflare zonder wijzigingen
+    needs: test-guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Vereis broncode van main
+        shell: bash
+        run: |
+          test "$GITHUB_REF" = "refs/heads/main" || { echo "STOP: voer inventarisatie uit vanaf main"; exit 1; }
+      - name: Lees live Cloudflare Worker-ID's
+        if: inputs.mode == 'inventory'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_GUARD_READ_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: node scripts/release-guard/inventory.mjs
+      - name: Verifieer alleen (nooit deployen)
+        if: inputs.mode == 'verify'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_RELEASE_GUARD_READ_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BESTEMD_APPROVAL: ${{ inputs.approval }}
+        run: node scripts/release-guard/check.mjs "${{ inputs.worker }}"
