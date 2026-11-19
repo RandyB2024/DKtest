@@ -11,7 +11,7 @@ if(!/^[0-9a-f]{32}$/i.test(account??"")||!token) {
 const out={checkedAt:new Date().toISOString(),workers:[]};
 for(const [area,worker] of Object.entries(WORKERS)) {
  try {
-  const endpoint=`https://api.cloudflare.com/client/v4/accounts/${account}/workers/scripts/${worker}/deployments?per_page=1`;
+  const endpoint=`https://api.cloudflare.com/client/v4/accounts/${account}/workers/scripts/${worker}/deployments?per_page=100`;
   const response=await fetch(endpoint,{
     headers:{Authorization:`Bearer ${token}`,Accept:"application/json"},
     signal:AbortSignal.timeout(15000),cache:"no-store"
