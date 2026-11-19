@@ -1,0 +1,34 @@
+name: BESTEMD WhatsApp inbox tests
+on:
+  pull_request:
+    paths:
+      - 'apps/office/src/communication.mjs'
+      - 'apps/office/public/communication.js'
+      - 'apps/office/tests/whatsapp-inbox.test.mjs'
+      - 'apps/portal/supabase/migrations/202611190001_office_whatsapp_inbox.sql'
+      - '.github/workflows/bestemd-whatsapp-inbox-ci.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/office/package-lock.json
+      - name: Dependencies
+        working-directory: apps/office
+        run: npm ci --no-audit --no-fund
+      - name: Office API and client syntax
+        run: |
+          node --check apps/office/src/communication.mjs
+          node --check apps/office/public/communication.js
+      - name: SQL tenant isolation and MFA
+        working-directory: apps/office
+        run: node --test tests/whatsapp-inbox.test.mjs
+      - name: Office security regression
+        working-directory: apps/office
+        run: node --test tests/security.test.mjs tests/supabase-auth.test.mjs
