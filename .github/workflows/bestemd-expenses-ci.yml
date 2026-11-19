@@ -1,0 +1,35 @@
+name: BESTEMD Digitale Declaraties — checks
+on:
+  pull_request:
+    paths:
+      - 'apps/portal/app/api/financial/expenses/**'
+      - 'apps/portal/lib/expense-**'
+      - 'apps/portal/supabase/migrations/202611180001_bestemd_expense_claims.sql'
+      - 'apps/portal/tests/expenses-*.test.mjs'
+      - 'apps/portal/package.json'
+      - '.github/workflows/bestemd-expenses-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Declaraties database- en bestandscontrole
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/portal/package-lock.json
+      - name: Reproduceerbare dependencies
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript
+        run: npm run typecheck
+      - name: SQL RLS en declaraties (geen Cloudflare publicatie)
+        run: npm run test:expenses

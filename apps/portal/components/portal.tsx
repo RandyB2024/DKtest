@@ -10,6 +10,7 @@ import {
   CalendarDays,
   CalendarClock,
   Boxes,
+  ReceiptText,
   ChartNoAxesCombined,
   ClipboardCheck,
   FolderOpen,
@@ -37,6 +38,7 @@ import CustomerDashboard from "./customer-dashboard";
 import InstallApp from "./install-app";
 import InvoiceDetailView from "./invoice-detail-view";
 import InventoryView from "./inventory-view";
+import ExpensesView from "./expenses-view";
 import KlaasVisInsurance from "./klaas-vis-insurance";
 import { hasVerifiedKlaasVisInsurance } from "@/lib/insurance-visibility";
 import Logout from "./logout";
@@ -49,6 +51,7 @@ import WizeChatPanel from "./wize-chat-panel";
 const businessNav = [
   ["Dashboard", LayoutDashboard],
   ["Bankieren", WalletCards],
+  ["Declaraties", ReceiptText],
   ["Relaties", Users],
   ["Documenten", FolderOpen],
   ["Communicatie", MessagesSquare],
@@ -434,6 +437,10 @@ export default function Portal({
           onGo={setView}
         />
       );
+    }
+
+    if (view === "Declaraties") {
+      return <ExpensesView context={context} organization={organization} />;
     }
 
     if (view === "Bankieren") {
