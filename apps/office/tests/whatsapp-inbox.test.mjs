@@ -15,7 +15,7 @@ test("WhatsApp Office inbox: verified staged messages are visible only with fres
     create role anon; create role authenticated;
     create schema auth;
     create function auth.uid() returns uuid language sql stable as $$
-      select nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub'
+      select (nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'sub')::uuid
     $$;
     create function public.has_aal2() returns boolean language sql stable as $$
       select coalesce(nullif(current_setting('request.jwt.claims',true),'')::jsonb->>'aal'='aal2',false)
