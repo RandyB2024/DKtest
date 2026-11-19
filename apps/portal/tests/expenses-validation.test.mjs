@@ -20,6 +20,6 @@ test("bestandscontrole: onveilig of onbekend bestand niet herkend", () => {
 });
 test("bewijsmateriaal: HEIF van smartphone naar HEIC MIME en veilige naam", () => {
   assert.equal(normalizedExpenseMime("image/heif"), "image/heic");
-  assert.equal(safeExpenseFilename("../../bon <script>.heic", "image/heic"), "bon-script-.heic");
+  assert.equal(safeExpenseFilename("../../bon <script>.heic", "image/heic"), "bon-script.heic");
   assert.equal(safeExpenseFilename("bewijs.pdf", "application/pdf"), "bewijs.pdf");
 });
