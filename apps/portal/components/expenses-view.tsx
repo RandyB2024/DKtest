@@ -95,7 +95,8 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       const result=await linked.json() as {error?:string};
       if(!linked.ok)throw new Error(result.error||"Document is geüpload maar koppelen is mislukt. Neem contact op met BESTEMD.");
       await loadEvidence();
-      setNotice("Bon gekoppeld aan de kostenpost.");
+      setEditing(false);
+      setNotice("Bon gekoppeld. De declaratie kan nu worden ingediend; de kostenposten zijn tegen overschrijven beschermd.");
     }catch(e){setError(e instanceof Error?e.message:"Uploaden mislukt.");}
     finally{setUploading(null);}
   }
@@ -117,7 +118,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       })});
       const d=await response.json() as {error?:string};
       if(!response.ok)throw new Error(d.error||"Rittenoverzicht kon niet worden opgeslagen.");
-      setNotice("Rittenoverzicht gekoppeld.");await loadEvidence();
+      setNotice("Rittenoverzicht gekoppeld.");setEditing(false);await loadEvidence();
     }catch(e){setError(e instanceof Error?e.message:"Rit opslaan mislukt.");}
   }
   async function openClaim(item:Claim) {
@@ -129,7 +130,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       setClaimId(item.id);setMonth(item.month);setIban(item.private_iban??"");
       setEvidence(payload.evidence??[]);setMileage(payload.mileage??[]);setSourceLoaded(true);
       setLines((payload.lines??[]).map(row=>({id:row.id,date:row.expense_date,supplier:row.supplier,category:row.category,amount:(row.gross_cents/100).toFixed(2),vat:(row.vat_cents/100).toFixed(2),description:row.description??"",receipt_status:row.receipt_status})));
-      setRevision(0);setSavedRevision(0);setEditing(item.status==="draft"&&(payload.evidence??[]).length===0);
+      setRevision(0);setSavedRevision(0);setEditing(item.status==="draft"&&(payload.evidence??[]).length===0&&(payload.mileage??[]).length===0);
     }catch(e){setError(e instanceof Error?e.message:"Openen mislukt.");}finally{setBusy(false);}
   }
   async function submit(){
@@ -157,7 +158,7 @@ export default function ExpensesView({context,organization}:{context:PortalConte
       <div className="invoice-list">{claims.map(c=><button key={c.id} type="button" className="invoice-row" onClick={()=>void openClaim(c)}><span><strong>{c.month.slice(0,7)}</strong><small>{statusLabel(c.status)}</small></span><strong>{toMoney(c.total_cents)}</strong></button>)}</div>}
     </section>}
     {canEdit&&(editing||claimId)&&<section className="card expenses-editor">
-      <div className="section-heading"><div><h2>{claimId?"Declaratie bekijken":"Nieuwe maanddeclaratie"}</h2><p>{editing?"Wijzigingen worden automatisch als concept opgeslagen.":"Ingediende declaratie (alleen lezen)."}</p></div><strong>{toMoney(total)}</strong></div>
+      <div className="section-heading"><div><h2>{claimId?"Declaratie bekijken":"Nieuwe maanddeclaratie"}</h2><p>{editing?"Wijzigingen worden automatisch als concept opgeslagen.":"Gegevens zijn vergrendeld voor bewerking; bewijsstukken kunnen worden toegevoegd zolang de beoordeling loopt."}</p></div><strong>{toMoney(total)}</strong></div>
       <div className="expenses-fields">
         <label>Declaratiemaand<input type="month" disabled={!editing} value={month.slice(0,7)} onChange={e=>{setMonth(e.target.value+"-01");setRevision(v=>v+1);}}/></label>
         <label>Privé-IBAN<input type="text" autoComplete="off" disabled={!editing} value={iban} placeholder="NL00BANK0123456789" onChange={e=>{setIban(e.target.value.toUpperCase());setRevision(v=>v+1);}}/></label>
