@@ -1,6 +1,7 @@
 import {createClient} from '@supabase/supabase-js';
 import {randomBytes,createHash} from 'node:crypto';
 import {OfficeError} from './auth/supabase.mjs';
+import {prospectDocumentChecklist} from './prospect-document-checklist.mjs';
 import {validateQuoteLines} from './prospect-quote-policy.mjs';
 import {WORKFLOW_VERSION,advanceWorkflow,canSendOnboarding,startWorkflow,validateCompanyCount,validateAdministrationPreparation,isAdministrationReady} from './prospect-workflow-v4.mjs';
 
@@ -45,27 +46,25 @@ export async function officeProspectWorkflowRoute(req,url,client,user,config,fet
     .eq('application_id',id).order('created_at',{ascending:false}).limit(100);
   if(documentsResult.error)fail(503,'DOCUMENTS_UNAVAILABLE','Documentenoverzicht kon niet worden geladen.');
   const documents=documentsResult.data||[];
-  const categoryOf=d=>String(d.filename||'').split(' - ')[0].trim();
-  const personalCategories=new Set(['Aangifte inkomstenbelasting','Identiteitsbewijs ondernemer']);
-  const personalDocs=documents.filter(d=>personalCategories.has(categoryOf(d)));
+  const checklist=prospectDocumentChecklist(documents,companies);
   const companyRows=companies.map(c=>{
-   const received=documents.filter(d=>Number(d.company_position)===c.position&&!personalCategories.has(categoryOf(d)));
+   const checked=checklist.companyDocuments.find(x=>x.position===c.position);
    const entity=String(c.company_data?.entityType||c.company_data?.legalForm||'').toLowerCase();
-   const needsVat=c.company_data?.vatRequired==='yes';
-   const required=['KvK-uittreksel','Jaarrekening','Kolommenbalans',...(needsVat?['Btw-aangifte']:[])];
-   const present=new Set(received.map(categoryOf));
    const financial=c.company_data?.financialOnboarding||{};
    const administrative=c.company_data?.administrativeOnboarding||{};
    return {position:c.position,name:c.company_data?.companyName||c.company_data?.name||'Onderneming',
-     entityType:entity,documents:received,
-     missingDocuments:required.filter(category=>!present.has(category)),
+     entityType:entity,documents:checked?.documents||[],
+     missingDocuments:checked?.missingDocuments||[],
+     kvkIssueDateRequiresReview:checked?.kvkIssueDateRequiresReview||false,
      financialAnswered:['cashBookkeeping','cashTransactions'].every(key=>['yes','no'].includes(financial[key])),
      administrationAnswered:['vatRequired','iban'].every(key=>!!administrative[key])&&
        (administrative.vatRequired!=='yes'||!!administrative.vatFrequency)};
   });
   return {status:200,data:{applicationId:id,applicationStatus:app.status,relationshipId:app.customer_relationship_id,
    legacy:workflow?.version!==WORKFLOW_VERSION,workflow:workflow?.version===WORKFLOW_VERSION?publicWorkflow(workflow):null,
-   companies:companyRows,personalDocuments:personalDocs,
+   companies:companyRows,personalDocuments:checklist.personalDocuments,
+   missingPersonalDocuments:checklist.missingPersonalDocuments,
+   documentsSupplied:checklist.documentsSupplied,
    // ID evidence is assessed separately; storing a full copy is not assumed lawful.
    personalDocumentsPendingReview:true}};
  }
