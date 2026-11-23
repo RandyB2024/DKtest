@@ -76,7 +76,6 @@ export async function POST(request: Request) {
       throw new AccessError(502, "De bankaanbieder gaf geen geldige klantreferentie.");
     }
 
-    const origin = new URL(request.url).origin;
     const session = await saltEdgePost(
       "/connections/connect",
       {
@@ -85,7 +84,7 @@ export async function POST(request: Request) {
         attempt: {
           fetch_scopes: ["accounts", "transactions"],
           locale: "nl",
-          return_to: origin + "/mijn-onderneming?view=banking",
+          return_to: "https://app.mijnbestemd.nl/mijn-onderneming?view=banking",
         },
         widget: { show_account_overview: true },
         return_connection_id: true,
