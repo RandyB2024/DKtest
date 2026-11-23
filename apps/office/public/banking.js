@@ -275,6 +275,12 @@ export function mountOfficeBanking(
   let current = null;
   let requestVersion = 0;
 
+  // Opening Bankzaken from an enterprise dossier selects that enterprise only.
+  const requestedOrganizationId = new URLSearchParams(window.location.search).get('organizationId');
+  if (requestedOrganizationId && organizations.some(org => org.id === requestedOrganizationId)) {
+    organizationSelect.value = requestedOrganizationId;
+  }
+
   if (!organizations.length) {
     status.textContent =
       'Er zijn geen ondernemingen beschikbaar.';
