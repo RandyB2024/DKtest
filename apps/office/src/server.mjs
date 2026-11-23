@@ -32,7 +32,7 @@ export function createServer({ config = loadConfig(), fetchImpl = fetch } = {}) 
       if (!target.startsWith(resolve(publicDir) + sep)) return sendJson(res,403,'Geen toegang.');
       let data = await readFile(target);
       if (extname(target) === '.html' && requested === '/index.html') {
-        data = Buffer.from(data.toString().replace('<script src="/portal.js" defer></script><script src="/app.js" defer></script>', '<script src="/supabase-app.js" defer></script>').replace('</head>', '<link rel="stylesheet" href="/supabase.css"></head>'));
+        data = Buffer.from(data.toString().replace('<script src="/portal.js" defer></script><script src="/accounting-page.js" defer></script><script src="/app.js" defer></script>', '<script src="/supabase-app.js" defer></script>').replace('</head>', '<link rel="stylesheet" href="/supabase.css"></head>'));
       }
       res.writeHead(200, { 'Content-Type':types[extname(target)] || 'application/octet-stream', 'Cache-Control':extname(target) === '.html' || path === '/sw.js' ? 'no-store, private' : 'public, max-age=300' });
       res.end(data);
