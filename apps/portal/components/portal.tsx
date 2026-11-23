@@ -168,6 +168,10 @@ export default function Portal({
         window.location.href,
       );
 
+    if (url.searchParams.get("view") === "banking") {
+      setView("Bankieren");
+    }
+
     if (
       url.searchParams.get(
         "view",
