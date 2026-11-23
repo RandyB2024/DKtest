@@ -78,7 +78,19 @@ type MatchSuggestion = {
   };
 };
 
+type BankConnection = {
+  id: string;
+  provider: string;
+  provider_code: string;
+  connection_status: string;
+  consent_status: string;
+  consent_expires_at: string | null;
+  last_successful_sync_at: string | null;
+  is_sandbox: boolean;
+};
+
 type BankResponse = {
+  connections: BankConnection[];
   accounts: BankAccount[];
 
   transactions: {
@@ -469,6 +481,31 @@ export default function BankingView({
       {!loading &&
         data && (
           <>
+            {data.connections?.length > 0 && (
+              <section className="card" aria-label="Bankkoppelingen">
+                <div className="section-heading">
+                  <div>
+                    <h2>Bankkoppelingen</h2>
+                    <p>Verbindingsstatus van {companyName}. Alleen-lezen inzicht.</p>
+                  </div>
+                  <Landmark />
+                </div>
+                <div className="bank-account-grid">
+                  {data.connections.map((connection) => (
+                    <article className="card bank-account-card" key={connection.id}>
+                      <div>
+                        <small>{connection.is_sandbox ? "Testverbinding" : "Bankverbinding"}</small>
+                        <h3>{connection.provider_code}</h3>
+                        <p>Status: {connection.connection_status.replaceAll("_", " ")}</p>
+                        <p>Toestemming: {connection.consent_status.replaceAll("_", " ")}</p>
+                        <p>Laatst bijgewerkt: {connection.last_successful_sync_at ? date(connection.last_successful_sync_at) : "Nog niet gesynchroniseerd"}</p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section className="bank-account-grid">
               {data.accounts.length ===
               0 ? (
