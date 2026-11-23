@@ -59,12 +59,13 @@ test('geblokkeerde portaalgebruiker kan geen sessie openen',async t=>{
   const base=await runningServer(t),login=await portalLogin(base,'user-blocked');assert.equal(login.response.status,403);
 });
 
-test('beveiligde PDF is downloadbaar maar niet publiek cachebaar',async t=>{
+test('oude PDF-route is niet beschikbaar en privéopslag blijft afgeschermd',async t=>{
   const base=await runningServer(t),login=await portalLogin(base,'user-jan');
   const response=await fetch(`${base}/api/portal/organizations/de-boer-advies/reports/month.pdf`,{headers:{cookie:login.cookie}});
-  assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'application/pdf');assert.match(response.headers.get('cache-control'),/no-store/);
-  assert.equal(Buffer.from(await response.arrayBuffer()).subarray(0,4).toString(),'%PDF');
-  const publicAttempt=await fetch(`${base}/private-storage/reports/de-boer-advies-month.pdf`);assert.equal(publicAttempt.status,404);
+  // De legacy-PDF-route hoort niet in de productie-Office gepubliceerd te worden.
+  assert.equal(response.status,404);
+  const publicAttempt=await fetch(`${base}/private-storage/reports/de-boer-advies-month.pdf`);
+  assert.equal(publicAttempt.status,404);
 });
 
 test('Office kan dezelfde klantrapportage controleren',async t=>{
