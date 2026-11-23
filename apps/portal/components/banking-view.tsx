@@ -478,7 +478,7 @@ export default function BankingView({
           </button>
 
           <h1>
-            Bankieren
+            Bankzaken
           </h1>
 
           <p>
@@ -595,10 +595,13 @@ export default function BankingView({
                           {account.iban ||
                             "IBAN niet beschikbaar"}
                         </p>
+                        <p>
+                          Laatst gesynchroniseerd: {account.lastSyncedAt ? date(account.lastSyncedAt) : "Nog niet"}
+                        </p>
                       </div>
 
-                      <span className="status ok">
-                        Actief
+                      <span className={account.status === "active" ? "status ok" : "status"}>
+                        {account.status === "active" ? "Actief" : "Niet actief"}
                       </span>
                     </article>
                   ),
