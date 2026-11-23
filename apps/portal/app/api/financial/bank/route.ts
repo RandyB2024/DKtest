@@ -121,6 +121,7 @@ export async function GET(
         accountsResult,
         transactionsResult,
         matchesResult,
+        connectionsResult,
       ] = await Promise.all([
         client.rpc(
           "get_bank_accounts",
@@ -147,6 +148,10 @@ export async function GET(
             p_limit: 100,
           },
         ),
+        client.from("bestemd_bank_connections")
+          .select("id,provider,provider_code,connection_status,consent_status,consent_expires_at,last_successful_sync_at,is_sandbox")
+          .eq("organization_id", organizationId)
+          .order("created_at", { ascending: false }),
       ]);
 
       if (accountsResult.error) {
@@ -200,7 +205,15 @@ export async function GET(
         );
       }
 
+      if (connectionsResult.error) {
+        return Response.json(
+          { error: "De bankkoppelstatus kan tijdelijk niet worden geladen." },
+          { status: 503 },
+        );
+      }
+
       return Response.json({
+        connections: connectionsResult.data ?? [],
         accounts:
           accountsResult.data as BankAccount[],
 
