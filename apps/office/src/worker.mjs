@@ -6,7 +6,7 @@ import { runScheduledInvoiceReminders } from './invoice-reminders.mjs';
 
 const assets = new Set([
   '/index.html', '/offline.html', '/styles.css', '/intake.css', '/supabase.css',
-  '/supabase-app.js', '/passkeys.js', '/kvk-intake.js', '/customer-profile.js', '/profile-fields.js', '/client-workspace.js', '/intake-fields.js', '/intake-form.js', '/tasks.js', '/documents-readonly.js', '/banking.js', '/payment-monitoring.js', '/tax-returns.js', '/communication.js', '/wize-admin.js', '/wize-office.js', '/sw.js', '/manifest.webmanifest',
+  '/supabase-app.js', '/accounting-worker.js', '/passkeys.js', '/kvk-intake.js', '/customer-profile.js', '/profile-fields.js', '/client-workspace.js', '/intake-fields.js', '/intake-form.js', '/tasks.js', '/documents-readonly.js', '/banking.js', '/payment-monitoring.js', '/tax-returns.js', '/communication.js', '/wize-admin.js', '/wize-office.js', '/sw.js', '/manifest.webmanifest',
   '/prospect.js',
   '/prospect-signature.js',
   '/prospect-wizard.js',

@@ -1,4 +1,5 @@
 import { officeProspectReviewRoute } from './prospect-review.mjs';
+import {accountingOverviewRoute} from './accounting-overview.mjs';
 import { officeProspectRoute } from './prospects.mjs';
 import { officeExpenseClaimsRoute } from './expense-claims.mjs';
 import { bankingRoute } from './banking.mjs';
@@ -704,6 +705,9 @@ export async function handleOfficeApi(req, res, config, fetchImpl) {
     }
     // Everything else, including legacy and unknown API routes, passes this gate.
     const user = await officeIdentity(client);
+    // Reuse Office's authenticated MFA session, never expose financial credentials to the browser.
+    const accounting = await accountingOverviewRoute(req, url, client, config, fetchImpl);
+    if (accounting) return sendJson(res, accounting.status, accounting.data);
 
     // Central calendar: Office-only, AAL2 protected by officeIdentity above.
     if (path === '/api/office/dashboard/appointments') {

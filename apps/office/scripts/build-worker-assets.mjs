@@ -7,7 +7,7 @@ const source = join(root, 'public');
 const destination = join(root, 'worker-public');
 const files = [
   'offline.html', 'styles.css', 'intake.css', 'supabase.css',
-  'supabase-app.js', 'passkeys.js', 'kvk-intake.js', 'customer-profile.js', 'personal-portal-access.js', 'profile-fields.js', 'client-workspace.js', 'intake-fields.js', 'intake-form.js', 'tasks.js', 'documents-readonly.js', 'banking.js', 'payment-monitoring.js', 'tax-returns.js', 'communication.js', 'wize-admin.js', 'wize-office.js', 'sw.js', 'manifest.webmanifest',
+  'supabase-app.js', 'accounting-worker.js', 'passkeys.js', 'kvk-intake.js', 'customer-profile.js', 'personal-portal-access.js', 'profile-fields.js', 'client-workspace.js', 'intake-fields.js', 'intake-form.js', 'tasks.js', 'documents-readonly.js', 'banking.js', 'payment-monitoring.js', 'tax-returns.js', 'communication.js', 'wize-admin.js', 'wize-office.js', 'sw.js', 'manifest.webmanifest',
   'assets/logo.png', 'assets/icon.png', 'assets/icon-192.png', 'assets/icon-512.png', 'assets/office-login-background.webp',
 ];
 
@@ -30,7 +30,7 @@ for (const file of files) {
 const html = await readFile(join(source, 'index.html'), 'utf8');
 const start = html.indexOf('  <div id="login"');
 const end = html.indexOf('  <div id="app"');
-const scripts = '<script src="/portal.js" defer></script><script src="/app.js" defer></script>';
+const scripts = '<script src="/portal.js" defer></script><script src="/accounting-page.js" defer></script><script src="/app.js" defer></script>';
 if (start < 0 || end <= start || !html.includes(scripts)) throw new Error('Office index.html is gewijzigd; controleer de veilige Worker-shell.');
 const safe = html.slice(0, start) + '  <div id="login" class="login-shell" hidden></div>\n  <div id="lock" class="login-shell" hidden></div>\n' + html.slice(end);
 await writeFile(join(destination, 'index.html'), safe.replace(scripts, '<script src="/supabase-app.js" defer></script>').replace('</head>', '<link rel="stylesheet" href="/supabase.css"></head>'));

@@ -168,6 +168,9 @@ async function renderRoute() {
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
       const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header('Onderneming');
       html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
+    } else if (path === '/accounting/eboekhouden') {
+      header('Boekhouding');
+      html = '<div id="office-accounting"></div>';
     } else if (path === '/inventory') {
       header('Bedrijfsmiddelen');
       recordData = await api('/api/clients');
@@ -249,6 +252,9 @@ async function renderRoute() {
       if(path==='/clients'||path==='/dashboard'){
         const {mountClientWorkspace}=await import('/client-workspace.js');
         if(activeGeneration===generation&&currentUser)mountClientWorkspace($('#client-workspace'),recordData,{canCreate:currentUser.canManageCustomers,onCreate:()=>customerForm('new')});
+      }else if(path==='/accounting/eboekhouden'){
+        const {mountOfficeAccounting}=await import('/accounting-worker.js');
+        if(activeGeneration===generation&&currentUser)await mountOfficeAccounting($('#office-accounting'),api);
       }else if(path==='/inventory'){
         if(activeGeneration===generation&&currentUser){
           await mountOfficeInventory($('#office-inventory'),api,recordData);
