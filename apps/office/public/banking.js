@@ -222,6 +222,11 @@ export function mountOfficeBanking(
       ></p>
 
       <div
+        id="bank-connections"
+        aria-label="Bankkoppelingen"
+      ></div>
+
+      <div
         id="bank-summary"
         class="office-bank-summary"
       ></div>
@@ -401,6 +406,23 @@ export function mountOfficeBanking(
     );
   }
 
+  function renderConnections() {
+    const target = root.querySelector('#bank-connections');
+    const items = current?.connections ?? [];
+    if (!items.length) {
+      target.innerHTML = '<p class="small-copy">Nog geen bankkoppelingen geregistreerd voor deze onderneming.</p>';
+      return;
+    }
+    target.innerHTML = '<section class="panel"><h3>Bankkoppelingen</h3>'
+      + items.map(item => '<div class="office-bank-row">'
+        + '<strong>' + escapeHtml(item.provider_code) + '</strong>'
+        + '<span>' + (item.is_sandbox ? 'Testverbinding' : 'Bankverbinding') + '</span>'
+        + '<span>Status: ' + escapeHtml(item.connection_status.replaceAll('_', ' ')) + '</span>'
+        + '<span>Toestemming: ' + escapeHtml(item.consent_status.replaceAll('_', ' ')) + '</span>'
+        + '<span>Laatst gesynchroniseerd: ' + (item.last_successful_sync_at ? escapeHtml(date(item.last_successful_sync_at)) : 'Nog niet') + '</span>'
+        + '</div>').join('') + '</section>';
+  }
+
   function renderSummary() {
     const map =
       suggestionMap();
@@ -542,6 +564,7 @@ export function mountOfficeBanking(
   function render() {
     if (!current) return;
 
+    renderConnections();
     renderSummary();
 
     const map =
@@ -1487,6 +1510,7 @@ export function mountOfficeBanking(
 
       current = null;
 
+      root.querySelector('#bank-connections').replaceChildren();
       summary.replaceChildren();
 
       list.innerHTML = `
