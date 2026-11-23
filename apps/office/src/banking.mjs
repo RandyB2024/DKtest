@@ -91,6 +91,7 @@ export async function bankingRoute(
       suggestions,
       documentRequests,
       creditors,
+      connections,
     ] =
       await Promise.all([
         client.rpc(
@@ -179,6 +180,11 @@ export async function bankingRoute(
               ascending: true,
             }
           ),
+        client
+          .from('bestemd_bank_connections')
+          .select('id,provider,provider_code,connection_status,consent_status,consent_expires_at,last_successful_sync_at,is_sandbox')
+          .eq('organization_id', organizationId)
+          .order('created_at', { ascending: false }),
       ]);
 
     if (accounts.error) {
@@ -221,10 +227,19 @@ export async function bankingRoute(
       );
     }
 
+    if (connections.error) {
+      throw new OfficeError(
+        503,
+        'BANK_CONNECTIONS_UNAVAILABLE',
+        'Bankkoppelingen kunnen niet worden geladen.'
+      );
+    }
+
     return {
       status: 200,
       data: {
         organization,
+        connections: connections.data ?? [],
         accounts:
           accounts.data ?? [],
         transactions:
