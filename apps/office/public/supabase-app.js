@@ -167,7 +167,7 @@ async function renderRoute() {
       html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><span>Klantdossier</span></div><div id="personal-portal-access"></div><div id="customer-profile"></div>`;
     } else if (/^\/organizations\/[^/]+$/.test(path)) {
       const data = await api('/api/organizations/' + path.split('/').pop()); recordData = data; header('Onderneming');
-      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><div id="customer-profile"></div>`;
+      html = `<div class="profile-breadcrumb"><a data-route href="/clients">Klanten</a><span aria-hidden="true">/</span><a data-route href="/clients/${encodeURIComponent(data.organization.customer_relationship_id)}">Klantrelatie</a><span aria-hidden="true">/</span><span>Onderneming</span></div><section class="panel"><p class="eyebrow">Administratie</p><h2>Bankzaken</h2><p class="muted">Bekijk de gekoppelde bankrekening(en), toestemmingsstatus en bankmutaties van deze onderneming.</p><a data-route href="/banking?organizationId=${encodeURIComponent(data.organization.id)}" class="primary">Open Bankzaken van deze onderneming</a></section><div id="customer-profile"></div>`;
     } else if (path === '/accounting/eboekhouden') {
       header('Boekhouding');
       html = '<div id="office-accounting"></div>';
