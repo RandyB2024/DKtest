@@ -4,11 +4,17 @@
 import { registerHooks } from "node:module";
 
 const syntheticEnvironmentUrl = new URL("./cloudflare-test-env.mjs", import.meta.url).href;
+const serverOnlyMarkerUrl = new URL("./server-only-test-marker.mjs", import.meta.url).href;
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
     if (specifier === "cloudflare:workers") {
       return { url: syntheticEnvironmentUrl, shortCircuit: true };
+    }
+    // `server-only` is a framework marker. Node unit tests run server route
+    // handlers without the Next/Vinext RSC resolver; substitute only its marker.
+    if (specifier === "server-only") {
+      return { url: serverOnlyMarkerUrl, shortCircuit: true };
     }
     return nextResolve(specifier, context);
   },
