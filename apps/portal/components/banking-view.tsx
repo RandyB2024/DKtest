@@ -170,6 +170,34 @@ export default function BankingView({
       null,
     );
 
+  const [connectBusy, setConnectBusy] = useState(false);
+
+  async function beginBankConnection() {
+    if (context.organizationId === "all" || connectBusy) return;
+    setConnectBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/financial/bank/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizationId: context.organizationId }),
+        cache: "no-store",
+      });
+      const payload = await response.json() as { error?: string; connectUrl?: string };
+      if (!response.ok || !payload.connectUrl) {
+        throw new Error(payload.error || "De bankverbinding kon niet worden gestart.");
+      }
+      const target = new URL(payload.connectUrl);
+      if (target.origin !== "https://www.saltedge.com" || target.pathname !== "/connect") {
+        throw new Error("Ongeldige bankkoppelpagina.");
+      }
+      window.location.assign(target.href);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Bank koppelen is niet gelukt.");
+      setConnectBusy(false);
+    }
+  }
+
   const [
     loading,
     setLoading,
@@ -458,6 +486,14 @@ export default function BankingView({
             van {companyName}.
           </p>
         </div>
+        <button
+          type="button"
+          className="btn primary"
+          onClick={() => void beginBankConnection()}
+          disabled={connectBusy || context.organizationId === "all"}
+        >
+          {connectBusy ? "Bankverbinding starten..." : "Bank koppelen"}
+        </button>
       </div>
 
       {error && (
