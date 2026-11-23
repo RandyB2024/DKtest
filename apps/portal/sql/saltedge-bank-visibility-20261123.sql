@@ -3,6 +3,9 @@
 BEGIN;
 ALTER TABLE public.bestemd_bank_connections ENABLE ROW LEVEL SECURITY;
 
+-- Remove any existing table-wide permission first, otherwise column grants
+-- would not limit access to internal Salt Edge identifiers.
+REVOKE SELECT ON public.bestemd_bank_connections FROM PUBLIC, authenticated;
 -- The customer portal needs only status metadata. Do NOT expose external IDs.
 GRANT SELECT (
   id, organization_id, provider, provider_code, connection_status,
