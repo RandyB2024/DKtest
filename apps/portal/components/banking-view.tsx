@@ -90,6 +90,7 @@ type BankConnection = {
 };
 
 type BankResponse = {
+  canConnect?: boolean;
   connections: BankConnection[];
   accounts: BankAccount[];
 
@@ -486,14 +487,16 @@ export default function BankingView({
             van {companyName}.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn primary"
-          onClick={() => void beginBankConnection()}
-          disabled={connectBusy || context.organizationId === "all"}
-        >
-          {connectBusy ? "Bankverbinding starten..." : "Bank koppelen"}
-        </button>
+        {data?.canConnect && (
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => void beginBankConnection()}
+            disabled={connectBusy || context.organizationId === "all"}
+          >
+            {connectBusy ? "Bankverbinding starten..." : "Bank koppelen"}
+          </button>
+        )}
       </div>
 
       {error && (
