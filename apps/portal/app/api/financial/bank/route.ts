@@ -212,7 +212,17 @@ export async function GET(
         );
       }
 
+      const membership = identity.memberships.find((m) => m.organization_id === organizationId);
+      let canConnect = false;
+      if (process.env.BANK_CONNECT_ENABLED === "true" && membership) {
+        const { data: role, error: permissionError } = await client.from("roles")
+          .select("code,scope").eq("id", membership.role_id).maybeSingle();
+        canConnect = !permissionError && role?.scope === "customer"
+          && ["owner", "admin"].includes(role.code);
+      }
+
       return Response.json({
+        canConnect,
         connections: connectionsResult.data ?? [],
         accounts:
           accountsResult.data as BankAccount[],
